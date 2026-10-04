@@ -119,7 +119,6 @@ public static class ServerApplication
             options.Providers.Add<BrotliCompressionProvider>();
             options.Providers.Add<GzipCompressionProvider>();
         });
-        builder.Services.AddApplicationInsightsTelemetry();
         builder.Services
             .AddMcpServer(options =>
             {

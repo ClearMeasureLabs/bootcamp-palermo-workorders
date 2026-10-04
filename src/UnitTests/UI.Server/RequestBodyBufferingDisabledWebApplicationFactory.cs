@@ -22,7 +22,6 @@ public sealed class RequestBodyBufferingDisabledWebApplicationFactory : WebAppli
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
-                ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = "",
                 ["ApiKeyAuthentication:Enabled"] = "false",
                 ["ApiKeyAuthentication:ValidationKey"] = "",
                 [$"{RequestBodyBufferingOptions.SectionName}:Enabled"] = "false"

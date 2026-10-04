@@ -13,7 +13,7 @@ Host the MCP HTTP transport inside the existing UI.Server process at route `/mcp
 ### 2. Register MCP services and map /mcp route in UI.Server Program.cs
 **File:** `src/UI/Server/Program.cs`
 - Add `using` statements for `ClearMeasure.Bootcamp.McpServer.Tools` and `ClearMeasure.Bootcamp.McpServer.Resources`
-- After existing service registration (after `AddApplicationInsightsTelemetry`), register MCP:
+- After existing service registration, register MCP:
   ```csharp
   builder.Services
       .AddMcpServer(options =>

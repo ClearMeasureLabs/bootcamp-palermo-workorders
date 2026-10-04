@@ -44,8 +44,11 @@ registering anything new in `ServiceDefaults`.
   true`. Don't add a second logging pipeline; use `ILogger` + `LogContext`
   scopes and let Serilog fan it out.
 - **Exporters**: OTLP and Azure Monitor are both wired and enabled purely by
-  config presence (`OTEL_EXPORTER_OTLP_ENDPOINT`,
-  `ApplicationInsights:ConnectionString`) — either, both, or neither. In
+  config presence — either, both, or neither. `APPLICATIONINSIGHTS_CONNECTION_STRING`
+  (set on the app in Azure, together with `OTEL_SERVICE_NAME`) turns on the
+  Azure Monitor OpenTelemetry exporter, which sends traces, metrics and logs to
+  Application Insights; `OTEL_EXPORTER_OTLP_ENDPOINT` (set by the Aspire AppHost
+  locally) turns on the OTLP exporter for the Aspire dashboard. In
   Development, `LocalTelemetryFileWriter` also runs (alongside any configured
   exporters, not just as a fallback) so telemetry is always visible locally.
   New code never needs to touch exporter selection.

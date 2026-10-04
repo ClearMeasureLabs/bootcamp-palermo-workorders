@@ -42,6 +42,8 @@ This file provides standards for GitHub Copilot to follow when generating code f
 - Small focused methods, nullable reference types
 - XML docs on public APIs
 
+**Telemetry:** OpenTelemetry, wired in `src/ChurchBulletin.ServiceDefaults/Extensions.cs`. In Azure, when the app has `APPLICATIONINSIGHTS_CONNECTION_STRING` (and `OTEL_SERVICE_NAME` for the cloud role name), the Azure Monitor OpenTelemetry exporter sends traces, metrics and logs to Application Insights. Locally, running `src/ChurchBulletin.AppHost` sets `OTEL_EXPORTER_OTLP_ENDPOINT` and the OTLP exporter sends to the Aspire dashboard. No connection string or instrumentation key in the repository.
+
 ---
 
 ## Project Overview
@@ -148,15 +150,15 @@ All branches must be created inside a folder matching the username of the accoun
 | Core | MediatR.Contracts 2.0.1, Microsoft.Extensions.Logging.Abstractions 10.0.0 |
 | DataAccess | MediatR 12.4.1, Microsoft.EntityFrameworkCore 10.0.0, EF Core SqlServer + Sqlite 10.0.0, NServiceBus.Persistence.Sql.TransactionalSession 8.3.0 |
 | Database | DbUp 5.0.41, dbup-sqlserver 6.0.16, Spectre.Console 0.54.0 |
-| UI.Server | Lamar.Microsoft.DependencyInjection 15.0.1, Azure.Monitor.OpenTelemetry.AspNetCore 1.3.0, ModelContextProtocol 1.0.0, NServiceBus.Extensions.Hosting 3.0.1, OpenTelemetry 1.12.0 |
+| UI.Server | Lamar.Microsoft.DependencyInjection 15.0.1, ModelContextProtocol 1.0.0, NServiceBus.Extensions.Hosting 3.0.1, OpenTelemetry 1.12.0 |
 | UI.Client | BlazorMvc 2.1.1, MediatR 12.4.1, Lamar.Microsoft.DependencyInjection 15.0.1, Microsoft.AspNetCore.Components.WebAssembly 10.0.0 |
 | UI.Api | Lamar.Microsoft.DependencyInjection 15.0.1 |
-| UI.Shared | BlazorMvc 2.1.1, MediatR 12.4.1, Microsoft.ApplicationInsights 2.23.0 |
+| UI.Shared | BlazorMvc 2.1.1, MediatR 12.4.1 |
 | LlmGateway | Azure.AI.OpenAI 2.1.0, MediatR 12.4.1, Microsoft.Extensions.AI 9.7.0 |
 | McpServer | ModelContextProtocol 1.0.0, Lamar.Microsoft.DependencyInjection 15.0.1, MediatR 12.4.1 |
 | Worker | ClearMeasureLabs.HostedEndpoint.SqlServerTransport 1.0.30 |
 | AppHost | Aspire.AppHost.Sdk 13.1.2 |
-| ServiceDefaults | Azure.Monitor.OpenTelemetry.AspNetCore 1.3.0, OpenTelemetry 1.12.0, Microsoft.Extensions.ServiceDiscovery 9.5.0 |
+| ServiceDefaults | Azure.Monitor.OpenTelemetry.AspNetCore 1.6.0, OpenTelemetry 1.12.0, Microsoft.Extensions.ServiceDiscovery 9.5.0 |
 | UnitTests | NUnit 4.3.2, Shouldly 4.3.0, bunit 1.40.0, AutoBogus.Conventions 2.13.1 |
 | IntegrationTests | NUnit 4.3.2, Shouldly 4.3.0, Microsoft.EntityFrameworkCore 10.0.0 |
 | AcceptanceTests | NUnit 4.3.2, microsoft.playwright.nunit 1.54.0, Azure.AI.OpenAI 2.1.0, ModelContextProtocol 1.0.0 |

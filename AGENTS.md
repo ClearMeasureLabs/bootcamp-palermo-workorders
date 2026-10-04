@@ -29,7 +29,6 @@ The `launchSettings.json` contains a Windows-only LocalDB connection string that
 ```bash
 export ConnectionStrings__SqlConnectionString="server=localhost,1433;database=ChurchBulletin;User ID=sa;Password=churchbulletin-mssql#1A;TrustServerCertificate=true;"
 export ASPNETCORE_ENVIRONMENT=Development
-export APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=586d68ed-85bc-4092-ac8a-fabb7a583e93;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=5328e763-3c56-4eae-ad66-aa528a92e984"
 export AI_OpenAI_ApiKey=""
 export AI_OpenAI_Url=""
 export AI_OpenAI_Model=""
@@ -38,7 +37,7 @@ cd src/UI/Server && dotnet run --no-launch-profile --urls "https://localhost:717
 
 Key gotchas:
 - **Must use `--no-launch-profile`** to avoid the LocalDB connection string override from `launchSettings.json`.
-- **Must set `APPLICATIONINSIGHTS_CONNECTION_STRING`** or the Azure Monitor exporter will crash on startup.
+- **No telemetry setting is needed to run locally.** Telemetry is OpenTelemetry (`src/ChurchBulletin.ServiceDefaults/Extensions.cs`). In Azure, when the app has `APPLICATIONINSIGHTS_CONNECTION_STRING` (and `OTEL_SERVICE_NAME` for the cloud role name), the Azure Monitor OpenTelemetry exporter sends traces, metrics and logs to Application Insights. Locally, running `src/ChurchBulletin.AppHost` sets `OTEL_EXPORTER_OTLP_ENDPOINT` and the OTLP exporter sends to the Aspire dashboard. Without either variable no exporter runs and the app starts normally. No connection string or instrumentation key belongs in the repository.
 - **Must set `AI_OpenAI_*` vars to empty strings** to prevent the app from trying to connect to Azure OpenAI (it degrades gracefully).
 - The SQL Server Docker container must already be running (created by `PrivateBuild.ps1` or manually via `docker run`). The container name is `churchbulletin-mssql` and the password is `churchbulletin-mssql#1A`.
 

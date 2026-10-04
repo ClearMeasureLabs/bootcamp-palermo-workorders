@@ -1,5 +1,3 @@
-using BlazorApplicationInsights;
-using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.UI.Client;
 using Lamar;
 using Lamar.Microsoft.DependencyInjection;
@@ -15,13 +13,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddSingleton<IHostEnvironment>(new WasmHostEnvironment(builder.HostEnvironment));
-var configurationModel = new ConfigurationModel
-    { AppInsightsConnectionString = "" }; //await http.GetFromJsonAsync<ConfigurationModel>("Configuration");}
-
-builder.Services.AddBlazorApplicationInsights(x =>
-{
-    x.ConnectionString = configurationModel.AppInsightsConnectionString;
-});
 
 // Add authentication services
 builder.Services.AddAuthorizationCore();

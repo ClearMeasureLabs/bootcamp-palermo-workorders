@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
 
@@ -96,9 +97,11 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Adds OpenTelemetry exporters based on the presence of configuration.
-    /// If the OTEL_EXPORTER_OTLP_ENDPOINT environment variable is set, the OTLP exporter will be used.
-    /// If ApplicationInsights:ConnectionString is configured, the Azure Monitor exporter will be used.
+    /// Adds the exporters whose configuration is present; both may be active together.
+    /// APPLICATIONINSIGHTS_CONNECTION_STRING (set on the app in Azure) turns on the Azure Monitor exporter,
+    /// which sends traces, metrics and logs to Application Insights. OTEL_EXPORTER_OTLP_ENDPOINT (set by the Aspire
+    /// AppHost locally) turns on the OTLP exporter. The service name and other resource attributes come from
+    /// OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES.
     /// </summary>
     private static void AddOpenTelemetryExporters<TBuilder>(this TBuilder builder, OpenTelemetryBuilder otelBuilder) where TBuilder : IHostApplicationBuilder
     {
@@ -109,11 +112,16 @@ public static class Extensions
             otelBuilder.UseOtlpExporter();
         }
 
-        var useAzureMonitorExporter = !string.IsNullOrEmpty(builder.Configuration["ApplicationInsights:ConnectionString"]);
+        var useAzureMonitorExporter = !string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]);
 
         if (useAzureMonitorExporter)
         {
             otelBuilder.UseAzureMonitor();
+
+            // UseAzureMonitor adds the App Service, Container Apps and VM resource detectors after the SDK's own
+            // OTEL_RESOURCE_ATTRIBUTES / OTEL_SERVICE_NAME detectors, so the site or container app name would
+            // replace service.name. Applying the OTEL_* variables again, last, keeps the name OTEL_SERVICE_NAME sets.
+            otelBuilder.ConfigureResource(resource => resource.AddEnvironmentVariableDetector());
         }
     }
 

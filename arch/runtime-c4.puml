@@ -19,7 +19,7 @@ System_Boundary(c4sys, "ChurchBulletin.sln runtime") {
 }
 
 System_Ext(openai, "Azure OpenAI", "LLM via AI_OpenAI_Url / AI_OpenAI_ApiKey / AI_OpenAI_Model (LlmGateway library)")
-System_Ext(appi, "Application Insights / OTel", "Traces, metrics, logs (APPLICATIONINSIGHTS / Azure Monitor exporter)")
+System_Ext(appi, "Application Insights / OTel", "Traces, metrics, logs (Azure Monitor OpenTelemetry exporter, APPLICATIONINSIGHTS_CONNECTION_STRING)")
 System_Ext(acr, "churchbulletingithubacr", "Azure Container Registry — churchbulletin.ui:{version}")
 System_Ext(gha, "GitHub Actions", "Build 2.4.x then Deploy workflow_run to TDD → UAT → Prod")
 System_Ext(octopus, "Octopus Deploy", "https://clearmeasure.octopus.app/ — DbUp ChurchBulletin.Database then az containerapp update")
@@ -34,7 +34,7 @@ Rel(worker, sql, "Saga persistence + RemotableBus HTTP back to API", "TDS + HTTP
 Rel(mcpStandalone, sql, "Same DataAccess when run standalone", "TDS")
 Rel(uiServer, openai, "Chat + WorkOrderReformatAgent (LlmGateway)", "HTTPS")
 Rel(worker, openai, "ChatClientFactory if configured", "HTTPS")
-Rel(uiServer, appi, "OpenTelemetry + App Insights SDK", "HTTPS")
+Rel(uiServer, appi, "OpenTelemetry", "HTTPS")
 Rel(worker, appi, "OpenTelemetry", "HTTPS")
 Rel(gha, acr, "docker build/push churchbulletin.ui", "Docker")
 Rel(gha, octopus, "Create/deploy release 2.4.*", "Octopus API")
@@ -106,7 +106,7 @@ Deployment_Node(azure, "Azure South Central US", "az_location = southcentralus")
     }
 
     System_Ext(openai, "Azure OpenAI", "Optional; UAT/Prod may be Degraded if AI_OpenAI_* unset")
-    System_Ext(appi, "Application Insights", "When ApplicationInsights:ConnectionString is set")
+    System_Ext(appi, "Application Insights", "When APPLICATIONINSIGHTS_CONNECTION_STRING is set")
 }
 
 Rel(staff, uiClient, "HTTPS")
@@ -117,7 +117,7 @@ Rel(prodUi, prodDb, "SqlConnectionString", "TDS")
 Rel(tddUi, openai, "LlmGateway if configured", "HTTPS")
 Rel(uatUi, openai, "LlmGateway if configured", "HTTPS")
 Rel(prodUi, openai, "LlmGateway if configured", "HTTPS")
-Rel(tddUi, appi, "OTel / App Insights", "HTTPS")
+Rel(tddUi, appi, "OpenTelemetry", "HTTPS")
 Rel(buildWf, image, "docker push", "ACR")
 Rel(buildWf, octoProj, "dotnet-octo push + packages")
 Rel(deployWf, octoProj, "create-release + deploy TDD/UAT/Prod")

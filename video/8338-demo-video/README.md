@@ -51,7 +51,6 @@ node scripts/generate-narration.cjs   # -> public/audio/*.mp3 via Microsoft Edge
    ```powershell
    cd src/UI/Server
    $env:ASPNETCORE_ENVIRONMENT = "Development"
-   $env:APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=00000000-0000-0000-0000-000000000000"
    $env:ApiKeyAuthentication__Enabled = "false"
    $env:ConnectionStrings__SqlConnectionString = 'server=(LocalDb)\MSSQLLocalDB;database=ChurchBulletinVideo;Integrated Security=true;TrustServerCertificate=true;'
    dotnet run --no-build --configuration Release --no-launch-profile --urls=https://localhost:7175
