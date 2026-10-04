@@ -7,6 +7,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 public class DarkModeTests : AcceptanceTestBase
 {
     [Test, Retry(2)]
+    [Category("Smoke")]
     public async Task DarkMode_ShouldToggleHtmlDataTheme_WhenSwitchChangedOnSettings()
     {
         await LoginAsCurrentUser();

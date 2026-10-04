@@ -41,6 +41,7 @@ public class CopyrightFooterTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    [Category("Smoke")]
     public async Task ShouldShowCopyrightFooter_OnNotFoundRoute()
     {
         await Page.GotoAsync("/this-route-does-not-exist-1842");
