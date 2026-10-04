@@ -85,7 +85,7 @@ $dockerArgs = @(
     "-e", "REPO_ORG=ClearMeasureLabs",
     "-e", "REPO_NAME=bootcamp-palermo-workorders",
     "-v", "${HostRepo}:/workspace",
-    "-v", "ai-factory-nuget:/tmp/nuget-packages",
+    "-v", "ai-factory-nuget:/home/bobagent/.nuget/packages",
     "-v", "${tokenFile}:/run/secrets/gh_token:ro",
     "-v", "$($agentSecret.HostPath):$($agentSecret.ContainerPath):ro",
     "--entrypoint", "pwsh",

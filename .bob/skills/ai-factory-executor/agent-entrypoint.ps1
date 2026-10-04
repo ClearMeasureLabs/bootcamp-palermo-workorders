@@ -473,10 +473,10 @@ try {
     Write-StructuredLog -Level "INFO" -Message "AI Factory Agent starting..."
 
     # Ensure the (possibly root-owned) persistent NuGet cache volume is writable
-    # by bobagent. Mounted at /tmp/nuget-packages to match build.ps1, which sets
-    # NUGET_PACKAGES=/tmp/nuget-packages. Safe no-op when no volume is mounted.
-    if (Test-Path "/tmp/nuget-packages") {
-        sudo chown -R bobagent:bobagent /tmp/nuget-packages 2>$null
+    # by bobagent. Mounted at the image's NUGET_PACKAGES (/home/bobagent/.nuget/packages),
+    # which build.ps1 keeps. Safe no-op when no volume is mounted.
+    if (Test-Path "/home/bobagent/.nuget/packages") {
+        sudo chown -R bobagent:bobagent /home/bobagent/.nuget/packages 2>$null
     }
 
     # Start Docker-in-Docker only if explicitly requested (ENABLE_DIND=true). The
