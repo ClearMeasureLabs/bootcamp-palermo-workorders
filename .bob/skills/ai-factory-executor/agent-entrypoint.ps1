@@ -474,9 +474,12 @@ try {
 
     # Ensure the (possibly root-owned) persistent NuGet cache volume is writable
     # by bobagent. Mounted at the image's NUGET_PACKAGES (/home/bobagent/.nuget/packages),
-    # which build.ps1 keeps. Safe no-op when no volume is mounted.
+    # which build.ps1 keeps. Only the mount root: a fresh named volume's root is
+    # root-owned and its contents are written by bobagent (the Argo PVC is writable
+    # through fsGroup), so a recursive chown of the whole cache on every start is not
+    # needed. Safe no-op when no volume is mounted.
     if (Test-Path "/home/bobagent/.nuget/packages") {
-        sudo chown -R bobagent:bobagent /home/bobagent/.nuget/packages 2>$null
+        sudo chown bobagent:bobagent /home/bobagent/.nuget/packages 2>$null
     }
 
     # Start Docker-in-Docker only if explicitly requested (ENABLE_DIND=true). The

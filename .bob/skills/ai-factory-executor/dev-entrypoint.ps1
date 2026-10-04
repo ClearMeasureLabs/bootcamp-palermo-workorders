@@ -30,9 +30,10 @@ try {
 
     Write-Step "AI Factory dev workstation starting..."
 
-    # NuGet cache volume perms (mounted at NUGET_PACKAGES, /home/bobagent/.nuget/packages)
+    # NuGet cache volume perms (mounted at NUGET_PACKAGES, /home/bobagent/.nuget/packages).
+    # Only the mount root: a fresh named volume's root is root-owned; its contents are written by bobagent.
     if (Test-Path "/home/bobagent/.nuget/packages") {
-        sudo chown -R bobagent:bobagent /home/bobagent/.nuget/packages 2>$null
+        sudo chown bobagent:bobagent /home/bobagent/.nuget/packages 2>$null
     }
 
     # 1. Docker-in-Docker (required for SQL Server container mode)
