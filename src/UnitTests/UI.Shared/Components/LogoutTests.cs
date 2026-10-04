@@ -79,6 +79,29 @@ public class LogoutTests
     }
 
     [Test]
+    public async Task ShouldDisplayFullNameWithMiddleName_WhenUserLoggedInEventArrives()
+    {
+        await using var ctx = new BunitContext();
+
+        var authProvider = new CustomAuthenticationStateProvider(new StubUserSessionStore());
+        await authProvider.Login("hsimpson");
+        var userSession = new StubUserSession(null);
+
+        ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<IUserSession>(userSession);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+
+        var component = ctx.Render<Logout>();
+        userSession.CurrentUser = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com") { MiddleName = "Jay" };
+        component.Instance.Handle(new UserLoggedInEvent("hsimpson"));
+
+        component.WaitForAssertion(() =>
+            NormalizeWhitespace(component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']").TextContent)
+                .ShouldBe("Welcome Homer Jay Simpson!"));
+    }
+
+    [Test]
     public async Task ShouldDisplayUsername_WhenUserLookupFails()
     {
         await using var ctx = new BunitContext();
@@ -245,9 +268,11 @@ public class LogoutTests
 
 public class StubUserSession(Employee? currentUser) : IUserSession
 {
+    public Employee? CurrentUser { get; set; } = currentUser;
+
     public Task<Employee?> GetCurrentUserAsync()
     {
-        return Task.FromResult(currentUser);
+        return Task.FromResult(CurrentUser);
     }
 }
 

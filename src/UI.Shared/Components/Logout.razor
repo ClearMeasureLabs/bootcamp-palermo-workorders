@@ -1,3 +1,4 @@
+@using Microsoft.Extensions.Logging
 @using Palermo.BlazorMvc
 @inject CustomAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
@@ -39,8 +40,9 @@
         {
             _currentEmployee = await UserSession.GetCurrentUserAsync();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.LogWarning(ex, "Could not load the signed-in employee; the welcome text shows the user name");
             _currentEmployee = null;
         }
     }
