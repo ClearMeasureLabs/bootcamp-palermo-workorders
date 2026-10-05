@@ -18,6 +18,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    [Category("Smoke")]
     public async Task ShouldCreateNewWorkOrderAndVerifyOnSearchScreen()
     {
         await LoginAsCurrentUser();

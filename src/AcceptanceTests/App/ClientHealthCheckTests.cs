@@ -26,6 +26,7 @@ public class ClientHealthCheckTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    [Category("Smoke")]
     public async Task Should_NavigateToHealthCheck_WhenGearIconClicked()
     {
         await Page.GotoAsync("/");

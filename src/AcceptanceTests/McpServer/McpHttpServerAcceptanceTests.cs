@@ -47,6 +47,7 @@ public class McpHttpServerAcceptanceTests : AcceptanceTestBase
     }
 
     [Test]
+    [Category("Smoke")]
     public async Task ShouldListWorkOrdersViaHttp()
     {
         var text = await _helper!.CallToolDirectly("list-work-orders",

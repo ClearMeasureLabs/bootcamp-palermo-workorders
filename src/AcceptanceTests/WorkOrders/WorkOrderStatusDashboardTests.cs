@@ -6,6 +6,7 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 public class WorkOrderStatusDashboardTests : AcceptanceTestBase
 {
     [Test, Retry(2)]
+    [Category("Smoke")]
     public async Task ShouldShowStatusCardsWhenAuthenticated()
     {
         await LoginAsCurrentUser();
