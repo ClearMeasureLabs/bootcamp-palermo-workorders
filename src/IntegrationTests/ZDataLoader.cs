@@ -1,5 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
-using ClearMeasure.Bootcamp.Core.Model.Constants;
+using ClearMeasure.Bootcamp.DemoData;
 using ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,202 +12,22 @@ public class ZDataLoader
     public void LoadData()
     {
         new DatabaseTests().Clean();
-        var lead = new Role("Facility Lead", true, false);
-        var fulfillment = new Role("Fulfillment", false, true);
-        var bot = new Role(Roles.Bot, false, true);
-        var db = TestHost.GetRequiredService<DbContext>();
-        db.Add(lead);
-        db.Add(fulfillment);
-        db.Add(bot);
-        db.SaveChanges();
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            DemoEmployeeSeeder.Seed(context);
+        }
 
-        //Trainer1
-        var jpalermo = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffreypalermo@yahoo.com");
-        jpalermo.AddRole(lead);
-        jpalermo.AddRole(fulfillment);
-        db.Add(jpalermo);
-
-        //Trainer2 - Sean Spaniel
-        var sspaniel = new Employee("sspaniel", "Sean", "Spaniel", "sean.spaniel@clear-measure.com");
-        sspaniel.AddRole(lead);
-        sspaniel.AddRole(fulfillment);
-        db.Add(sspaniel);
-
-        //AI Bot
-        var aiBot = new Employee("aibot", "AI", Roles.Bot, "aibot@system.local");
-        aiBot.AddRole(bot);
-        db.Add(aiBot);
-
-        //Person 1
-        var jcuevas = new Employee("jcuevas", "Joe", "Cuevas", "joecuevasjr@gmail.com") { PreferredLanguage = "es-ES" };
-        jcuevas.AddRole(fulfillment);
-        db.Add(jcuevas);
-
-        //Person 2
-        var bsides = new Employee("bsides", "Bart", "Sides", "bartsides@gmail.com");
-        bsides.AddRole(lead);
-        bsides.AddRole(fulfillment);
-        db.Add(bsides);
-
-        //Person 3
-
-        //Person 4
-
-        //Person 5
-
-        //Person 6
-
-        //Person 7
-        var cklaips = new Employee("cklaips", "Casey", "Klaips", "cklaips@gmail.com");
-        cklaips.AddRole(lead);
-        cklaips.AddRole(fulfillment);
-        db.Add(cklaips);
-
-        //Person 8
-
-        //Person 9
-        var csullivan = new Employee("csullivan", "Cole", "Sullivan", "cole.sullivan@biberk.com");
-        csullivan.AddRole(lead);
-        csullivan.AddRole(fulfillment);
-        db.Add(csullivan);
-
-        //Person 10
-
-        //Person 11
-
-        //Person 12
-        //trivial comment
-        var nlarsen = new Employee("nlarsen", "Nick", "Larsen", "nick@larsen.com") { PreferredLanguage = "de-DE" };
-        nlarsen.AddRole(lead);
-        nlarsen.AddRole(fulfillment);
-        db.Add(nlarsen);
-
-        //Person 13
-        var pludecker = new Employee("pludecker", "Paige", "Ludecker", "pludecker@gmail.com") { PreferredLanguage = "de-DE" };
-        pludecker.AddRole(lead);
-        pludecker.AddRole(fulfillment);
-        db.Add(pludecker);
-
-        var hsimpson = new Employee("hsimpson", "Homer", "Simpson", "homer@simpson.com");
-        hsimpson.AddRole(lead);
-        hsimpson.AddRole(fulfillment);
-        db.Add(hsimpson);
-
-        var ndoughton = new Employee("ndoughton", "Noah", "Doughton", "noah.doughton@biberk.com");
-        ndoughton.AddRole(lead);
-        ndoughton.AddRole(fulfillment);
-        db.Add(ndoughton);
-
-        var will = new Employee("will", "Will", "Perea", "wperea@setworks.com") { PreferredLanguage = "es-ES" };
-        will.AddRole(lead);
-        will.AddRole(fulfillment);
-        db.Add(will);
-
-        db.SaveChanges();
-        db.Dispose();
-
-        LoadSimpsonsChurchData();
+        LoadChristmasConcertWorkOrders();
     }
 
-    private void LoadSimpsonsChurchData()
+    private static void LoadChristmasConcertWorkOrders()
     {
-        var db = TestHost.GetRequiredService<DbContext>();
-
-        // Create church-related roles
-        var minister = new Role("Minister", true, true);
-        var deacon = new Role("Deacon", false, true);
-        var choir = new Role("Choir Member", false, false);
-        var organist = new Role("Church Organist", false, true);
-        var parishioner = new Role("Parishioner", false, false);
-        var groundskeeper = new Role("Groundskeeper", false, true);
-
-        db.Add(minister);
-        db.Add(deacon);
-        db.Add(choir);
-        db.Add(organist);
-        db.Add(parishioner);
-        db.Add(groundskeeper);
-
-        // Reverend Timothy Lovejoy Jr - Main focus character
-        var revLovejoy = new Employee("tlovejoy", "Timothy", "Lovejoy Jr", "reverend@firstchurchspringfield.org");
-        revLovejoy.AddRole(minister);
-        db.Add(revLovejoy);
-
-        // Helen Lovejoy - Minister's wife
-        var helenLovejoy = new Employee("hlovejoy", "Helen", "Lovejoy", "helen@firstchurchspringfield.org");
-        helenLovejoy.AddRole(parishioner);
-        db.Add(helenLovejoy);
-
-        // Jessica Lovejoy - Minister's daughter
-        var jessicaLovejoy = new Employee("jlovejoy", "Jessica", "Lovejoy", "jessica@springfield.edu");
-        jessicaLovejoy.AddRole(parishioner);
-        db.Add(jessicaLovejoy);
-
-        // Ned Flanders - Deacon and faithful parishioner
-        var nedFlanders = new Employee("nflanders", "Ned", "Flanders", "neddy@okily.dokily.com");
-        nedFlanders.AddRole(deacon);
-        nedFlanders.AddRole(parishioner);
-        db.Add(nedFlanders);
-
-        // Maude Flanders - Choir member (though deceased in later seasons, including for completeness)
-        var maudeFlanders = new Employee("mflanders", "Maude", "Flanders", "maude@okily.dokily.com");
-        maudeFlanders.AddRole(choir);
-        maudeFlanders.AddRole(parishioner);
-        db.Add(maudeFlanders);
-
-        // Rod Flanders - Young parishioner
-        var rodFlanders = new Employee("rflanders", "Rod", "Flanders", "rod@okily.dokily.com");
-        rodFlanders.AddRole(parishioner);
-        db.Add(rodFlanders);
-
-        // Todd Flanders - Young parishioner
-        var toddFlanders = new Employee("tflanders", "Todd", "Flanders", "todd@okily.dokily.com");
-        toddFlanders.AddRole(parishioner);
-        db.Add(toddFlanders);
-
-        // Marge Simpson - Occasional church attendee
-        var margeSimpson = new Employee("msimpson", "Marge", "Simpson", "marge@simpson.com");
-        margeSimpson.AddRole(parishioner);
-        db.Add(margeSimpson);
-
-        // Lisa Simpson - Thoughtful young parishioner
-        var lisaSimpson = new Employee("lsimpson", "Lisa", "Simpson", "lisa@simpson.com");
-        lisaSimpson.AddRole(parishioner);
-        db.Add(lisaSimpson);
-
-        // Groundskeeper Willie - Church groundskeeper and maintenance
-        var groundskeeperWillie = new Employee("gwillie", "Groundskeeper Willie", "MacDougal",
-            "willie@springfieldelementary.edu");
-        groundskeeperWillie.AddRole(groundskeeper);
-        db.Add(groundskeeperWillie);
-
-        // Church organist (generic character for church services)
-        var organistEmployee = new Employee("gfeesh", "Gertie", "Feesh", "gertie@firstchurchspringfield.org");
-        organistEmployee.AddRole(organist);
-        db.Add(organistEmployee);
-
-        // Apu Nahasapeemapetilon - Represents religious diversity but attends some services
-        var apuNahasapeemapetilon =
-            new Employee("anahasapeemapetilon", "Apu", "Nahasapeemapetilon", "apu@kwikmart.com");
-        apuNahasapeemapetilon.AddRole(parishioner);
-        db.Add(apuNahasapeemapetilon);
-
-        // Moe Szyslak - Rarely attends church but included for completeness
-        var moeSzyslak = new Employee("mszyslak", "Moe", "Szyslak", "moe@moestab.com");
-        moeSzyslak.AddRole(parishioner);
-        db.Add(moeSzyslak);
-
-        // Lenny Leonard - Occasional church attendee
-        var lennyLeonard = new Employee("lleonard", "Lenny", "Leonard", "lenny@powerplant.com");
-        lennyLeonard.AddRole(parishioner);
-        db.Add(lennyLeonard);
-
-        // Ms. Albright - Church basement sunday school teacher
-        var msAlbright = new Employee("malbright", "Ms.", "Albright", "albright@firstchurchspringfield.com");
-        msAlbright.AddRole(choir);
-        db.Add(msAlbright);
-
-        db.SaveChanges();
+        using var db = TestHost.GetRequiredService<DbContext>();
+        var revLovejoy = db.Set<Employee>().Single(e => e.UserName == "tlovejoy");
+        var nedFlanders = db.Set<Employee>().Single(e => e.UserName == "nflanders");
+        var maudeFlanders = db.Set<Employee>().Single(e => e.UserName == "mflanders");
+        var groundskeeperWillie = db.Set<Employee>().Single(e => e.UserName == "gwillie");
+        var organistEmployee = db.Set<Employee>().Single(e => e.UserName == "gfeesh");
 
         // Create Christmas Concert Work Orders
         var christmasOrder1 = new WorkOrder
