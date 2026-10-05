@@ -64,6 +64,21 @@ public class McpEmployeeToolTests
     }
 
     [Test]
+    public async Task ShouldIncludeMiddleName_WhenGettingEmployeeByUsername()
+    {
+        var emp = new Employee("mjdoe", "Mary", "Doe", "mary@test.com") { MiddleName = "Jane" };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.GetEmployee(bus, "mjdoe");
+
+        result.ShouldContain("\"MiddleName\": \"Jane\"");
+    }
+
+    [Test]
     public async Task ShouldReturnNotFoundForMissingEmployee()
     {
         var bus = TestHost.GetRequiredService<IBus>();

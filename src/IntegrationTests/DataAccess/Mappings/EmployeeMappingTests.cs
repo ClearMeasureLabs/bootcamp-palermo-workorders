@@ -1,5 +1,6 @@
 ﻿using ClearMeasure.Bootcamp.Core.Model;
 using Microsoft.EntityFrameworkCore;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Mappings;
 
@@ -52,6 +53,67 @@ public class EmployeeMappingTests
         {
             var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
             Assert.That(rehydrated.LastName, Is.EqualTo(longLastName));
+        }
+    }
+
+    [Test]
+    public void ShouldPersistMiddleName()
+    {
+        new DatabaseTests().Clean();
+
+        var emp = new Employee("usermiddle", "First", "Last", "emailmiddle@example.com") { MiddleName = "Middle" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            rehydrated.MiddleName.ShouldBe("Middle");
+        }
+    }
+
+    [Test]
+    public void ShouldPersistNullMiddleName()
+    {
+        new DatabaseTests().Clean();
+
+        var emp = new Employee("usernomiddle", "First", "Last", "emailnomiddle@example.com") { MiddleName = null };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            rehydrated.MiddleName.ShouldBeNull();
+        }
+    }
+
+    [Test]
+    public void ShouldPersistMiddleNameUpTo100Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var longMiddleName = new string('M', 100);
+        var emp = new Employee("user100", "First", "Last", "email100@example.com") { MiddleName = longMiddleName };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            rehydrated.MiddleName.ShouldBe(longMiddleName);
         }
     }
 }

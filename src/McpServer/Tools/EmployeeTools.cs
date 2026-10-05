@@ -39,6 +39,7 @@ public class EmployeeTools
     {
         emp.UserName,
         emp.FirstName,
+        emp.MiddleName,
         emp.LastName,
         emp.EmailAddress,
         Roles = emp.Roles.Select(r => new
