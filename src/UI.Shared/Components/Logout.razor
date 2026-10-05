@@ -1,16 +1,51 @@
+@using Microsoft.Extensions.Logging
+@using Palermo.BlazorMvc
 @inject CustomAuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
+@inject IUserSession UserSession
+@implements IListener<UserLoggedInEvent>
 
 <span data-testid="@Elements.WelcomeText">
     Welcome
     @{
         var userIdentity = AuthStateProvider.GetUsername();
     }
-    @userIdentity!
+    @(HasMiddleName(_currentEmployee) ? _currentEmployee!.GetFullName() : userIdentity)!
 </span>
 <button type="button" data-testid="@Elements.LogoutLink" title="Sign out of the application" @onclick="HandleLogout" class="btn btn-link ms-3 p-0 align-baseline">Logout</button>
 
 @code {
+
+    private Employee? _currentEmployee;
+
+    private static bool HasMiddleName(Employee? employee) => employee is { MiddleName: not null } && !string.IsNullOrWhiteSpace(employee.MiddleName);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrentEmployee();
+    }
+
+    public void Handle(UserLoggedInEvent theEvent)
+    {
+        InvokeAsync(async () =>
+        {
+            await LoadCurrentEmployee();
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadCurrentEmployee()
+    {
+        try
+        {
+            _currentEmployee = await UserSession.GetCurrentUserAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Could not load the signed-in employee; the welcome text shows the user name");
+            _currentEmployee = null;
+        }
+    }
 
     private async Task HandleLogout()
     {
