@@ -1,0 +1,9 @@
+# Known gitleaks findings in master's history that are not secrets, by fingerprint (commit:file:rule:line).
+# Anything else fails the scan.
+
+# The password of the throwaway localhost SQL Server container (sa) in the test settings, since replaced:
+058b64c3cc61c806648abb81d295c1c18d2ae39a:src/AcceptanceTests/appsettings.acceptancetests.json:generic-api-key:3
+058b64c3cc61c806648abb81d295c1c18d2ae39a:src/IntegrationTests/appsettings.test.json:generic-api-key:3
+
+# A key planted for the trufflehog skill demo, deleted the same day:
+82fd59d6367852841bcf94bc3d81c9e46834dcae:secret-scan-demo.config:private-key:7
