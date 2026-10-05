@@ -26,6 +26,32 @@ public class EmployeeTests
     }
 
     [Test]
+    public void GetFullName_WithMiddleName_ShouldIncludeMiddleName()
+    {
+        var employee = new Employee("jcamel", "Joe", "Camel", "") { MiddleName = "Big" };
+
+        employee.GetFullName().ShouldBe("Joe Big Camel");
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void GetFullName_WithBlankMiddleName_ShouldOmitMiddleName(string? middleName)
+    {
+        var employee = new Employee("jcamel", "Joe", "Camel", "") { MiddleName = middleName };
+
+        employee.GetFullName().ShouldBe("Joe Camel");
+    }
+
+    [Test]
+    public void ToString_WithMiddleName_ShouldReturnFullNameWithMiddleName()
+    {
+        var employee = new Employee("jcamel", "Joe", "Camel", "") { MiddleName = "Big" };
+
+        employee.ToString().ShouldBe("Joe Big Camel");
+    }
+
+    [Test]
     public void PropertiesShouldGetAndSetProperly()
     {
         var employee = new Employee();

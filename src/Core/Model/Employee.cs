@@ -27,6 +27,11 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string LastName { get; set; }
 
+    /// <summary>
+    /// Optional middle name. When null or blank it is omitted from <see cref="GetFullName"/>.
+    /// </summary>
+    public string? MiddleName { get; set; }
+
     public string EmailAddress { get; set; }
 
     public string PreferredLanguage { get; set; } = "en-US";
@@ -46,7 +51,9 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string GetFullName()
     {
-        return $"{FirstName} {LastName}";
+        return string.IsNullOrWhiteSpace(MiddleName)
+            ? $"{FirstName} {LastName}"
+            : $"{FirstName} {MiddleName} {LastName}";
     }
 
     public override string ToString()
