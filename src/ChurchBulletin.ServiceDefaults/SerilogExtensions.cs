@@ -21,7 +21,7 @@ public static class SerilogExtensions
     /// <summary>
     /// Configures Serilog as the primary logging pipeline with JSON console output and forwards
     /// events to other <see cref="Microsoft.Extensions.Logging.ILoggerProvider"/> registrations
-    /// (for example OpenTelemetry and Application Insights).
+    /// (for example the OpenTelemetry logging provider).
     /// </summary>
     public static void AddSerilogJsonConsole(this IHostApplicationBuilder builder)
     {

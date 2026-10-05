@@ -24,15 +24,16 @@ public class ServerApplicationTests
     [Test]
     public void ShouldBuildApplicationWithoutThrowing()
     {
-        var app = ServerApplication.BuildApplication([], builder =>
+        // A command-line value is read before services are registered, so an
+        // APPLICATIONINSIGHTS_CONNECTION_STRING in the environment cannot switch the exporter on.
+        var app = ServerApplication.BuildApplication(["--APPLICATIONINSIGHTS_CONNECTION_STRING="], builder =>
         {
             builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:SqlConnectionString"] = "Data Source=:memory:",
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
-                ["AI_OpenAI_Model"] = "",
-                ["APPLICATIONINSIGHTS_CONNECTION_STRING"] = ""
+                ["AI_OpenAI_Model"] = ""
             });
             builder.Environment.EnvironmentName = "Testing";
         });

@@ -181,8 +181,8 @@ function Start-ServeApp {
     $conn = Get-ServeConnectionString
     if (-not $conn) {
         # SQLite mode: no SQL Server available. Mirror the startup used by
-        # ServerFixture.ApplySqliteServerEnvironment: --no-launch-profile,
-        # dummy APPLICATIONINSIGHTS_CONNECTION_STRING, empty AI_OpenAI_* vars.
+        # ServerFixture.ApplySqliteServerEnvironment: --no-launch-profile and
+        # empty AI_OpenAI_* vars.
         Write-Info "No SQL Server connection string - serving in SQLite mode (mirrors CI acceptance-test startup)."
 
         # Resolve the SQLite DB path from the environment (set earlier in the
@@ -204,7 +204,6 @@ function Start-ServeApp {
         $serveScript = "/tmp/serve-app.ps1"
         Set-Content -Path $serveScript -Value @"
 `$env:ASPNETCORE_ENVIRONMENT = 'Development'
-`$env:APPLICATIONINSIGHTS_CONNECTION_STRING = 'InstrumentationKey=00000000-0000-0000-0000-000000000000'
 `$env:AI_OpenAI_ApiKey = ''
 `$env:AI_OpenAI_Url = ''
 `$env:AI_OpenAI_Model = ''

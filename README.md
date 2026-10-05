@@ -101,8 +101,6 @@ The repository supports three common local development workflows. Pick the one t
      ```bash
      export ConnectionStrings__SqlConnectionString="server=localhost,1433;database=ChurchBulletin;User ID=sa;Password=churchbulletin-mssql#1A;TrustServerCertificate=true;"
      export ASPNETCORE_ENVIRONMENT=Development
-     # Must set APPLICATIONINSIGHTS_CONNECTION_STRING or set to an empty string to avoid the Azure Monitor exporter crashing:
-     export APPLICATIONINSIGHTS_CONNECTION_STRING=""
      # Prevent the app from attempting to contact Azure OpenAI (leave empty if not used)
      export AI_OpenAI_ApiKey=""
      export AI_OpenAI_Url=""
@@ -111,6 +109,8 @@ The repository supports three common local development workflows. Pick the one t
      dotnet run --no-launch-profile --urls "https://localhost:7174;http://localhost:5174"
      ```
   Important: use `--no-launch-profile` on Linux/macOS to avoid the Windows LocalDB connection string from launchSettings.json overriding your env vars.
+
+  Telemetry is OpenTelemetry and needs no setting to run locally. In Azure, when the app has `APPLICATIONINSIGHTS_CONNECTION_STRING` (and `OTEL_SERVICE_NAME` for the cloud role name), the Azure Monitor OpenTelemetry exporter sends traces, metrics and logs to Application Insights. Locally, running `src/ChurchBulletin.AppHost` sets `OTEL_EXPORTER_OTLP_ENDPOINT` and the OTLP exporter sends to the Aspire dashboard. Without either variable no exporter runs.
 
 - SQLite fallback (no Docker)
 
