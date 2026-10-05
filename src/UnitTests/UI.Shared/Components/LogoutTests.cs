@@ -96,7 +96,7 @@ public class LogoutTests
         userSession.CurrentUser = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com") { MiddleName = "Jay" };
         component.Instance.Handle(new UserLoggedInEvent("hsimpson"));
 
-        component.WaitForAssertion(() =>
+        await component.WaitForAssertionAsync(() =>
             NormalizeWhitespace(component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']").TextContent)
                 .ShouldBe("Welcome Homer Jay Simpson!"));
     }
