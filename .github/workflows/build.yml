@@ -182,17 +182,6 @@ jobs:
           path: 'build/test/**/*.trx'
           reporter: dotnet-trx
 
-      # Publish code coverage. Non-blocking: codecov is a report, and an outage of it must not fail the build. The
-      # coverage files stay in the code-coverage artifact, and the CRAP gate above already used them.
-      - name: Publish Code Coverage
-        uses: codecov/codecov-action@v5
-        if: always()
-        continue-on-error: true
-        with:
-          files: '**/build/test/**/In/**/coverage.cobertura.xml'
-          flags: unittests-linux
-          name: codecov-linux
-
       # Upload test results as artifacts
       - name: Upload Test Results
         uses: actions/upload-artifact@v4

@@ -57,7 +57,7 @@ All test artifacts and logs are kept for 30 days:
 
 ### Test Reporting
 - Test results are published using the `publish-unit-test-result-action`
-- Code coverage is uploaded to Codecov (optional, can be removed if not using Codecov)
+- Code coverage stays in the build: the CRAP gate reads the Cobertura files, and they are kept as the `code-coverage-linux` artifact
 - All artifacts are available for download from the workflow run page
 
 ## Differences from Azure Pipelines
