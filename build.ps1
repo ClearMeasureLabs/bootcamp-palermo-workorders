@@ -54,7 +54,8 @@ Function Init {
 	Initialize-SqlServerModule
 
 	if (Test-IsLinux) {
-		if (-not (Test-IsGitHubActions)) {
+		# A cache path the machine already sets wins: /tmp is often a small in-memory disk.
+		if (-not (Test-IsGitHubActions) -and -not $env:NUGET_PACKAGES) {
 			$env:NUGET_PACKAGES = "/tmp/nuget-packages"
 		}
 	}
