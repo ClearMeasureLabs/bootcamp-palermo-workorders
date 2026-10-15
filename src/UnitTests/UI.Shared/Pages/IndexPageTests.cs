@@ -11,6 +11,36 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class IndexPageTests
 {
     [Test]
+    public async Task ShouldDisplayTechBastWorkOrderSystemHomeHeading()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.AddAuthorization();
+
+        var component = ctx.Render<IndexPage>();
+
+        var heading = component.Find("h1.church-title");
+        heading.TextContent.ShouldBe("TechBast Work Order System");
+        heading.GetAttribute("data-testid").ShouldBe(nameof(IndexPage.Elements.HomeHeadingTooltip));
+    }
+
+    [Test]
+    public async Task ShouldSetPageTitleToTechBastWorkOrderSystem()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.AddAuthorization();
+
+        var component = ctx.Render<IndexPage>();
+
+        component.Markup.ShouldContain("TechBast Work Order System");
+        var heading = component.Find($"[data-testid='{nameof(IndexPage.Elements.HomeHeadingTooltip)}']");
+        heading.TextContent.ShouldBe("TechBast Work Order System");
+    }
+
+    [Test]
     public async Task ShouldDisplayGreetingBanner()
     {
         await using var ctx = new BunitContext();
