@@ -22,6 +22,31 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared;
 public class MainLayoutTests
 {
     [Test]
+    public async Task ShouldDisplayTechBastWorkOrderSystemHeaderTitle()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        var headerTitle = layout.Find(".header-title h3");
+        headerTitle.TextContent.ShouldBe("TechBast Work Order System");
+        layout.Find(".header-title .subtitle").TextContent.ShouldBe("Work Orders");
+    }
+
+    [Test]
+    public async Task ShouldDisplaySidebarBrandAsTechBast()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
+        var layout = component.FindComponent<MainLayout>();
+
+        layout.Find(".brand-text h4").TextContent.ShouldBe("TechBast");
+        layout.Find(".brand-text span").TextContent.ShouldBe("Work Order System");
+    }
+
+    [Test]
     public async Task ShouldRenderNavRailToggleWithExpandedStateByDefault()
     {
         await using var ctx = CreateContext();
