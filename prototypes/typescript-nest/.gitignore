@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.db
+*.db-journal
+artifacts/
+coverage/
+test-results/
+playwright-report/
