@@ -124,7 +124,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Description = workOrder.Description,
             Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
-            CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
+            CreatedDate = workOrder.CreatedDate?.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
             DueDateInput = workOrder.DueDate,
