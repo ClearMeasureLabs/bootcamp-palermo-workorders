@@ -1,0 +1,57 @@
+name: Python Django Prototype
+on:
+  pull_request:
+    paths: ["python-django/**", "video/src/Root.tsx", "video/src/workOrderAcceptance.tsx", ".github/workflows/django-prototype.yml"]
+  push:
+    branches: ["prototype/python-django"]
+    paths: ["python-django/**", "video/src/Root.tsx", "video/src/workOrderAcceptance.tsx", ".github/workflows/django-prototype.yml"]
+jobs:
+  django-tests-and-acceptance:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SECRET_KEY: ci-only-secret-key-used-by-tests
+      DJANGO_DEBUG: "0"
+      DJANGO_ENABLE_DEMO_LOGIN: "1"
+    steps:
+      - uses: actions/checkout@v6.0.1
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: python-django/requirements.txt
+      - name: Install dependencies and browser
+        working-directory: python-django
+        run: |
+          python -m pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+      - name: Django checks, schema drift, and unit/integration tests
+        working-directory: python-django
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python manage.py test --verbosity 2
+      - name: Run visible browser acceptance under virtual display
+        working-directory: python-django
+        env:
+          HEADFUL: "1"
+          ACCEPTANCE_ARTIFACTS: ${{ github.workspace }}/python-django/artifacts
+        run: xvfb-run -a python acceptance_tests.py
+      - name: Render acceptance recording with Remotion
+        run: |
+          set -euo pipefail
+          recording="$(find python-django/artifacts/video -type f -name '*.webm' -print -quit)"
+          test -n "$recording"
+          cp "$recording" video/public/work-order-acceptance.webm
+          npm ci --prefix video
+          cd video
+          npx remotion render src/index.ts WorkOrderAcceptance out/work-order-acceptance.mp4
+      - name: Upload browser recording, screenshot, and Remotion video
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: django-work-order-acceptance
+          path: |
+            python-django/artifacts/**
+            video/out/work-order-acceptance.mp4
+          if-no-files-found: error
+          retention-days: 30
