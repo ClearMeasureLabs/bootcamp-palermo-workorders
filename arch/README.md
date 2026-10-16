@@ -57,6 +57,8 @@ Several PlantUML files include remote C4 library snippets via `!includeurl`. To 
 
 | File | Diagram type | Description |
 |------|--------------|-------------|
+| `logical-c4.puml` / `logical-c4.png` | C4Component | **Logical Onion architecture** from current `.csproj` refs |
+| `runtime-c4.puml` | C4Container / Deployment | Runtime processes and Azure deploy topology |
 | `arch-c4-system.md` | C4Context | Church Bulletin system context |
 | `arch-c4-ai-software-factory.puml` | C4Container | AI Software Factory SDLC workflow |
 | `arch-c4-container-deployment.md` | C4Container | Containers (DB, app, UI) |
