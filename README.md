@@ -12,6 +12,8 @@ This codebase serves as both a working application and a teaching reference for 
 4. Read `docs/glossary-ops.md` for the operations terms used on the board.
 5. For a full local Bootcamp run, see [Quick start — Run locally](#quick-start--run-locally) below.
 
+Report bugs and feature requests through this repository’s GitHub Issues.
+
 ## Solution Structure
 
 ```
