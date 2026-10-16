@@ -27,7 +27,10 @@ internal class BogusOverrides : AutoGeneratorOverride
                     : null;
                 break;
             case WorkOrderStatus:
-                context.Instance = context.Faker.PickRandom(WorkOrderStatus.GetAllItems());
+                // Exclude Cancelled so faked orders are visible in default search;
+                // tests that need a cancelled order set the status explicitly.
+                context.Instance = context.Faker.PickRandom(
+                    WorkOrderStatus.GetAllItems().Where(s => s != WorkOrderStatus.Cancelled));
                 break;
             case WorkOrderSpecificationQuery query:
                 query.StatusKey = context.Faker.PickRandom(WorkOrderStatus.GetAllItems()).Key;

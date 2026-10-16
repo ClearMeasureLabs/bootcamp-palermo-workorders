@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -781,6 +782,36 @@ public class WorkOrderSearchTests : AcceptanceTestBase
 
         await Expect(dueDateSortBtn).ToHaveTextAsync("Due Date ▼");
         await Expect(firstRow.Locator("td:nth-child(6)")).ToContainTextAsync("Dec");
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldHideCancelledWorkOrders_InDefaultSearch()
+    {
+        // Arrange: create, assign, and cancel a work order
+        var order = await CreateAndSaveNewWorkOrder();
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+        order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
+        order = await ClickWorkOrderNumberFromSearchPage(order);
+
+        // Act: cancel the work order
+        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToCancelledCommand.Name);
+        await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        // Assert: cancelled order is hidden in default search
+        var linkTestId = nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number;
+        await Expect(Page.GetByTestId(linkTestId)).Not.ToBeAttachedAsync();
+
+        // Assert: cancelled order is visible when filtering by Cancelled status
+        var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
+        await statusSelect.SelectOptionAsync(WorkOrderStatus.Cancelled.Key);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(linkTestId)).ToBeVisibleAsync();
+        var statusBadge = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(4) span.status-badge");
+        await Expect(statusBadge).ToHaveTextAsync(WorkOrderStatus.Cancelled.FriendlyName);
     }
 
     [Test, Retry(2)]
