@@ -1,12 +1,13 @@
 # Token-reduction experiment (feature-loop dispatch)
 
-Goal: cut Cursor cloud agent token usage per work item by 80% vs baseline. Method: dispatch one similar work item per iteration through project 1, measure tokens, refine the skills (canned PowerShell scripts, prebuilt context), close each PR without merging, and repeat (max 20).
+Goal: cut Cursor cloud agent token usage per work item by 80% vs baseline. Each iteration uses one sibling issue built from [work-item-template.md](work-item-template.md). PRs are closed without merging. Maximum 20 iterations.
 
-## Runs
+Cursor transcripts carry no token usage fields. Proxy = cumulative replayed context (sum over turns of prefix bytes / 4), plus turns and tool calls.
 
-| Run | Item | PR | Agent | Input | Cache read | Cache write | Output | Total | Δ vs baseline | Changes |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | _pending_ | | | | | | | | baseline | |
+| Run | Item | PR | Agent | Turns | Tool calls | Est. cumulative tokens | Δ vs baseline | Notes |
+|---|---|---|---|---|---|---|---|---|
+| 0 | #9936 | — | bc-34ba5471 | 99 | 99 | ~3.1M | invalid | no diff (finding already fixed) |
+| 1 | #9937 | | | | | | baseline | stock skill |
 
 ## Progress notes
-- 2026-10-16: Branch and scaffold created. Baseline dispatch is pending: the executor session has no Cursor cloud-agent launch tool and no Cursor API key.
+- 2026-10-16: Run 0 analysed. It is an invalid baseline. A repeatable template was created and issue #9937 filed for baseline run 1. Board writes were not possible: the gh token lacks the project scope.
