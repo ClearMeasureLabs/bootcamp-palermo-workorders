@@ -25,6 +25,7 @@ public record DraftToAssignedCommand(WorkOrder WorkOrder, Employee CurrentUser)
 
     public override void Execute(StateCommandContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
         WorkOrder.AssignedDate = context.CurrentDateTime;
         base.Execute(context);
 

@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Services;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
 
@@ -66,6 +67,22 @@ public class DraftToAssignedCommandTests : StateCommandBaseTests
 
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
         Assert.That(order.AssignedDate, Is.Not.Null);
+    }
+
+    [Test]
+    public void ShouldThrowArgumentNullException_WhenContextIsNull()
+    {
+        var employee = new Employee();
+        var order = new WorkOrder
+        {
+            Status = WorkOrderStatus.Draft,
+            Creator = employee
+        };
+        var command = new DraftToAssignedCommand(order, employee);
+
+        var exception = Should.Throw<ArgumentNullException>(() => command.Execute(null!));
+
+        exception.ParamName.ShouldBe("context");
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
