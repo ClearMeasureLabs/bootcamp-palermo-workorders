@@ -263,11 +263,7 @@ public class WorkOrderTools
     private static bool IsBlankPatch(string? value) => value != null && string.IsNullOrWhiteSpace(value);
 
     private static bool IsInvalidDueDatePatch(string? dueDate) =>
-        dueDate != null && !string.IsNullOrWhiteSpace(dueDate) && !TryParseDueDatePatch(dueDate, out _);
-
-    private static bool TryParseDueDatePatch(string dueDate, out DateOnly parsedDueDate) =>
-        DateOnly.TryParseExact(dueDate.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture,
-            DateTimeStyles.None, out parsedDueDate);
+        dueDate != null && !DatedWorkOrderScheduling.TryParseOptionalDueDate(dueDate, out _, out _);
 
     private static void ApplySavePatches(
         WorkOrder workOrder,
@@ -326,12 +322,7 @@ public class WorkOrderTools
 
     private static DateOnly? ParseDueDatePatch(string dueDate)
     {
-        if (string.IsNullOrWhiteSpace(dueDate))
-        {
-            return null;
-        }
-
-        TryParseDueDatePatch(dueDate, out var parsedDueDate);
+        DatedWorkOrderScheduling.TryParseOptionalDueDate(dueDate, out var parsedDueDate, out _);
         return parsedDueDate;
     }
 
