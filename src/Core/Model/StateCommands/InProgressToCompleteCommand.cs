@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.Core.Model.Events;
 using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
@@ -29,5 +30,8 @@ CurrentUser)
     {
         WorkOrder.CompletedDate = context.CurrentDateTime;
         base.Execute(context);
+        StateTransitionEvent = new WorkOrderCompletedEvent(
+            WorkOrder.Number ?? string.Empty,
+            WorkOrder.Assignee?.GetFullName() ?? string.Empty);
     }
 }
