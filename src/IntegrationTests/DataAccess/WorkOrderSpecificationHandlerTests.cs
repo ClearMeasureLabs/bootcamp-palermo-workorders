@@ -264,7 +264,7 @@ public class WorkOrderSpecificationHandlerTests
         {
             Creator = creator,
             Assignee = assignee,
-            Number = "EAGER-001",
+            Number = "EAG001",
             Status = WorkOrderStatus.Assigned
         };
 
