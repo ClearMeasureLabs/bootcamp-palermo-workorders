@@ -1,0 +1,11 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Altering [dbo].[WorkOrder] RoomNumber column from NVARCHAR(900) to NVARCHAR(1200)'
+GO
+	ALTER TABLE [dbo].[WorkOrder] ALTER COLUMN [RoomNumber] NVARCHAR(1200) NULL
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO

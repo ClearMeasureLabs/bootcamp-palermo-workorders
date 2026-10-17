@@ -9,7 +9,7 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// <summary>
     /// Maximum length of <see cref="RoomNumber"/> accepted by persistence and the work-order form.
     /// </summary>
-    public const int RoomNumberMaxLength = 900;
+    public const int RoomNumberMaxLength = 1200;
 
     /// <summary>
     /// Maximum length of <see cref="Description"/> accepted by persistence and the work-order form.

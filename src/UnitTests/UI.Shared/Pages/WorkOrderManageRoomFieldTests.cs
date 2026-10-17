@@ -18,7 +18,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageRoomFieldTests
 {
     [Test]
-    public async Task WorkOrderManage_ShouldRenderRoomAsTextareaWithMaxLength900()
+    public async Task WorkOrderManage_ShouldRenderRoomAsTextareaWithMaxLength1200()
     {
         await using var ctx = new BunitContext();
 

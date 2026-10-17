@@ -42,9 +42,9 @@ public class WorkOrderManageModelRoomNumberTests
     }
 
     [Test]
-    public void RoomNumberMaxLength_ShouldBe900()
+    public void RoomNumberMaxLength_ShouldBe1200()
     {
-        WorkOrder.RoomNumberMaxLength.ShouldBe(900);
+        WorkOrder.RoomNumberMaxLength.ShouldBe(1200);
     }
 
     private static WorkOrderManageModel ValidModel()

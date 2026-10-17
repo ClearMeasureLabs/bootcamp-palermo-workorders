@@ -9,13 +9,13 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
 public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
 {
     [Test, Retry(2)]
-    public async Task ShouldSaveWorkOrderWith900CharacterRoom()
+    public async Task ShouldSaveWorkOrderWith1200CharacterRoom()
     {
         await LoginAsCurrentUser();
 
         var room = new string('R', WorkOrder.RoomNumberMaxLength);
         var order = Faker<WorkOrder>();
-        order.Title = $"[{TestTag}] 900 char room";
+        order.Title = $"[{TestTag}] 1200 char room";
         order.Number = null;
         order.RoomNumber = room;
 
@@ -49,7 +49,7 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task ShouldRejectRoomLongerThan900Characters()
+    public async Task ShouldRejectRoomLongerThan1200Characters()
     {
         await LoginAsCurrentUser();
 
@@ -63,7 +63,7 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
         await Expect(woNumberLocator).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         var number = await woNumberLocator.InnerTextAsync();
 
-        await Input(nameof(WorkOrderManage.Elements.Title), $"[{TestTag}] 901 char room");
+        await Input(nameof(WorkOrderManage.Elements.Title), $"[{TestTag}] 1201 char room");
         await Input(nameof(WorkOrderManage.Elements.Description), "description");
 
         var roomField = Page.GetByTestId(nameof(WorkOrderManage.Elements.RoomNumber));
@@ -76,7 +76,7 @@ public class WorkOrderRoomNumberLengthTests : AcceptanceTestBase
         await Click(saveButtonTestId);
 
         await Expect(Page).ToHaveURLAsync(new Regex("workorder/manage"));
-        await Expect(Page.GetByText("Room cannot exceed 900 characters.")).ToBeVisibleAsync(
+        await Expect(Page.GetByText("Room cannot exceed 1200 characters.")).ToBeVisibleAsync(
             new LocatorAssertionsToBeVisibleOptions { Timeout = 15_000 });
 
         WorkOrder? stored = await Bus.Send(new WorkOrderByNumberQuery(number));

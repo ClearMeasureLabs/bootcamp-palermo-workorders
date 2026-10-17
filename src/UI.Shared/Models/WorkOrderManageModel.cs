@@ -43,6 +43,6 @@ public class WorkOrderManageModel
     /// </summary>
     public string? DueDateDisplay { get; set; }
 
-    [StringLength(WorkOrder.RoomNumberMaxLength, ErrorMessage = "Room cannot exceed 900 characters.")]
+    [StringLength(WorkOrder.RoomNumberMaxLength, ErrorMessage = "Room cannot exceed 1200 characters.")]
     public string? RoomNumber { get; set; }
 }

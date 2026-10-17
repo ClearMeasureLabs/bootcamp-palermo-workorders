@@ -282,7 +282,7 @@ public class McpSaveWorkOrderTests
     }
 
     [Test]
-    public async Task ShouldTruncateRoomNumberTo900Characters()
+    public async Task ShouldTruncateRoomNumberTo1200Characters()
     {
         await SeedCreatorAsync();
         var bus = TestHost.GetRequiredService<IBus>();
