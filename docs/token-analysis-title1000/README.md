@@ -33,7 +33,9 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 | Technique | Introduced (iter) | Δ input | Δ output | Notes |
 |---|---|---|---|---|
 | (baseline: stock bootcamp feature loop) | 1 | ~1.68M (lower bound; 7 subagents uncounted) | ~12.4k | 60 parent calls, 0 CI reds, 1 review-fix cycle, 1 extra notification run |
-| T1 file map in issue · T2 canned whole-change script · T3 one-call CI wait · T4 local SQLite mapping tests · T5 no subagents/board walk/MCP | 2 | tbd | tbd | introduced together (v1); later iterations ablate |
+| T1-T5 together (file map, canned change, one-call CI wait, local SQLite tests, no subagents/board/MCP) | 2 | -1.67M (-99.2%) | -10.6k (-85.5%) | 7 calls, 4 of them recovery from a path bug |
+| v2 fix: scripts copied to temp before the branch switch | 3 | tbd | tbd | expect ~4 fewer calls |
+| per-technique ablations | 4-8 | see ablation-plan.md | | |
 
 ## Plan
 1. **Iter 1 (baseline):** stock feature-loop skill from master, no lean scripts. The agent must poll CI to green and fix reds.
@@ -44,4 +46,7 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 | Iter | Issue | PR | Input est. | Output est. | Calls | CI reds | Notes |
 |---|---|---|---|---|---|---|---|
 | 1 | #9977 | #9978 | ~1.68M+ | ~12.4k | 60 (+7 subagents) | 0 | baseline |
-| 2 | #9979 | | | | | | lean v1 |
+| 2 | #9979 | #9980 | ~13.4k | ~1.8k | 7 | 0 | lean v1 |
+| 3 | #9981 | | | | | | v2 reference |
+| 4 | #9982 | | | | | | ablate T3 (CI wait) |
+| 5 | #9983 | | | | | | ablate T2 (canned change) |
