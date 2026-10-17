@@ -227,4 +227,25 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void GetInitials_WithFirstAndLastName_ShouldReturnBothInitials()
+    {
+        var employee = new Employee { FirstName = "Ann", LastName = "Lee" };
+        employee.GetInitials().ShouldBe("AL");
+    }
+
+    [Test]
+    public void GetInitials_WithLowerCaseNames_ShouldReturnUpperInvariantInitials()
+    {
+        var employee = new Employee { FirstName = "ann", LastName = "lee" };
+        employee.GetInitials().ShouldBe("AL");
+    }
+
+    [Test]
+    public void GetInitials_WithBlankFirstName_ShouldReturnLastInitial()
+    {
+        var employee = new Employee { FirstName = "", LastName = "Lee" };
+        employee.GetInitials().ShouldBe("L");
+    }
 }

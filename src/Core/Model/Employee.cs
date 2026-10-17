@@ -72,4 +72,20 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     {
         Roles.Add(role);
     }
+
+    public string GetInitials()
+    {
+        var initials = string.Empty;
+        if (!string.IsNullOrWhiteSpace(FirstName))
+        {
+            initials += char.ToUpperInvariant(FirstName.Trim()[0]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(LastName))
+        {
+            initials += char.ToUpperInvariant(LastName.Trim()[0]);
+        }
+
+        return initials;
+    }
 }
