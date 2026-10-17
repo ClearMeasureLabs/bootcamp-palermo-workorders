@@ -27,31 +27,15 @@ public class WorkOrderTools
         }
 
         var query = new WorkOrderSpecificationQuery();
-        if (!string.IsNullOrWhiteSpace(status))
+        ApplyStatusFilter(query, status);
+        if (!await TryApplyEmployeeFilter(bus, query, creatorUsername, matchCreator: true))
         {
-            query.MatchStatus(WorkOrderStatus.FromKey(status));
+            return "[]";
         }
 
-        if (!string.IsNullOrWhiteSpace(creatorUsername))
+        if (!await TryApplyEmployeeFilter(bus, query, assigneeUsername, matchCreator: false))
         {
-            var creator = await FindEmployeeByUsername(bus, creatorUsername);
-            if (creator == null)
-            {
-                return "[]";
-            }
-
-            query.MatchCreator(creator);
-        }
-
-        if (!string.IsNullOrWhiteSpace(assigneeUsername))
-        {
-            var assignee = await FindEmployeeByUsername(bus, assigneeUsername);
-            if (assignee == null)
-            {
-                return "[]";
-            }
-
-            query.MatchAssignee(assignee);
+            return "[]";
         }
 
         var workOrders = await bus.Send(query);
@@ -361,6 +345,43 @@ public class WorkOrderTools
         }
 
         error = "limit must be between 1 and 100";
+        return true;
+    }
+
+    private static void ApplyStatusFilter(WorkOrderSpecificationQuery query, string? status)
+    {
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query.MatchStatus(WorkOrderStatus.FromKey(status));
+        }
+    }
+
+    private static async Task<bool> TryApplyEmployeeFilter(
+        IBus bus,
+        WorkOrderSpecificationQuery query,
+        string? username,
+        bool matchCreator)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return true;
+        }
+
+        var employee = await FindEmployeeByUsername(bus, username);
+        if (employee == null)
+        {
+            return false;
+        }
+
+        if (matchCreator)
+        {
+            query.MatchCreator(employee);
+        }
+        else
+        {
+            query.MatchAssignee(employee);
+        }
+
         return true;
     }
 
