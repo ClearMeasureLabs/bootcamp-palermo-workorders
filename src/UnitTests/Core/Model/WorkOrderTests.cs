@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -94,7 +95,7 @@ public class WorkOrderTests
     [Test]
     public void TitleMaxLength_ShouldBe1000()
     {
-        Assert.That(WorkOrder.TitleMaxLength, Is.EqualTo(1000));
+        WorkOrder.TitleMaxLength.ShouldBe(1000);
     }
 
     [Test]
