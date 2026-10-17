@@ -1,4 +1,4 @@
-# v3. Wait for every check-run on the PR head and print a compact verdict. Each call returns within -MaxCallMin
+# v10 (stuck-queued ignore). v3. Wait for every check-run on the PR head and print a compact verdict. Each call returns within -MaxCallMin
 # (default 9, under the agent runtime's ~10 min terminal cap, so the call never gets backgrounded):
 #   exit 0 CHECKS=GREEN | 1 CHECKS=RED (code failures, with log tail) | 3 CHECKS=PENDING (just rerun the same command)
 # Infra flakes (a job cancelled or timed out, or running >= 25 min with no test report) are re-run ONCE automatically
@@ -21,6 +21,12 @@ function Get-Runs {
 while ($true) {
   $runs = @(Get-Runs)
   $pending = @($runs | Where-Object Status -ne 'completed')
+  # v10: a check that never leaves 'queued' (phase 4 rep 1 g04: QDNETC queued >1 h after every other check finished) is
+  # reported as IGNORED_QUEUED once nothing else is running and it has been queued >= 15 min, instead of PENDING forever.
+  if ($pending -and -not @($pending | Where-Object { $_.Status -ne 'queued' }) -and @($runs | Where-Object Status -eq 'completed')) {
+    $stuck = @($pending | Where-Object { $_.Start -and ((Get-Date).ToUniversalTime() - ([datetime]$_.Start).ToUniversalTime()).TotalMinutes -ge 15 })
+    if ($stuck.Count -eq $pending.Count) { $stuck | ForEach-Object { "IGNORED_QUEUED: $($_.Name)" }; $pending = @() }
+  }
   $bad = @($runs | Where-Object { $_.Status -eq 'completed' -and $_.Conclusion -notin 'success', 'skipped', 'neutral' -and $_.Name -ne 'Build result' })
   # Flake triage: rerun once per run id.
   foreach ($b in $bad) {

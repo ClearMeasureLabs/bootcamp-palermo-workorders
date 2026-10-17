@@ -7,6 +7,7 @@ Goal: minimize tokens for ANY change in this codebase. Phase 3's -99.4% relied o
 - Script: `scripts/agent/Submit-Change.ps1` (verify -> publish workspace src diff -> WAIT_CMD; `-VerifyOnly` = single local verify). Keeps v8/v9 publish, auto-rerun wait (v9 fix), PUBLISH=NO_CHANGE.
 - Items (none overlap phase 3 t01-t19): g01 #10206 domain method, g02 #10207 query/handler filter, g03 #10208 UI component,
   g04 #10209 MCP tool param, g05 #10210 DB index migration, g06 #10211 structured logging, g07 #10212 bug from symptom, g08 #10213 refactor.
+- Rep 1 done (v9g, 8/8 green, 1,499k input, see rep-1.md). Rep 2 uses v10g.
 - Plan: 3 reps x 8 items. Between reps improve only the GENERAL skill/scripts from measured waste; never per-issue patches or hints.
 - Measurement as phase 3: input = replayed context summed over turns, output = reasoning + text + tool args, bytes / 4 (estimates).
 - Branches `cursor/token-exp-p4-gNN-rR`. PRs are closed unmerged.
