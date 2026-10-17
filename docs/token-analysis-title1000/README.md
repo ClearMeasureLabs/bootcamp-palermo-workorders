@@ -45,7 +45,11 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 | v4: terse prompt + "no narration" + one `RESULT` line | 10-11 | **~0.63k** (-0.23k, -27% vs iter 9) | **~0.31k** (-0.14k, -31%) | best clean run; one run was backgrounded at the ~600 s cap (+3.6k) |
 | **Prompt terseness** removed (iter 13: v3 prompt on v4) | 13 | confounded by the publish bug (~33.6k) | ~2.2k | clean estimate = iter 9 vs 11: +0.23k input / +0.14k output |
 | v4 generic field script (`-Field RoomNumber -Max 1200`) | 12 | ~0.64k (≈ Title) | ~0.32k | the canned path generalizes at the same cost |
-| v5: REST-only gh, guarded and resumable publish (non-src guard, PUBLISH_FAIL line) | 14 | tbd | tbd | prevents the iter 13 failure mode (+33k input) |
+| v5: REST-only gh, guarded and resumable publish, in-call wait budget | 14-20 | clean runs **0.64-0.67k** (≈ v4 best) | **0.32-0.33k** | iter 14 push rejection handled in 1 call (~0.23k / 0.37k) vs iter 13's 33.6k / 2.2k recovery; no GraphQL use |
+| Command-list prompt (iter 15) | 15 | ~37.3k (backgrounding confounded it) | ~1.1k | not measurable here; it didn't prevent exploration once the call was backgrounded |
+| **T2 canned change** removed again (iter 18: hand edits, file map kept, vs 17) | 18 | **+518k (~800x)** | **+3.1k (~10x)** | the canned script is the dominant input lever; replicates iter 5 |
+| **T1 file map**, hand path (iter 6 vs 18) | 6/18 | -664k with map | -1.2k with map | replicates the iter 5-vs-6 estimate (-577k / -1.5k) |
+| Runtime backgrounding (variance: iters 10, 15, 19 vs 11, 16, 17, 20) | - | +3.9k to +36.7k | +0.1k to +0.8k | the runtime's foreground timeout varies (120/300/600 s); it is the largest remaining cost driver |
 
 ## Plan
 1. **Iter 1 (baseline):** stock feature-loop skill from master, no lean scripts. The agent must poll CI to green and fix reds.
@@ -68,10 +72,10 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 | 11 | #9996 | #9999 | ~0.63k | ~0.31k | 2 | 0 | v4 repeat |
 | 12 | #9997 | #10001 | ~0.64k | ~0.32k | 2 | 0 | RoomNumber 1200 |
 | 13 | #9998 | #10003 | ~33.6k | ~2.2k | 11 | 0 | v3 prompt; publish bug, 54-file PR |
-| 14 | #10004 | | | | | | v5 reference (REST, guarded publish, call under the 600 s cap) |
-| 15 | #10005 | | | | | | command-list prompt (output technique) |
-| 16 | #10006 | | | | | | Title -Max 1200 (value generalization) |
-| 17 | #10007 | | | | | | v5 repeat (variance) |
-| 18 | #10008 | | | | | | hand edits with file map + `-SkipApply` (non-canned floor) |
-| 19 | #10009 | | | | | | v5 repeat |
-| 20 | #10010 | | | | | | v5 final repeat |
+| 14 | #10004 | none | ~0.23k | ~0.37k | 1 | - | v5: PUBLISH_FAIL (remote rejected push); guard stopped cleanly |
+| 15 | #10005 | #10013 | ~37.3k | ~1.1k | 11 | 0 | command-list prompt; backgrounded at 120 s |
+| 16 | #10006 | #10011 | ~0.64k | ~0.32k | 2 | 0 | Title 1200 |
+| 17 | #10007 | #10012 | ~0.65k | ~0.32k | 2 | 0 | v5 repeat |
+| 18 | #10008 | #10016 | ~519k | ~3.4k | 41 | 0 | hand edits + file map |
+| 19 | #10009 | #10014 | ~9.8k | ~0.65k | 6 | 0 | v5 repeat; backgrounded at 300 s |
+| 20 | #10010 | #10015 | ~0.67k | ~0.33k | 2 | 0 | v5 final repeat |
