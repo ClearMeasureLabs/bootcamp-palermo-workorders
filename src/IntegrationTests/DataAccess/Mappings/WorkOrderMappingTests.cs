@@ -364,6 +364,39 @@ public class WorkOrderMappingTests
     }
 
     [Test]
+    public void ShouldPersistLocationNotes()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-LN",
+            Title = "Location notes",
+            Description = "Check access path",
+            LocationNotes = "Building B, loading dock entrance",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.LocationNotes.ShouldBe("Building B, loading dock entrance");
+    }
+
+    [Test]
     public void ShouldPersistNullInstructionsForLegacyWorkOrder()
     {
         new DatabaseTests().Clean();
