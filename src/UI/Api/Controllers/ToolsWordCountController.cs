@@ -39,10 +39,23 @@ public class ToolsWordCountController : ControllerBase
             ? 0
             : text.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries).Length;
         var characterCount = text.Length;
-        // Normalize CRLF to LF, then split on LF to count lines (handles CR, LF, and CRLF).
-        var lineCount = text.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n').Length;
+        var lineCount = CountLines(text);
 
         return Ok(new WordCountResponse(wordCount, characterCount, lineCount));
+    }
+
+    /// <summary>
+    /// Counts lines after normalizing CR/LF; a single trailing line break does not add a line.
+    /// </summary>
+    private static int CountLines(string text)
+    {
+        var normalized = text.Replace("\r\n", "\n").Replace("\r", "\n");
+        if (normalized.EndsWith('\n'))
+        {
+            normalized = normalized[..^1];
+        }
+
+        return normalized.Split('\n').Length;
     }
 }
 
