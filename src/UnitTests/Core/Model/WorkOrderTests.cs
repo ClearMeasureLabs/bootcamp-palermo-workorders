@@ -92,6 +92,12 @@ public class WorkOrderTests
     }
 
     [Test]
+    public void TitleMaxLength_ShouldBe1000()
+    {
+        Assert.That(WorkOrder.TitleMaxLength, Is.EqualTo(1000));
+    }
+
+    [Test]
     public void ShouldChangeStatus()
     {
         var order = new WorkOrder() { Status = WorkOrderStatus.Draft };
