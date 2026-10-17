@@ -197,7 +197,7 @@ public class McpWorkOrderToolTests
         var bus = TestHost.GetRequiredService<IBus>();
         var result = await WorkOrderTools.ListWorkOrders(bus, limit: 2);
 
-        ExtractNumbers(result).ShouldBe(new[] { "WO-001", "WO-002" });
+        ExtractNumbers(result).ShouldBe(["WO-001", "WO-002"]);
     }
 
     [Test]
