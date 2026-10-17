@@ -46,4 +46,18 @@ public class LastWorkOrderTests
         component.FindAll($"[data-testid='{nameof(LastWorkOrder.Elements.LastWorkOrderTooltip)}']")
             .ShouldBeEmpty();
     }
+
+    [Test]
+    public async Task ShouldRenderTooltipIncludingTitleWhenWorkOrderHasTitle()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        var component = ctx.Render<LastWorkOrder>();
+        var sampleWorkOrder = new WorkOrder { Number = "WO-001", Title = "Fix sink" };
+        component.Instance.Handle(new WorkOrderChangedEvent(new StateCommandResult(sampleWorkOrder)));
+        component.Render();
+        var link = component.Find($"[data-testid='{nameof(LastWorkOrder.Elements.LastWorkOrderTooltip)}']");
+        link.GetAttribute("title").ShouldBe("Most recently viewed work order: Fix sink");
+    }
 }

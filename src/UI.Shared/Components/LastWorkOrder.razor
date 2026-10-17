@@ -5,7 +5,7 @@
 @if (WorkOrderLastChanged != null)
 {
     <a href="/workorder/manage/@(WorkOrderLastChanged?.Number)?mode=Edit"
-       title="Most recently viewed work order"
+       title="@LastWorkOrderTooltip"
        data-testid="@nameof(Elements.LastWorkOrderTooltip)">
         @WorkOrderLastChanged?.Number
     </a>
@@ -14,6 +14,17 @@
 @code {
 
     private WorkOrder? WorkOrderLastChanged { get; set; }
+
+    private string LastWorkOrderTooltip
+    {
+        get
+        {
+            var title = WorkOrderLastChanged?.Title;
+            return string.IsNullOrWhiteSpace(title)
+                ? "Most recently viewed work order"
+                : $"Most recently viewed work order: {title}";
+        }
+    }
 
     public void Handle(WorkOrderChangedEvent theEvent)
     {
