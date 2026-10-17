@@ -227,4 +227,37 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void HasRole_WhenEmployeeHasRole_ShouldReturnTrue()
+    {
+        var employee = new Employee();
+        employee.AddRole(new Role("Admin", true, false));
+        employee.HasRole("Admin").ShouldBeTrue();
+    }
+
+    [Test]
+    public void HasRole_WhenCaseDiffers_ShouldReturnTrue()
+    {
+        var employee = new Employee();
+        employee.AddRole(new Role("Admin", true, false));
+        employee.HasRole("aDMIN").ShouldBeTrue();
+    }
+
+    [Test]
+    public void HasRole_WhenRoleMissing_ShouldReturnFalse()
+    {
+        var employee = new Employee();
+        employee.AddRole(new Role("Admin", true, false));
+        employee.HasRole("Fulfiller").ShouldBeFalse();
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void HasRole_WhenRoleNameBlank_ShouldThrowArgumentException(string? roleName)
+    {
+        var employee = new Employee();
+        Should.Throw<ArgumentException>(() => employee.HasRole(roleName!));
+    }
 }

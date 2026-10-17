@@ -68,6 +68,20 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// </summary>
     public bool CanFulfillWorkOrder() => Roles.Any(role => role.CanFulfillWorkOrder);
 
+    /// <summary>
+    /// Returns true when the employee has a role whose name matches <paramref name="roleName"/>, ignoring case.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="roleName"/> is null or blank.</exception>
+    public bool HasRole(string roleName)
+    {
+        if (string.IsNullOrWhiteSpace(roleName))
+        {
+            throw new ArgumentException("Role name must not be null or blank.", nameof(roleName));
+        }
+
+        return Roles.Any(role => string.Equals(role.Name, roleName, StringComparison.OrdinalIgnoreCase));
+    }
+
     public void AddRole(Role role)
     {
         Roles.Add(role);
