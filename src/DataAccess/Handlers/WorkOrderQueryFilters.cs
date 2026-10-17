@@ -11,7 +11,8 @@ internal static class WorkOrderQueryFilters
         Employee? assignee,
         Employee? creator,
         WorkOrderStatus? status,
-        bool overdueOnly = false)
+        bool overdueOnly = false,
+        string? titleContains = null)
     {
         if (assignee != null)
         {
@@ -33,6 +34,12 @@ internal static class WorkOrderQueryFilters
             query = ApplyOverdueFilter(query);
         }
 
+        if (!string.IsNullOrWhiteSpace(titleContains))
+        {
+            var lowered = titleContains.ToLower();
+            query = query.Where(wo => wo.Title != null && wo.Title.ToLower().Contains(lowered));
+        }
+
         return query;
     }
 
@@ -50,10 +57,13 @@ internal static class WorkOrderQueryFilters
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,
         WorkOrderSearchSpecification specification) =>
-        Apply(query, specification.Assignee, specification.Creator, specification.Status);
+        Apply(query, specification.Assignee, specification.Creator, specification.Status,
+            titleContains: specification.TitleContains);
 
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,
         WorkOrderSpecificationQuery specification) =>
-        Apply(query, specification.Assignee, specification.Creator, specification.Status, specification.OverdueOnly);
+        Apply(query, specification.Assignee, specification.Creator, specification.Status,
+            specification.OverdueOnly, specification.TitleContains);
 }
+
