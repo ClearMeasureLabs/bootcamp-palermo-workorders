@@ -252,6 +252,42 @@ public class WorkOrderSpecificationHandlerTests
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
     }
+
+    [Test]
+    public async Task ShouldEagerLoadAssignee_WhenSearching()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("c1", "Chris", "Creator", "chris@example.com");
+        var assignee = new Employee("a1", "Alex", "Assignee", "alex@example.com");
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Assignee = assignee,
+            Number = "EAG001",
+            Status = WorkOrderStatus.Assigned
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(assignee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        dataContext.ChangeTracker.Clear();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var orders = await repository.Handle(new WorkOrderSpecificationQuery());
+
+        var result = orders.ShouldHaveSingleItem();
+        result.Assignee.ShouldNotBeNull();
+        result.Assignee.Id.ShouldBe(assignee.Id);
+        result.Assignee.UserName.ShouldBe(assignee.UserName);
+        result.Creator.ShouldNotBeNull();
+        result.Creator.Id.ShouldBe(creator.Id);
+    }
     [Test]
     public async Task ShouldReturnOnlyOverdueWorkOrders_WhenOverdueOnlyFilterIsTrue()
     {
