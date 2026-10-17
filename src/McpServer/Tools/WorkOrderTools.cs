@@ -236,6 +236,13 @@ public class WorkOrderTools
         }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
     }
 
+    [McpServerTool(Name = "get-work-order-counts-by-status"), Description("Returns the count of work orders for each status (Draft, Assigned, InProgress, Complete, Cancelled).")]
+    public static async Task<string> GetWorkOrderCountsByStatus(IBus bus)
+    {
+        var counts = await bus.Send(new WorkOrderCountByStatusQuery());
+        return JsonSerializer.Serialize(counts, new JsonSerializerOptions { WriteIndented = true });
+    }
+
     private static string? ValidateSave(
         WorkOrder workOrder,
         Employee executingUser,
