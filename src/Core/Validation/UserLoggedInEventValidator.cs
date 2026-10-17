@@ -9,6 +9,6 @@ public sealed class UserLoggedInEventValidator : AbstractValidator<UserLoggedInE
 {
     public UserLoggedInEventValidator()
     {
-        RuleFor(x => x.UserName).NotEmpty();
+        RuleFor(x => x.UserName).NotEmpty().MaximumLength(100);
     }
 }
