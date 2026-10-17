@@ -66,7 +66,7 @@ Rep 2 issues: T01 #10054, T02 #10055, T03 #10056, T04 #10057, T05 #10058, T06 #1
 ## Technique ledger
 | Technique | Rep | Δ input | Δ output | Notes |
 |---|---|---|---|---|
-| v6 base: lean PHASE3 skill, no-wait Invoke, ≤2-min wait calls | 1 | baseline: 18.0M total over 19 types | 89k total | the 2-min waits multiplied context replays |
+| v6 base: lean PHASE3 skill, no-wait Invoke, ≤2-min wait calls | 1 | baseline: 17.80M total over 19 types | 82k total | the 2-min waits multiplied context replays |
 | v6.1: publish from a temp worktree on origin/master (workspace never switches; t16 fix), follow-up commits by rerunning Invoke | 2 | tbd | tbd | |
 | v6.1: full unit suite locally (no filter) + IT build | 2 | tbd | tbd | targets the t01/t04 CI reds |
 | v6.1: wait ≤8 min per call | 2 | tbd | tbd | targets the wait-turn count |
