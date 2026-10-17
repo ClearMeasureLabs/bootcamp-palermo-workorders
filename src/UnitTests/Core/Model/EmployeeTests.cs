@@ -26,6 +26,37 @@ public class EmployeeTests
     }
 
     [Test]
+    public void GetInitials_FirstAndLast_ShouldReturnTwoLetters()
+    {
+        var employee = new Employee("jp", "Jeffrey", "Palermo", "");
+
+        employee.GetInitials().ShouldBe("JP");
+    }
+
+    [Test]
+    public void GetInitials_WithMiddleName_ShouldIncludeMiddleInitial()
+    {
+        var employee = new Employee("jp", "Jeffrey", "Palermo", "") { MiddleName = "Q" };
+
+        employee.GetInitials().ShouldBe("JQP");
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void GetInitials_BlankMiddleOrEmptyParts_ShouldOmitThoseInitials(string? middleName)
+    {
+        var withBlankMiddle = new Employee("jp", "Jeffrey", "Palermo", "") { MiddleName = middleName };
+        withBlankMiddle.GetInitials().ShouldBe("JP");
+
+        var emptyFirst = new Employee("x", "", "Palermo", "") { MiddleName = "Q" };
+        emptyFirst.GetInitials().ShouldBe("QP");
+
+        var emptyLast = new Employee("x", "Jeffrey", "", "") { MiddleName = "Q" };
+        emptyLast.GetInitials().ShouldBe("JQ");
+    }
+
+    [Test]
     public void GetFullName_WithMiddleName_ShouldIncludeMiddleName()
     {
         var employee = new Employee("jcamel", "Joe", "Camel", "") { MiddleName = "Big" };
