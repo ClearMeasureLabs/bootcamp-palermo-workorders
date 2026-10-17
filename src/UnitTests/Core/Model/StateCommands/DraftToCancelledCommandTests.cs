@@ -53,17 +53,22 @@ public class DraftToCancelledCommandTests : StateCommandBaseTests
     public void ShouldTransitionStateProperly()
     {
         var employee = new Employee();
+        var assignee = new Employee();
         var order = new WorkOrder()
         {
             Number = "123",
             Status = WorkOrderStatus.Draft,
-            Creator = employee
+            Creator = employee,
+            Assignee = assignee,
+            AssignedDate = new DateTime(2024, 1, 1)
         };
 
         var command = new DraftToCancelledCommand(order, employee);
         command.Execute(new StateCommandContext());
 
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
+        Assert.That(order.Assignee, Is.Null);
+        Assert.That(order.AssignedDate, Is.Null);
     }
 
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
