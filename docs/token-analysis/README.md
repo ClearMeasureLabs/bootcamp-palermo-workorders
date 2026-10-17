@@ -12,7 +12,9 @@ Cursor transcripts carry no token usage fields. Proxy = cumulative replayed cont
 | 3 | #9941 | #9942 | bc-06208a2f | 1 | 1 | ~0.3k | **-99.99%** | lean v2 one-shot; target confirmed |
 | 4 | #9943 | #9944 | bc-23f09c58 | 10 | 10 | ~37k | -98.7% | type B (unit tests), generic lean |
 | 5 | #9945 | #9946 | bc-caaf07fd | 3 | 3 | ~3.3k | -99.9% | type B, canned recipe |
-| 6 | #9947 | | | | | | | type C (seal class), generic lean |
+| 6 | #9947 | #9948 | bc-54d95a8d | 6 | 6 | ~10k | -99.7% | type C (seal), generic lean |
+| 7 | #9949 | | | | | | | type C canned (Invoke-SealItem) |
+| 8 | #9950 | | | | | | | type D (validation rule + test), generic lean |
 
 ## Progress notes
 - 2026-10-16: Run 0 analysed. It is an invalid baseline. A repeatable template was created and issue #9937 filed for baseline run 1. Board writes were not possible: the gh token lacks the project scope.
@@ -21,3 +23,7 @@ Cursor transcripts carry no token usage fields. Proxy = cumulative replayed cont
 - 2026-10-16: Run 3 came in at -99.99% (est.), confirming >=80% over 2 runs. Runs 4-20 vary the type of work; see work-type-catalog.md.
 - 2026-10-16: Run 4 (type B, generic lean): ~37k. Canned unit-test recipe added. Note: branch deletion is blocked by a repo rule, so experiment branches remain.
 - 2026-10-16: Run 5 (type B canned): 3 calls, ~3.3k. Type C = seal a non-inherited class; the Qodana backlog is already fixed on master.
+- 2026-10-16: Run 6 (type C generic lean): 6 calls, ~10k. Seal recipe added. Runs 7 and 8 pre-filed; run 9 (type D canned) will be filed after run 8 so its recipe is based on the measured run.
+
+## Finding: the Qodana checklists are already fixed on master
+Every checklist item in #9436 (P1 mechanical), #9437 (P2 naming/nullability), #9438 (P3 visibility) and #9439 (P4 dead symbols) is already fixed on master, checked file by file on 2026-10-16. The committed `qodana.sarif.json` holds a single result (`Html.AttributeValueNotResolved`, Settings.razor:16), which is not a mechanical fix. That is why run 0 found nothing to change. Experiment work types are therefore drawn from verified live code (missing tests, sealable classes, validation gaps) instead of the stale checklists. The issues still show unchecked boxes and should be reconciled.

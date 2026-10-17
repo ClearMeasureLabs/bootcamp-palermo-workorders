@@ -23,3 +23,9 @@ Three calls, then stop:
 1. `pwsh -NoProfile scripts/agent/Get-TestContext.ps1 -Type <Type>`. This prints the TEST path, the class source, referenced sibling types and the test header. Don't read any other file.
 2. Create the TEST file in one write (header + tests named `Should...`, Shouldly asserts).
 3. `pwsh -NoProfile scripts/agent/Complete-AgentItem.ps1 -Issue <N> -Type <Type> -Branch <branch>`. Builds, tests, opens the PR and comments. On FAIL, fix only the reported error, rerun once.
+
+## Visibility: seal a non-inherited class
+Run ONE command, then stop: `pwsh -NoProfile scripts/agent/Invoke-SealItem.ps1 -Issue <N> -Type <Type> -Branch <branch>`. It refuses if the class is inherited or mocked.
+
+## All types
+The platform's post-run handoff artifact write (`/opt/cursor/artifacts/...`) is expected; it is not waste.
