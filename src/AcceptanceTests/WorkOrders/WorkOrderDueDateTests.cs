@@ -62,7 +62,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var order = Faker<WorkOrder>();
         order.Title = $"[{TestTag}] set due date";
         order.Number = null;
-        var dueDate = new DateOnly(2026, 9, 12);
+        var dueDate = ChurchTimeZone.Today(TimeProvider.System).AddDays(14);
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
@@ -222,6 +222,9 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var order = Faker<WorkOrder>();
         order.Title = title;
         order.Number = null;
+        var today = ChurchTimeZone.Today(TimeProvider.System);
+        // SaveDraft rejects past due dates; seed overdue rows via DB after a valid save.
+        var dueDateForSave = dueDate < today ? today : dueDate;
 
         var newWorkOrder = Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder));
         await Expect(newWorkOrder).ToBeVisibleAsync(
@@ -236,9 +239,9 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         await Input(nameof(WorkOrderManage.Elements.Title), order.Title);
         await Input(nameof(WorkOrderManage.Elements.Description), order.Description ?? "desc");
         var dueDateInput = Page.GetByTestId(nameof(WorkOrderManage.Elements.DueDate));
-        await dueDateInput.FillAsync(dueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        await dueDateInput.FillAsync(dueDateForSave.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
         var expectedUrgency = DueDateUrgencyCalculator.Calculate(
-            dueDate,
+            dueDateForSave,
             WorkOrderStatus.Draft,
             TimeProvider.System);
         var expectedCssClass = DueDateUrgencyCalculator.CssClass(expectedUrgency);
@@ -250,6 +253,20 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
         await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+
+        if (dueDate < today)
+        {
+            await using var context = TestHost.NewDbContext();
+            var workOrder = await context.Set<WorkOrder>().SingleAsync(w => w.Number == order.Number);
+            workOrder.DueDate = dueDate;
+            await context.SaveChangesAsync();
+            await Page.GotoAsync("/counter");
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            await Click(nameof(NavMenu.Elements.Search));
+            await Page.WaitForURLAsync("**/workorder/search");
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
         return order;
     }
 
