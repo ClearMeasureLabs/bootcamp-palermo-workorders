@@ -38,7 +38,7 @@ index ddd1b06a8..ae904f94c 100644
  
      protected string GetTextForStatus()
 diff --git a/src/UnitTests/Core/Model/WorkOrderTests.cs b/src/UnitTests/Core/Model/WorkOrderTests.cs
-index a8e7414c4..185a87d06 100644
+index a8e7414c4..592104dc7 100644
 --- a/src/UnitTests/Core/Model/WorkOrderTests.cs
 +++ b/src/UnitTests/Core/Model/WorkOrderTests.cs
 @@ -63,19 +63,19 @@ public void ShouldShowFriendlyStatusValuesAsStrings()
@@ -46,7 +46,7 @@ index a8e7414c4..185a87d06 100644
  
      [Test]
 -    public void ShouldTruncateTo4000CharactersOnDescription()
-+    public void ShouldTruncateToDescriptionMaxLengthOnDescription()
++    public void ShouldTruncateDescriptionToDescriptionMaxLength()
      {
 -        var longText = new string('x', 4001);
 +        var longText = new string('x', WorkOrder.DescriptionMaxLength + 1);
@@ -57,7 +57,7 @@ index a8e7414c4..185a87d06 100644
  
      [Test]
 -    public void ShouldTruncateTo4000CharactersOnInstructions()
-+    public void ShouldTruncateToInstructionsMaxLengthOnInstructions()
++    public void ShouldTruncateInstructionsToInstructionsMaxLength()
      {
 -        var longText = new string('x', 4001);
 +        var longText = new string('x', WorkOrder.InstructionsMaxLength + 1);

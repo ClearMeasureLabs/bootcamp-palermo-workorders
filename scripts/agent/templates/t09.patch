@@ -1,5 +1,5 @@
 diff --git a/src/AcceptanceTests/WorkOrders/WorkOrderCompleteTests.cs b/src/AcceptanceTests/WorkOrders/WorkOrderCompleteTests.cs
-index 187666ade..a876b8f3f 100644
+index 187666ade..0e5104187 100644
 --- a/src/AcceptanceTests/WorkOrders/WorkOrderCompleteTests.cs
 +++ b/src/AcceptanceTests/WorkOrders/WorkOrderCompleteTests.cs
 @@ -1,4 +1,5 @@
@@ -38,8 +38,9 @@ index 187666ade..a876b8f3f 100644
 +        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + CompleteToInProgressCommand.Name))
 +            .ToBeVisibleAsync();
      }
- }
+-}
 \ No newline at end of file
++}
 diff --git a/src/AcceptanceTests/WorkOrders/WorkOrderDictationTests.cs b/src/AcceptanceTests/WorkOrders/WorkOrderDictationTests.cs
 index 0b60923bd..41cedb4e4 100644
 --- a/src/AcceptanceTests/WorkOrders/WorkOrderDictationTests.cs

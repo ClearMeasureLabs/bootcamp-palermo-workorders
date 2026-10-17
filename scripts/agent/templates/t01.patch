@@ -47,7 +47,7 @@ index c0dcc21bc..688b0da99 100644
          await Page.WaitForURLAsync("**/workorder/manage?mode=New");
      }
 diff --git a/src/Core/Model/WorkOrder.cs b/src/Core/Model/WorkOrder.cs
-index ddd1b06a8..2f6b66188 100644
+index ddd1b06a8..84d545e79 100644
 --- a/src/Core/Model/WorkOrder.cs
 +++ b/src/Core/Model/WorkOrder.cs
 @@ -19,20 +19,20 @@ public class WorkOrder : EntityBase<WorkOrder>
@@ -79,7 +79,7 @@ index ddd1b06a8..2f6b66188 100644
      public DateOnly? DueDate { get; set; }
  
 -    private string GetTruncatedString(string? value)
-+    private static string GetTruncatedString(string? value, int maxAllowed)
++    private string GetTruncatedString(string? value, int maxAllowed)
      {
          if (value == null)
          {
@@ -92,7 +92,7 @@ index ddd1b06a8..2f6b66188 100644
      }
  
 diff --git a/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs b/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs
-index 3baf68ece..1bc95623e 100644
+index 3baf68ece..217b760f8 100644
 --- a/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs
 +++ b/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs
 @@ -401,7 +401,7 @@ public void ShouldPersistInstructionsAtMaxLength()
@@ -100,7 +100,7 @@ index 3baf68ece..1bc95623e 100644
  
          var creator = new Employee("creator1", "John", "Doe", "john@example.com");
 -        var longInstructions = new string('I', 4001);
-+        var longInstructions = new string('I', WorkOrder.InstructionsMaxLength + 1);
++        var longInstructions = new string('I', 2001);
          var workOrder = new WorkOrder
          {
              Number = "WO-08",
@@ -109,7 +109,7 @@ index 3baf68ece..1bc95623e 100644
          }
  
 -        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
-+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(WorkOrder.InstructionsMaxLength);
++        rehydratedWorkOrder.Instructions!.Length.ShouldBe(2000);
      }
  }
 \ No newline at end of file

@@ -1,0 +1,213 @@
+diff --git a/src/UI/Server/WorkOrderAssignedWebhookHandler.cs b/src/UI/Server/WorkOrderAssignedWebhookHandler.cs
+new file mode 100644
+index 000000000..fd1f1bf95
+--- /dev/null
++++ b/src/UI/Server/WorkOrderAssignedWebhookHandler.cs
+@@ -0,0 +1,71 @@
++using System.Text;
++using System.Text.Json;
++using ClearMeasure.Bootcamp.Core.Model;
++using ClearMeasure.Bootcamp.Core.Model.StateCommands;
++using MediatR;
++
++namespace ClearMeasure.Bootcamp.UI.Server;
++
++/// <summary>
++/// Posts a JSON webhook after Draft→Assigned when <c>Webhooks:WorkOrderAssignedUrl</c> is configured.
++/// </summary>
++public class WorkOrderAssignedWebhookHandler(
++    IHttpClientFactory httpClientFactory,
++    IConfiguration configuration,
++    ILogger<WorkOrderAssignedWebhookHandler> logger)
++    : IPipelineBehavior<DraftToAssignedCommand, StateCommandResult>
++{
++    /// <summary>Configuration key for the outbound webhook URL.</summary>
++    public const string ConfigKey = "Webhooks:WorkOrderAssignedUrl";
++
++    /// <inheritdoc />
++    public async Task<StateCommandResult> Handle(
++        DraftToAssignedCommand request,
++        RequestHandlerDelegate<StateCommandResult> next,
++        CancellationToken cancellationToken)
++    {
++        var result = await next();
++        await NotifyAsync(result.WorkOrder, cancellationToken);
++        return result;
++    }
++
++    /// <summary>
++    /// POSTs {number,title,assignee} when the webhook URL is non-empty; skips otherwise.
++    /// Failures are logged and not thrown.
++    /// </summary>
++    public async Task NotifyAsync(WorkOrder workOrder, CancellationToken cancellationToken = default)
++    {
++        var url = configuration[ConfigKey];
++        if (string.IsNullOrWhiteSpace(url))
++        {
++            return;
++        }
++
++        try
++        {
++            var client = httpClientFactory.CreateClient();
++            var payload = new
++            {
++                number = workOrder.Number,
++                title = workOrder.Title,
++                assignee = workOrder.Assignee?.UserName
++            };
++            using var content = new StringContent(
++                JsonSerializer.Serialize(payload),
++                Encoding.UTF8,
++                "application/json");
++            using var response = await client.PostAsync(url, content, cancellationToken);
++            if (!response.IsSuccessStatusCode)
++            {
++                logger.LogWarning(
++                    "Work order assigned webhook returned {StatusCode} for {WorkOrderNumber}",
++                    (int)response.StatusCode,
++                    workOrder.Number);
++            }
++        }
++        catch (Exception ex)
++        {
++            logger.LogError(ex, "Work order assigned webhook failed for {WorkOrderNumber}", workOrder.Number);
++        }
++    }
++}
+diff --git a/src/UI/Server/appsettings.json b/src/UI/Server/appsettings.json
+index 408679388..4e4088a8c 100644
+--- a/src/UI/Server/appsettings.json
++++ b/src/UI/Server/appsettings.json
+@@ -52,5 +52,8 @@
+   "ApiRequestTimeouts": {
+     "Enabled": true,
+     "TimeoutSeconds": 120
++  },
++  "Webhooks": {
++    "WorkOrderAssignedUrl": ""
+   }
+ }
+diff --git a/src/UnitTests/UI.Server/WorkOrderAssignedWebhookHandlerTests.cs b/src/UnitTests/UI.Server/WorkOrderAssignedWebhookHandlerTests.cs
+new file mode 100644
+index 000000000..b2dfa1ade
+--- /dev/null
++++ b/src/UnitTests/UI.Server/WorkOrderAssignedWebhookHandlerTests.cs
+@@ -0,0 +1,117 @@
++using System.Net;
++using System.Text.Json;
++using ClearMeasure.Bootcamp.Core.Model;
++using ClearMeasure.Bootcamp.UI.Server;
++using Microsoft.Extensions.Configuration;
++using Microsoft.Extensions.Logging.Abstractions;
++using Shouldly;
++
++namespace ClearMeasure.Bootcamp.UnitTests.UI.Server;
++
++[TestFixture]
++public class WorkOrderAssignedWebhookHandlerTests
++{
++    [Test]
++    public async Task NotifyAsync_WhenUrlConfigured_PostsNumberTitleAssigneeJson()
++    {
++        var stubHandler = new StubHttpMessageHandler();
++        var configuration = new ConfigurationBuilder()
++            .AddInMemoryCollection(new Dictionary<string, string?>
++            {
++                [WorkOrderAssignedWebhookHandler.ConfigKey] = "http://localhost/hooks/assigned"
++            })
++            .Build();
++        var handler = new WorkOrderAssignedWebhookHandler(
++            new StubHttpClientFactory(stubHandler),
++            configuration,
++            NullLogger<WorkOrderAssignedWebhookHandler>.Instance);
++        var workOrder = new WorkOrder
++        {
++            Number = "WO-100",
++            Title = "Fix lights",
++            Assignee = new Employee("gwillie", "Gordon", "Willie", "g@example.com")
++        };
++
++        await handler.NotifyAsync(workOrder);
++
++        stubHandler.LastRequest.ShouldNotBeNull();
++        stubHandler.LastRequest!.Method.ShouldBe(HttpMethod.Post);
++        stubHandler.LastRequest.RequestUri!.ToString().ShouldBe("http://localhost/hooks/assigned");
++        stubHandler.LastRequestBody.ShouldNotBeNull();
++        using var doc = JsonDocument.Parse(stubHandler.LastRequestBody!);
++        doc.RootElement.GetProperty("number").GetString().ShouldBe("WO-100");
++        doc.RootElement.GetProperty("title").GetString().ShouldBe("Fix lights");
++        doc.RootElement.GetProperty("assignee").GetString().ShouldBe("gwillie");
++    }
++
++    [Test]
++    public async Task NotifyAsync_WhenUrlEmpty_SkipsPost()
++    {
++        var stubHandler = new StubHttpMessageHandler();
++        var configuration = new ConfigurationBuilder()
++            .AddInMemoryCollection(new Dictionary<string, string?>
++            {
++                [WorkOrderAssignedWebhookHandler.ConfigKey] = ""
++            })
++            .Build();
++        var handler = new WorkOrderAssignedWebhookHandler(
++            new StubHttpClientFactory(stubHandler),
++            configuration,
++            NullLogger<WorkOrderAssignedWebhookHandler>.Instance);
++
++        await handler.NotifyAsync(new WorkOrder { Number = "WO-1", Title = "x" });
++
++        stubHandler.LastRequest.ShouldBeNull();
++    }
++
++    [Test]
++    public async Task NotifyAsync_WhenHttpFails_DoesNotThrow()
++    {
++        var stubHandler = new StubHttpMessageHandler { ThrowOnSend = true };
++        var configuration = new ConfigurationBuilder()
++            .AddInMemoryCollection(new Dictionary<string, string?>
++            {
++                [WorkOrderAssignedWebhookHandler.ConfigKey] = "http://localhost/hooks/assigned"
++            })
++            .Build();
++        var handler = new WorkOrderAssignedWebhookHandler(
++            new StubHttpClientFactory(stubHandler),
++            configuration,
++            NullLogger<WorkOrderAssignedWebhookHandler>.Instance);
++
++        await Should.NotThrowAsync(async () =>
++            await handler.NotifyAsync(new WorkOrder { Number = "WO-2", Title = "y" }));
++    }
++
++    private sealed class StubHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
++    {
++        public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
++    }
++
++    private sealed class StubHttpMessageHandler : HttpMessageHandler
++    {
++        public HttpRequestMessage? LastRequest { get; private set; }
++
++        public string? LastRequestBody { get; private set; }
++
++        public bool ThrowOnSend { get; init; }
++
++        protected override async Task<HttpResponseMessage> SendAsync(
++            HttpRequestMessage request,
++            CancellationToken cancellationToken)
++        {
++            if (ThrowOnSend)
++            {
++                throw new HttpRequestException("simulated failure");
++            }
++
++            LastRequest = request;
++            if (request.Content != null)
++            {
++                LastRequestBody = await request.Content.ReadAsStringAsync(cancellationToken);
++            }
++
++            return new HttpResponseMessage(HttpStatusCode.OK);
++        }
++    }
++}

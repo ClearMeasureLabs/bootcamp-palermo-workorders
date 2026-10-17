@@ -12,7 +12,7 @@ index 01f426f44..7e6570b5c 100644
  
          await roomSortBtn.ClickAsync();
 diff --git a/src/UI.Shared/Pages/WorkOrderSearch.razor b/src/UI.Shared/Pages/WorkOrderSearch.razor
-index c692ecd0b..8bf36d3f4 100644
+index c692ecd0b..dec2745a0 100644
 --- a/src/UI.Shared/Pages/WorkOrderSearch.razor
 +++ b/src/UI.Shared/Pages/WorkOrderSearch.razor
 @@ -105,6 +105,11 @@
@@ -31,7 +31,7 @@ index c692ecd0b..8bf36d3f4 100644
                                                aria-label="@badgeText">@badgeText</span>
                                      }
                                  </td>
-+                                <td>@order.WorkOrder.CreatedDate?.ToString("MMM d, yyyy")</td>
++                                <td>@(order.WorkOrder.CreatedDate?.ToString("MMM d, yyyy"))</td>
                                  <td>@order.WorkOrder.RoomNumber</td>
                              </tr>
                          }
@@ -44,10 +44,10 @@ index c692ecd0b..8bf36d3f4 100644
          SortByRoomButton,
          AssignedToMeCheckbox,
 diff --git a/src/UI.Shared/Pages/WorkOrderSearch.razor.cs b/src/UI.Shared/Pages/WorkOrderSearch.razor.cs
-index 7f252d6ba..2497b368f 100644
+index 7f252d6ba..2561a7ea1 100644
 --- a/src/UI.Shared/Pages/WorkOrderSearch.razor.cs
 +++ b/src/UI.Shared/Pages/WorkOrderSearch.razor.cs
-@@ -143,11 +143,30 @@ private void SortBy(string column)
+@@ -143,13 +143,20 @@ private void SortBy(string column)
  
      private void ApplySort()
      {
@@ -57,33 +57,23 @@ index 7f252d6ba..2497b368f 100644
 -        else if (_sortColumn == "Title") ApplySortByTitle();
 -        else if (_sortColumn == "Room") ApplySortByRoom();
 +        if (_sortColumn is null) return;
-+        ApplySortColumn(_sortColumn);
-+    }
-+
-+    private void ApplySortColumn(string column)
-+    {
-+        switch (column)
-+        {
-+            case "Status":
-+                ApplySortByStatus();
-+                break;
-+            case "DueDate":
-+                ApplySortByDueDate();
-+                break;
-+            case "Created":
-+                ApplySortByCreated();
-+                break;
-+            case "Title":
-+                ApplySortByTitle();
-+                break;
-+            case "Room":
-+                ApplySortByRoom();
-+                break;
-+        }
++        if (!SortDispatchers.TryGetValue(_sortColumn, out var apply)) return;
++        apply(this);
      }
  
++    private static readonly Dictionary<string, Action<WorkOrderSearch>> SortDispatchers = new()
++    {
++        ["Status"] = s => s.ApplySortByStatus(),
++        ["DueDate"] = s => s.ApplySortByDueDate(),
++        ["Created"] = s => s.ApplySortByCreated(),
++        ["Title"] = s => s.ApplySortByTitle(),
++        ["Room"] = s => s.ApplySortByRoom(),
++    };
++
      private void ApplySortByStatus()
-@@ -166,6 +185,15 @@ private void ApplySortByDueDate()
+     {
+         Model.Results = _sortAscending
+@@ -166,6 +173,15 @@ private void ApplySortByDueDate()
                             .ThenByDescending(r => r.WorkOrder.DueDate).ToArray();
      }
  
@@ -100,13 +90,29 @@ index 7f252d6ba..2497b368f 100644
      {
          Model.Results = _sortAscending
 diff --git a/src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs b/src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs
-index 2bf36d695..0ee41c5d8 100644
+index 2bf36d695..b8e90fa59 100644
 --- a/src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs
 +++ b/src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs
-@@ -298,6 +298,28 @@ public async Task SortByDueDate_Ascending_SortsResultsByDueDate_NullsLast()
-         tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
-     }
+@@ -471,7 +471,7 @@ public async Task SortByRoom_Ascending_SortsResultsByRoomNumber()
+         var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
+         await sortBtn.ClickAsync(new());
  
+-        var cells = component.FindAll("tbody tr td:nth-child(7)");
++        var cells = component.FindAll("tbody tr td:nth-child(8)");
+         cells[0].TextContent.Trim().ShouldBe("A");
+         cells[1].TextContent.Trim().ShouldBe("B");
+         cells[2].TextContent.Trim().ShouldBe("C");
+@@ -494,11 +494,33 @@ public async Task SortByRoom_ClickingAgain_ReversesToDescending()
+         await sortBtn.ClickAsync(new());
+         await sortBtn.ClickAsync(new());
+ 
+-        var cells = component.FindAll("tbody tr td:nth-child(7)");
++        var cells = component.FindAll("tbody tr td:nth-child(8)");
+         cells[0].TextContent.Trim().ShouldBe("C");
+         cells[1].TextContent.Trim().ShouldBe("B");
+         cells[2].TextContent.Trim().ShouldBe("A");
+     }
++
 +    [Test]
 +    public async Task SortByCreated_Ascending_SortsResultsByCreatedDate_NullsLast()
 +    {
@@ -128,25 +134,6 @@ index 2bf36d695..0ee41c5d8 100644
 +        tds[1].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-001");
 +        tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
 +    }
-+
      [Test]
-     public async Task SortByDueDate_ClickingAgain_ReversesToDescending_NullsLast()
+     public async Task AssignedToMeCheckbox_WhenSessionStateIsTrue_RestoresCheckboxAndFiltersOnLoad()
      {
-@@ -471,7 +493,7 @@ public async Task SortByRoom_Ascending_SortsResultsByRoomNumber()
-         var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
-         await sortBtn.ClickAsync(new());
- 
--        var cells = component.FindAll("tbody tr td:nth-child(7)");
-+        var cells = component.FindAll("tbody tr td:nth-child(8)");
-         cells[0].TextContent.Trim().ShouldBe("A");
-         cells[1].TextContent.Trim().ShouldBe("B");
-         cells[2].TextContent.Trim().ShouldBe("C");
-@@ -494,7 +516,7 @@ public async Task SortByRoom_ClickingAgain_ReversesToDescending()
-         await sortBtn.ClickAsync(new());
-         await sortBtn.ClickAsync(new());
- 
--        var cells = component.FindAll("tbody tr td:nth-child(7)");
-+        var cells = component.FindAll("tbody tr td:nth-child(8)");
-         cells[0].TextContent.Trim().ShouldBe("C");
-         cells[1].TextContent.Trim().ShouldBe("B");
-         cells[2].TextContent.Trim().ShouldBe("A");

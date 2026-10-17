@@ -1,4 +1,4 @@
-# v6.1 general lean loop (phase 3 rep 2). The agent makes the edits; ONE call then does:
+# v7 general lean loop (phase 3 rep 3): -Template tNN applies a canned per-type patch (from the green rep-2 PR) when src is clean.
 #   FULL unit tests (rep 1: CI failed on unit tests outside the old filter) + IntegrationTests build -> publish (temp worktree on
 #   origin/master, src only; the workspace branch never changes) -> prints WAIT_CMD. Rerun after any fix: it pushes a follow-up commit.
 # WAIT_CMD waits up to 8 min per call (rep 1's 2-min calls cost ~10 wait turns per CI cycle, each replaying the whole context).

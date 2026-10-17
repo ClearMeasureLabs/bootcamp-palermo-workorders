@@ -46,8 +46,16 @@ foreach ($b in $bad) {
   "--- FAILED: $($b.Name) ($($b.Conclusion))"
   if ($b.Url -match '/runs/(\d+)') {
     ((gh run view $Matches[1] --repo $Repo --log-failed 2>$null) -replace "`0", '') -split "`n" |
-      Select-String -Pattern 'error [A-Z]+\d+|Failed |Assert|Exception|error:' | Select-Object -Last 20 |
+      Select-String -Pattern 'error [A-Z]+\d+|Failed |Assert|Exception|error:|CRAP|exceed|violation|threshold' | Select-Object -Last 20 |
       ForEach-Object { $l = $_.Line -replace '^\S+\s+\S+\s+\S+Z\s', ''; $l.Substring(0, [Math]::Min(250, $l.Length)) }
+  }
+  if (-not $qdone -and $b.Url -match '/runs/(\d+)') { $qdone = $true  # v7: Qodana findings live in the SARIF artifact, not the log
+    $d = Join-Path ([IO.Path]::GetTempPath()) "qodana-$($Matches[1])"; Remove-Item -Recurse -Force $d -ErrorAction SilentlyContinue
+    gh run download $Matches[1] --repo $Repo -p 'qodana*' -D $d 2>$null | Out-Null
+    Get-ChildItem $d -Recurse -Filter *.zip -ErrorAction SilentlyContinue | ForEach-Object { Expand-Archive $_.FullName -DestinationPath "$d/x" -Force }
+    $sar = Get-ChildItem $d -Recurse -Filter 'qodana.sarif.json' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($sar) { (Get-Content $sar.FullName -Raw | ConvertFrom-Json).runs[0].results | Where-Object { $_.baselineState -eq 'new' } | Select-Object -First 10 |
+      ForEach-Object { "QODANA $($_.ruleId) $($_.locations[0].physicalLocation.artifactLocation.uri):$($_.locations[0].physicalLocation.region.startLine) $($_.message.text)" } }
   }
 }
 'CHECKS=RED'; exit 1
