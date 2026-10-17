@@ -1,6 +1,6 @@
 namespace ClearMeasure.Bootcamp.Core.Services.Impl;
 
-public class WorkOrderNumberGenerator : IWorkOrderNumberGenerator
+public sealed class WorkOrderNumberGenerator : IWorkOrderNumberGenerator
 {
     public string GenerateNumber()
     {
