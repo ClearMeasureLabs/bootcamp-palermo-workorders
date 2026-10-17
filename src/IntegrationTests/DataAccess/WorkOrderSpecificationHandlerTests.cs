@@ -290,4 +290,41 @@ public class WorkOrderSpecificationHandlerTests
         orders.Length.ShouldBe(1);
         orders[0].Number.ShouldBe("OVR-001");
     }
+
+    [Test]
+    public async Task ShouldReturnOnlyMatchingTitles_WhenTitleContainsFilterIsSet()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var matching = new WorkOrder
+        {
+            Creator = employee,
+            Number = "TTL-001",
+            Title = "Fix Plumbing Leak"
+        };
+        var other = new WorkOrder
+        {
+            Creator = employee,
+            Number = "TTL-002",
+            Title = "Replace Light Bulb"
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(matching);
+            context.Add(other);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchTitleContains("plumbing");
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Number.ShouldBe("TTL-001");
+    }
 }
