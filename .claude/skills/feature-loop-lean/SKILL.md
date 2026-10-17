@@ -29,3 +29,7 @@ Run ONE command, then stop: `pwsh -NoProfile scripts/agent/Invoke-SealItem.ps1 -
 
 ## All types
 The platform's post-run handoff artifact write (`/opt/cursor/artifacts/...`) is expected; it is not waste.
+
+## Validation rule + unit tests (FluentValidation)
+Run ONE command, then stop:
+`pwsh -NoProfile scripts/agent/Invoke-ValidatorRuleItem.ps1 -Issue <N> -Validator <V> -Property <P> -Rule '<Rule(args)>' -New 'new <Request>({0})' -Valid '<C# expr>' -Invalid '<C# expr>' -Branch <branch>`

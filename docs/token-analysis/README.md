@@ -13,8 +13,11 @@ Cursor transcripts carry no token usage fields. Proxy = cumulative replayed cont
 | 4 | #9943 | #9944 | bc-23f09c58 | 10 | 10 | ~37k | -98.7% | type B (unit tests), generic lean |
 | 5 | #9945 | #9946 | bc-caaf07fd | 3 | 3 | ~3.3k | -99.9% | type B, canned recipe |
 | 6 | #9947 | #9948 | bc-54d95a8d | 6 | 6 | ~10k | -99.7% | type C (seal), generic lean |
-| 7 | #9949 | | | | | | | type C canned (Invoke-SealItem) |
-| 8 | #9950 | | | | | | | type D (validation rule + test), generic lean |
+| 7 | #9949 | #9951 | bc-43a2211a | 1 | 1 | ~0.27k | -99.99% | type C canned |
+| 8 | #9950 | #9952 | bc-c199a536 | 13 | 13 | ~50k | -98.3% | type D generic lean |
+| 9 | #9953 | | | | | | | type D canned |
+| 10 | #9954 | | | | | | | type E (bug fix + regression test), generic lean |
+| 12 | #9955 | | | | | | | mixed multi-project refactor, generic lean |
 
 ## Progress notes
 - 2026-10-16: Run 0 analysed. It is an invalid baseline. A repeatable template was created and issue #9937 filed for baseline run 1. Board writes were not possible: the gh token lacks the project scope.
@@ -27,3 +30,4 @@ Cursor transcripts carry no token usage fields. Proxy = cumulative replayed cont
 
 ## Finding: the Qodana checklists are already fixed on master
 Checklist items in #9436 (P1 mechanical) and #9437 (P2 naming/nullability), and a sample from #9439 (P4 dead symbols), were spot-checked on master on 2026-10-16; all of them are already fixed (#9437-#9439 are CLOSED; #9438 has no file-level checklist). The run-0 agent independently found its P1 target already fixed. The committed `qodana.sarif.json` holds a single result (`Html.AttributeValueNotResolved`, Settings.razor:16), which is not a mechanical fix. That is why run 0 found nothing to change. Experiment work types are therefore drawn from verified live code (missing tests, sealable classes, validation gaps) instead of the stale checklists. The issues still show unchecked boxes and should be reconciled.
+- 2026-10-16: Runs 7 and 8 recorded. Validator recipe added. Runs 9, 10 and 12 pre-filed; run 11 (type E canned) waits for run 10.
