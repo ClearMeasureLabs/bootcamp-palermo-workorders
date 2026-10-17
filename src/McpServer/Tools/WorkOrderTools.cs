@@ -18,7 +18,8 @@ public class WorkOrderTools
         IBus bus,
         [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null,
         [Description("Optional creator username filter")] string? creatorUsername = null,
-        [Description("Optional assignee username filter")] string? assigneeUsername = null)
+        [Description("Optional assignee username filter")] string? assigneeUsername = null,
+        [Description("Optional maximum number of work orders to return (1-100), ordered by Number")] int? limit = null)
     {
         var query = new WorkOrderSpecificationQuery();
         if (!string.IsNullOrWhiteSpace(status))
@@ -49,7 +50,20 @@ public class WorkOrderTools
         }
 
         var workOrders = await bus.Send(query);
-        return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
+        return SerializeWorkOrderList(workOrders, limit);
+    }
+
+    private static string SerializeWorkOrderList(IEnumerable<WorkOrder> workOrders, int? limit)
+    {
+        if (limit is < 1 or > 100)
+        {
+            return "limit must be between 1 and 100";
+        }
+
+        var items = limit.HasValue
+            ? workOrders.OrderBy(wo => wo.Number).Take(limit.Value)
+            : workOrders;
+        return JsonSerializer.Serialize(items.Select(FormatWorkOrderSummary).ToArray(),
             new JsonSerializerOptions { WriteIndented = true });
     }
 

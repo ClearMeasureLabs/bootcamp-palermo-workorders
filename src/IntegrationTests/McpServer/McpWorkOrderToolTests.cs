@@ -182,6 +182,36 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldLimitWorkOrdersOrderedByNumber()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var order1 = new WorkOrder { Creator = employee, Number = "WO-003", Title = "Third" };
+        var order2 = new WorkOrder { Creator = employee, Number = "WO-001", Title = "First" };
+        var order3 = new WorkOrder { Creator = employee, Number = "WO-002", Title = "Second" };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.AddRange(order1, order2, order3);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ListWorkOrders(bus, limit: 2);
+
+        ExtractNumbers(result).ShouldBe(new[] { "WO-001", "WO-002" });
+    }
+
+    [Test]
+    public async Task ShouldRejectLimitOutsideAllowedRange()
+    {
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        (await WorkOrderTools.ListWorkOrders(bus, limit: 0))
+            .ShouldBe("limit must be between 1 and 100");
+        (await WorkOrderTools.ListWorkOrders(bus, limit: 101))
+            .ShouldBe("limit must be between 1 and 100");
+    }
+
+    [Test]
     public async Task ShouldGetWorkOrderByNumberWithCompleteDetailShape()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
