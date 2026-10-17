@@ -21,8 +21,11 @@
     public void Handle(WorkOrderChangedEvent theEvent)
     {
         var order = theEvent.Result.WorkOrder;
-        _myWorkOrders.Add(order);
-        InvokeAsync(StateHasChanged);
+        if (order.Creator?.Id == _currentUser?.Id)
+        {
+            _myWorkOrders.Add(order);
+            InvokeAsync(StateHasChanged);
+        }
     }
 
     protected override async Task OnInitializedAsync()

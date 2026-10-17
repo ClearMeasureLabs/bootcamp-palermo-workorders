@@ -178,6 +178,45 @@ public class MyWorkOrdersTests
         component.Instance.Count.ShouldBe(0);
     }
 
+    [Test]
+    public async Task ShouldNotIncrementCountWhenWorkOrderCreatedByDifferentEmployee()
+    {
+        await using var ctx = new BunitContext();
+
+        // Arrange
+        var currentUser = new Employee("current.user", "Current", "User", "current@example.com")
+        {
+            Id = Guid.NewGuid()
+        };
+        var otherUser = new Employee("other.user", "Other", "User", "other@example.com")
+        {
+            Id = Guid.NewGuid()
+        };
+        var stubBus = new StubBusWithNoWorkOrders();
+        var stubUserSession = new StubUserSession(currentUser);
+        var stubUiBus = new StubUiBus();
+
+        ctx.Services.AddSingleton<IBus>(stubBus);
+        ctx.Services.AddSingleton<IUserSession>(stubUserSession);
+        ctx.Services.AddSingleton<IUiBus>(stubUiBus);
+
+        var component = ctx.Render<MyWorkOrders>();
+
+        // Act
+        var order = new WorkOrder
+        {
+            Id = Guid.NewGuid(),
+            Number = "WO-999",
+            Title = "Someone else's order",
+            Status = WorkOrderStatus.Draft,
+            Creator = otherUser
+        };
+        component.Instance.Handle(new WorkOrderChangedEvent(new StateCommandResult(order)));
+
+        // Assert
+        component.Instance.Count.ShouldBe(0);
+    }
+
     private class StubUserSession(Employee? currentUser = null) : IUserSession
     {
         private readonly Employee? _currentUser =
