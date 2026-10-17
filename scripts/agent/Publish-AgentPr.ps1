@@ -27,7 +27,16 @@ try {
   if ($c) {
     $bad = git diff --name-only origin/master $c | Where-Object { $_ -notlike 'src/*' }
     if ($bad) { Fail "non-src files: $($bad -join ',')" }
-    $p = git push -q origin "${c}:refs/heads/$Branch" 2>&1; if ($LASTEXITCODE) { Fail "push: $p" }
+    # v7.1: GitHub intermittently answers "! [remote rejected] ... (failed)" with no reason (phase 2 iter 14, phase 3 rep 3 t08;
+    # same rules/path succeeded for the other 9 concurrent pushes). Retry with backoff before declaring PUBLISH_FAIL.
+    $ok = $false
+    foreach ($try in 1..4) {
+      $p = git push -q origin "${c}:refs/heads/$Branch" 2>&1; if (-not $LASTEXITCODE) { $ok = $true; break }
+      git fetch -q origin $Branch 2>$null
+      if ($LASTEXITCODE -eq 0 -and (git rev-parse 'FETCH_HEAD^{tree}') -eq $tree) { $ok = $true; break }  # landed despite the error
+      if ($try -lt 4) { Start-Sleep -Seconds (10 * $try) }
+    }
+    if (-not $ok) { Fail "push (4 tries): $p" }
   }
 } finally { Pop-Location; git worktree remove --force $wt 2>$null | Out-Null }
 $owner = $Repo.Split('/')[0]
