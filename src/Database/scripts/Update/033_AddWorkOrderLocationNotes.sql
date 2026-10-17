@@ -1,0 +1,13 @@
+BEGIN TRY
+	BEGIN TRANSACTION
+	PRINT N'Adding LocationNotes column to [dbo].[WorkOrder]'
+	ALTER TABLE [dbo].[WorkOrder] ADD [LocationNotes] NVARCHAR(500) NULL
+	PRINT 'The database update succeeded'
+	COMMIT TRANSACTION
+END TRY
+BEGIN CATCH
+	IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION
+	THROW
+END CATCH
+GO
