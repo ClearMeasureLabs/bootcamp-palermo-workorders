@@ -1,0 +1,56 @@
+<div class="search-page">
+    <div class="search-container">
+        <div class="search-header">
+            <h2 data-testid="@Elements.Heading">Overdue Work Orders</h2>
+            <p data-testid="@Elements.Hint">Open work orders with a due date before today.</p>
+        </div>
+
+        <div class="search-results">
+            @if (_results.Length == 0)
+            {
+                <p data-testid="@Elements.EmptyMessage">No overdue work orders.</p>
+            }
+            else
+            {
+                <table class="table" data-testid="@Elements.ResultsTable">
+                    <thead>
+                    <tr>
+                        <th>WO #</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var order in _results)
+                    {
+                        <tr data-testid="@(Elements.Row + order.Number)">
+                            <td>
+                                <a data-testid="@(Elements.WorkOrderLink + order.Number)"
+                                   href="/workorder/manage/@order.Number?mode=Edit">
+                                    @order.Number
+                                </a>
+                            </td>
+                            <td>@order.Title</td>
+                            <td>@order.Status.FriendlyName</td>
+                            <td>@order.DueDate?.ToString("MMM d, yyyy")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    public enum Elements
+    {
+        Heading,
+        Hint,
+        EmptyMessage,
+        ResultsTable,
+        Row,
+        WorkOrderLink
+    }
+}
