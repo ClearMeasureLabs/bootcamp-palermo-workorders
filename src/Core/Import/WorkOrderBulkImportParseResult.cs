@@ -21,6 +21,9 @@ public sealed class WorkOrderBulkImportParseResult
     public static WorkOrderBulkImportParseResult Ok(IReadOnlyList<WorkOrderBulkImportRow> rows) =>
         new(true, null, rows);
 
-    public static WorkOrderBulkImportParseResult Fail(string error) =>
-        new(false, error, Array.Empty<WorkOrderBulkImportRow>());
+    public static WorkOrderBulkImportParseResult Fail(string error)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(error);
+        return new(false, error, Array.Empty<WorkOrderBulkImportRow>());
+    }
 }
