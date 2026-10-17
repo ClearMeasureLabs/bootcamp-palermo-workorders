@@ -27,6 +27,8 @@ public record AssignedToCancelledCommand(WorkOrder WorkOrder, Employee CurrentUs
 
     public override void Execute(StateCommandContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
         WorkOrder.AssignedDate = null;
         WorkOrder.Assignee = null;
         base.Execute(context);

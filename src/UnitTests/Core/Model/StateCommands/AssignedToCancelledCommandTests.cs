@@ -70,4 +70,12 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
     {
         return new AssignedToCancelledCommand(order, employee);
     }
+
+    [Test]
+    public void ExecuteShouldThrowWhenContextIsNull()
+    {
+        var command = new AssignedToCancelledCommand(new WorkOrder { Creator = new Employee() }, new Employee());
+        var ex = Assert.Throws<ArgumentNullException>(() => command.Execute(null!));
+        Assert.That(ex!.ParamName, Is.EqualTo("context"));
+    }
 }
