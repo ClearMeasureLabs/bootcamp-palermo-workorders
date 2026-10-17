@@ -7,7 +7,9 @@ Cursor transcripts carry no token usage fields. Proxy = cumulative replayed cont
 | Run | Item | PR | Agent | Turns | Tool calls | Est. cumulative tokens | Δ vs baseline | Notes |
 |---|---|---|---|---|---|---|---|---|
 | 0 | #9936 | — | bc-34ba5471 | 99 | 99 | ~3.1M | invalid | no diff (finding already fixed) |
-| 1 | #9937 | | | | | | baseline | stock skill |
+| 1 | #9937 | #9938 | bc-3101faa3 | 90 | 90 | ~2.90M | **baseline** | stock skill, ~35 min |
+| 2 | #9939 | | | | | | | lean v1 |
 
 ## Progress notes
 - 2026-10-16: Run 0 analysed. It is an invalid baseline. A repeatable template was created and issue #9937 filed for baseline run 1. Board writes were not possible: the gh token lacks the project scope.
+- 2026-10-16: Run 1 baseline recorded (~2.90M est.). Optimization v1 added (scripts/agent + feature-loop-lean). Iteration 2 filed.
