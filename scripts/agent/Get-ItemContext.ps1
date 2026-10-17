@@ -30,7 +30,7 @@ foreach ($p in ($paths | Select-Object -Unique)) {
   "--- FILE $p ($($lines.Count) lines; outline)"
   $lines | Where-Object { $_ -match '^(using|namespace|public|internal|private|protected|\s{4}(public|private|protected|internal))' -and $_ -notmatch '^\s{8}' }
   $text = $lines -join "`n"
-  foreach ($m in $Focus) {
+  foreach ($m in ($Focus -split "," | Where-Object { $_ })) {
     $mm = [regex]::Match($text, "(?ms)^(\s*)[^\n]*\b$m\b[^\n]*\n\1\{.*?\n\1\}")
     if ($mm.Success) { "--- FOCUS $m"; $mm.Value }
   }
