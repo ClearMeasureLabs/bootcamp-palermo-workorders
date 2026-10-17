@@ -61,7 +61,7 @@ public class WorkOrderManageModelInstructionsTests
         var results = Validate(model);
 
         results.Single(r => r.MemberNames.Contains(nameof(WorkOrderManageModel.Instructions)))
-            .ErrorMessage.ShouldBe("Instructions cannot exceed 4000 characters.");
+            .ErrorMessage.ShouldBe("Instructions cannot exceed 2000 characters.");
     }
 
     private static WorkOrderManageModel ValidModel()
