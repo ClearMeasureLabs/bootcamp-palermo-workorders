@@ -23,7 +23,8 @@ public class StateCommandHandler(
     public async Task<StateCommandResult> Handle(StateCommandBase request,
         CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Executing");
+        var commandName = request.GetType().Name;
+        logger.LogInformation("Executing {Command} for work order {Number}", commandName, request.WorkOrder.Number);
         request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
 
         var order = request.WorkOrder;
@@ -40,7 +41,8 @@ public class StateCommandHandler(
 
         var debugMessage = $"{fullName} has {loweredTransitionVerb} work order {workOrderNumber}";
         logger.LogDebug(debugMessage);
-        logger.LogInformation("Executed");
+        logger.LogInformation("Executed {Command} for work order {Number} -> {Status}", commandName, workOrderNumber,
+            persisted.Status);
 
         var result = new StateCommandResult(persisted, request.TransitionVerbPresentTense, debugMessage);
 
