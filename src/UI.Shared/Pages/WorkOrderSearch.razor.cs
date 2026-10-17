@@ -143,12 +143,30 @@ public partial class WorkOrderSearch : AppComponentBase
 
     private void ApplySort()
     {
-        if (_sortColumn == null) return;
-        if (_sortColumn == "Status") ApplySortByStatus();
-        else if (_sortColumn == "DueDate") ApplySortByDueDate();
-        else if (_sortColumn == "Created") ApplySortByCreated();
-        else if (_sortColumn == "Title") ApplySortByTitle();
-        else if (_sortColumn == "Room") ApplySortByRoom();
+        if (_sortColumn is null) return;
+        ApplySortColumn(_sortColumn);
+    }
+
+    private void ApplySortColumn(string column)
+    {
+        switch (column)
+        {
+            case "Status":
+                ApplySortByStatus();
+                break;
+            case "DueDate":
+                ApplySortByDueDate();
+                break;
+            case "Created":
+                ApplySortByCreated();
+                break;
+            case "Title":
+                ApplySortByTitle();
+                break;
+            case "Room":
+                ApplySortByRoom();
+                break;
+        }
     }
 
     private void ApplySortByStatus()
