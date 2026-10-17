@@ -1,4 +1,5 @@
-using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using MediatR;
@@ -49,7 +50,11 @@ public class WorkOrderAssignedWebhookHandler(
                 title = workOrder.Title,
                 assignee = workOrder.Assignee?.UserName
             };
-            using var response = await client.PostAsJsonAsync(url, payload, cancellationToken);
+            using var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+            using var response = await client.PostAsync(url, content, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogWarning(
