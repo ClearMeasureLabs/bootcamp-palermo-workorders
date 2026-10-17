@@ -9,6 +9,6 @@ public sealed class WorkOrderByNumberQueryValidator : AbstractValidator<WorkOrde
 {
     public WorkOrderByNumberQueryValidator()
     {
-        RuleFor(x => x.Number).NotEmpty();
+        RuleFor(x => x.Number).NotEmpty().MaximumLength(7);
     }
 }
