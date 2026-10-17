@@ -1,0 +1,14 @@
+BEGIN TRY
+	BEGIN TRANSACTION
+	PRINT N'Adding Priority column to [dbo].[WorkOrder]'
+	ALTER TABLE [dbo].[WorkOrder] ADD [Priority] NVARCHAR(10) NOT NULL
+		CONSTRAINT [DF_WorkOrder_Priority] DEFAULT N'Normal'
+	PRINT 'The database update succeeded'
+	COMMIT TRANSACTION
+END TRY
+BEGIN CATCH
+	IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION
+	THROW
+END CATCH
+GO

@@ -39,6 +39,11 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
+    /// <summary>
+    /// Priority classification (Low / Normal / High). Defaults to <see cref="WorkOrderPriority.Normal"/>.
+    /// </summary>
+    public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;
+
     public Employee? Creator { get; set; }
 
     public Employee? Assignee { get; set; }

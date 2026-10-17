@@ -14,6 +14,11 @@ public class WorkOrderManageModel
 
     public string? Status { get; set; }
 
+    /// <summary>
+    /// Bound priority key (Low / Normal / High).
+    /// </summary>
+    public string? Priority { get; set; }
+
     public string? CreatorFullName { get; set; }
 
     public string? AssignedToUserName { get; set; }
