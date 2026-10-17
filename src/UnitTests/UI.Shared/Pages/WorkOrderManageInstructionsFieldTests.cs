@@ -18,7 +18,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageInstructionsFieldTests
 {
     [Test]
-    public async Task WorkOrderManage_ShouldRenderInstructionsAsTextareaWithMaxLength4000()
+    public async Task WorkOrderManage_ShouldRenderInstructionsAsTextareaWithMaxLength2000()
     {
         await using var ctx = CreateNewModeContext();
 

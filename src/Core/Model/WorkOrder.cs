@@ -19,20 +19,20 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// <summary>
     /// Maximum length of <see cref="Instructions"/> accepted by persistence and the work-order form.
     /// </summary>
-    public const int InstructionsMaxLength = 4000;
+    public const int InstructionsMaxLength = 2000;
 
     public string? Title { get; set; } = "";
 
     public string? Description
     {
         get;
-        set => field = GetTruncatedString(value);
+        set => field = GetTruncatedString(value, DescriptionMaxLength);
     } = "";
 
     public string? Instructions
     {
         get;
-        set => field = GetTruncatedString(value);
+        set => field = GetTruncatedString(value, InstructionsMaxLength);
     } = "";
 
     public string? RoomNumber { get; set; }
@@ -59,14 +59,14 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public DateOnly? DueDate { get; set; }
 
-    private string GetTruncatedString(string? value)
+    private string GetTruncatedString(string? value, int maxAllowed)
     {
         if (value == null)
         {
             return string.Empty;
         }
 
-        var maxLength = Math.Min(InstructionsMaxLength, value.Length);
+        var maxLength = Math.Min(maxAllowed, value.Length);
         return value.Substring(0, maxLength);
     }
 

@@ -146,7 +146,7 @@ public class McpCreateWorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
 
         var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
         await Expect(instructionsField).ToHaveValueAsync(expectedInstructions);
-        await Expect(Page.GetByText("Instructions cannot exceed 4000 characters.")).Not.ToBeVisibleAsync();
+        await Expect(Page.GetByText("Instructions cannot exceed 2000 characters.")).Not.ToBeVisibleAsync();
     }
 
     private async Task LoginAsTlovejoyAsync()
