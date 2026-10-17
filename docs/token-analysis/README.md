@@ -10,7 +10,7 @@ Cursor transcripts carry no token usage fields. Proxy = cumulative replayed cont
 | 1 | #9937 | #9938 | bc-3101faa3 | 90 | 90 | ~2.90M | **baseline** | stock skill, ~35 min |
 | 2 | #9939 | #9940 | bc-aea9f32c | 13 | 13 | ~47k | **-98.4%** | lean v1, ~4 min |
 | 3 | #9941 | #9942 | bc-06208a2f | 1 | 1 | ~0.3k | **-99.99%** | lean v2 one-shot; target confirmed |
-| 4 | #TBD | | | | | | | new type: unit tests for untested class, generic lean |
+| 4 | #9943 | | | | | | | new type: unit tests for untested class, generic lean |
 
 ## Progress notes
 - 2026-10-16: Run 0 analysed. It is an invalid baseline. A repeatable template was created and issue #9937 filed for baseline run 1. Board writes were not possible: the gh token lacks the project scope.
