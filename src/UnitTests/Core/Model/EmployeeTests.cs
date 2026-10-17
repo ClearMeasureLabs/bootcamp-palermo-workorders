@@ -96,6 +96,14 @@ public class EmployeeTests
     }
 
     [Test]
+    public void CompareTo_WhenOtherIsNull_ShouldReturnPositive()
+    {
+        var employee = new Employee("", "1", "1", "");
+
+        employee.CompareTo(null).ShouldBeGreaterThan(0);
+    }
+
+    [Test]
     public void ShouldCompareEmployeesByLastName()
     {
         var employee1 = new Employee("", "1", "1", "");
