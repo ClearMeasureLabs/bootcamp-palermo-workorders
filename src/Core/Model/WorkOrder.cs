@@ -19,7 +19,7 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// <summary>
     /// Maximum length of <see cref="Instructions"/> accepted by persistence and the work-order form.
     /// </summary>
-    public const int InstructionsMaxLength = 4000;
+    public const int InstructionsMaxLength = 2000;
 
     public string? Title { get; set; } = "";
 
