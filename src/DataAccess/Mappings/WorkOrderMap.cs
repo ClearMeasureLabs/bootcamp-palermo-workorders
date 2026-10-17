@@ -8,6 +8,7 @@ public class WorkOrderMap : IEntityFrameworkMapping
     public void Map(ModelBuilder modelBuilder)
     {
         var statusConverter = new WorkOrderStatusConverter();
+        var priorityConverter = new WorkOrderPriorityConverter();
 
         modelBuilder.Entity<WorkOrder>(entity =>
         {
@@ -44,6 +45,11 @@ public class WorkOrderMap : IEntityFrameworkMapping
             entity.Property(e => e.Status)
                 .HasConversion(statusConverter)
                 .HasMaxLength(3);
+
+            entity.Property(e => e.Priority)
+                .HasConversion(priorityConverter)
+                .HasMaxLength(10)
+                .IsRequired();
         });
     }
 }

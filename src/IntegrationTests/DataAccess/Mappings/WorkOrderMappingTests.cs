@@ -47,8 +47,42 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Instructions.ShouldBe("Lock out panel before work.");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
+        rehydratedWorkOrder.Priority.ShouldBe(WorkOrderPriority.Normal);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
         rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);
+    }
+
+    [Test]
+    public void ShouldPersistAndRetrieveWorkOrderPriority()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator-pri", "Pri", "Oity", "pri@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-P1",
+            Title = "Priority mapping",
+            Description = "Round-trip High priority",
+            Status = WorkOrderStatus.Draft,
+            Priority = WorkOrderPriority.High,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydrated;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydrated = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydrated.Priority.ShouldBe(WorkOrderPriority.High);
+        rehydrated.Priority.Key.ShouldBe("High");
     }
 
     [Test]
