@@ -143,13 +143,19 @@ public partial class WorkOrderSearch : AppComponentBase
 
     private void ApplySort()
     {
-        if (_sortColumn == null) return;
-        if (_sortColumn == "Status") ApplySortByStatus();
-        else if (_sortColumn == "DueDate") ApplySortByDueDate();
-        else if (_sortColumn == "Created") ApplySortByCreated();
-        else if (_sortColumn == "Title") ApplySortByTitle();
-        else if (_sortColumn == "Room") ApplySortByRoom();
+        if (_sortColumn is null) return;
+        if (!SortDispatchers.TryGetValue(_sortColumn, out var apply)) return;
+        apply(this);
     }
+
+    private static readonly Dictionary<string, Action<WorkOrderSearch>> SortDispatchers = new()
+    {
+        ["Status"] = s => s.ApplySortByStatus(),
+        ["DueDate"] = s => s.ApplySortByDueDate(),
+        ["Created"] = s => s.ApplySortByCreated(),
+        ["Title"] = s => s.ApplySortByTitle(),
+        ["Room"] = s => s.ApplySortByRoom(),
+    };
 
     private void ApplySortByStatus()
     {
