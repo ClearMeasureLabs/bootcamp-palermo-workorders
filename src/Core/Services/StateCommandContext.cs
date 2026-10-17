@@ -1,6 +1,6 @@
 namespace ClearMeasure.Bootcamp.Core.Services;
 
-public class StateCommandContext
+public sealed class StateCommandContext
 {
     public DateTime CurrentDateTime { get; init; }
 }
