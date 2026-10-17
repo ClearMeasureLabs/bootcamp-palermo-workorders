@@ -52,8 +52,8 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     public string GetFullName()
     {
         return string.IsNullOrWhiteSpace(MiddleName)
-            ? $"{FirstName} {LastName}"
-            : $"{FirstName} {MiddleName} {LastName}";
+            ? $"{FirstName.Trim()} {LastName.Trim()}"
+            : $"{FirstName.Trim()} {MiddleName.Trim()} {LastName.Trim()}";
     }
 
     public override string ToString()
