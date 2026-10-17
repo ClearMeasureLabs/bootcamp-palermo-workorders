@@ -63,19 +63,19 @@ public class WorkOrderTests
     }
 
     [Test]
-    public void ShouldTruncateTo4000CharactersOnDescription()
+    public void ShouldTruncateToDescriptionMaxLengthOnDescription()
     {
-        var longText = new string('x', 4001);
+        var longText = new string('x', WorkOrder.DescriptionMaxLength + 1);
         var order = new WorkOrder() { Description = longText };
-        Assert.That(order.Description.Length, Is.EqualTo(4000));
+        Assert.That(order.Description.Length, Is.EqualTo(WorkOrder.DescriptionMaxLength));
     }
 
     [Test]
-    public void ShouldTruncateTo4000CharactersOnInstructions()
+    public void ShouldTruncateToInstructionsMaxLengthOnInstructions()
     {
-        var longText = new string('x', 4001);
+        var longText = new string('x', WorkOrder.InstructionsMaxLength + 1);
         var order = new WorkOrder() { Instructions = longText };
-        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
+        Assert.That(order.Instructions.Length, Is.EqualTo(WorkOrder.InstructionsMaxLength));
     }
 
     [Test]
