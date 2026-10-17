@@ -493,7 +493,7 @@ public class WorkOrderSearchTests
         var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
         await sortBtn.ClickAsync(new());
 
-        var cells = component.FindAll("tbody tr td:nth-child(7)");
+        var cells = component.FindAll("tbody tr td:nth-child(8)");
         cells[0].TextContent.Trim().ShouldBe("A");
         cells[1].TextContent.Trim().ShouldBe("B");
         cells[2].TextContent.Trim().ShouldBe("C");
@@ -516,7 +516,7 @@ public class WorkOrderSearchTests
         await sortBtn.ClickAsync(new());
         await sortBtn.ClickAsync(new());
 
-        var cells = component.FindAll("tbody tr td:nth-child(7)");
+        var cells = component.FindAll("tbody tr td:nth-child(8)");
         cells[0].TextContent.Trim().ShouldBe("C");
         cells[1].TextContent.Trim().ShouldBe("B");
         cells[2].TextContent.Trim().ShouldBe("A");
