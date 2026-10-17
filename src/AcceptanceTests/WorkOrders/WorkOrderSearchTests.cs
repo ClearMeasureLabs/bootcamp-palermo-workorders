@@ -600,7 +600,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await TakeScreenshotAsync(1, "SortedAscending");
 
         await Expect(roomSortBtn).ToHaveTextAsync("Room ▲");
-        var firstRoomCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(7)");
+        var firstRoomCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(8)");
         await Expect(firstRoomCell).ToContainTextAsync("Atrium");
 
         await roomSortBtn.ClickAsync();
