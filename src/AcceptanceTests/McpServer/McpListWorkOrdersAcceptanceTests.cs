@@ -213,20 +213,22 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         await searchButton.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        foreach (var number in requiredNumbers)
-        {
-            await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + number))
-                .ToBeVisibleAsync();
-        }
-
         // Re-query MCP after the portal settles so parity is not based on a stale pre-search
         // snapshot while Parallelizable siblings mutate the shared database.
+        // Required-link visibility is asserted only after portal/MCP sets agree so
+        // Parallelizable siblings and slow SQL do not race the first ToBeVisible.
         var portalNumbers = await VisibleSearchNumbers();
         var mcpNumbers = await CallListWorkOrders(filterArguments);
         for (var attempt = 0; attempt < 10; attempt++)
         {
             if (portalNumbers.SetEquals(mcpNumbers) && requiredNumbers.All(portalNumbers.Contains))
             {
+                foreach (var number in requiredNumbers)
+                {
+                    await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + number))
+                        .ToBeVisibleAsync();
+                }
+
                 return;
             }
 
