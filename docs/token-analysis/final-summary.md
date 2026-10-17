@@ -13,7 +13,7 @@ Cursor cloud-agent transcripts carry **no token usage fields** (no input/cache/o
 | Median, runs 2-20 (all types, all paths) | ~10k | **-99.7%** |
 | Median, general path v3/v4 with no type script (runs 11, 13-20) | ~9.9k | -99.7% |
 | Worst later run (run 18, context gap) | ~251k | -91.3% |
-| Mean, general path v3/v4 | ~39k | -98.7% |
+| Mean, general path v3/v4 | ~39k | -98.6% |
 
 Every run from 2 to 20 beat the 80% target. It held on the first two optimized runs (2: -98.4%, 3: -99.99%) and across 5 work types plus 9 general-path items. Wall clock fell from ~35 min to ~1-4 min.
 
