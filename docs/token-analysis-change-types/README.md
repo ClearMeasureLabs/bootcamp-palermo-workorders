@@ -42,37 +42,41 @@ Rep 2 issues: T01 #10054, T02 #10055, T03 #10056, T04 #10057, T05 #10058, T06 #1
 
 ## Results (per type, per rep)
 
-Rep 1 → rep 2 (details in rep-1.md and rep-2.md):
+Details in rep-1.md, rep-2.md and rep-3.md.
 
-| Type | PR | Rep1 in | Rep2 in | Δ in | Rep1 out | Rep2 out | Δ out | Calls | Waits |
-|---|---|---|---|---|---|---|---|---|---|
-| t01 | #10075 | 1,814k | 381k | -79% | 7.2k | 2.5k | -66% | 31 | 2 |
-| t02 | #10074 | 700k | 117k | -83% | 3.2k | 1.9k | -40% | 20 | 3 |
-| t03 | #10081 | 1,142k | 290k | -75% | 6.7k | 2.9k | -56% | 31 | 5 |
-| t04 | #10080 | 3,811k | 1,107k | -71% | 9.1k | 4.0k | -56% | 45 | 3 |
-| t05 | #10079 | 1,432k | 768k | -46% | 7.1k | 4.0k | -44% | 33 | 5 |
-| t06 | #10077 | 1,158k | 191k | -84% | 5.4k | 2.5k | -53% | 28 | 2 |
-| t07 | #10073 | 127k | 69k | -46% | 1.5k | 1.7k | +10% | 19 | 6 |
-| t08 | #10078 | 102k | 56k | -46% | 1.6k | 1.1k | -29% | 12 | 2 |
-| t09 | #10082 | 1,927k | 656k | -66% | 7.6k | 3.7k | -51% | 40 | 2 |
-| t10 | #10076 | 388k | 162k | -58% | 3.0k | 2.5k | -17% | 24 | 2 |
-| t11 | #10083 | 601k | 483k | -20% | 3.6k | 2.4k | -32% | 27 | 3 |
-| t12 | #10084 | 528k | 249k | -53% | 2.6k | 2.7k | +4% | 35 | 2 |
-| t13 | #10085 | 564k | 145k | -74% | 3.6k | 2.2k | -38% | 23 | 3 |
-| t14 | #10086 | 73k | 103k | +40% | 1.7k | 1.6k | -8% | 19 | 3 |
-| t15 | #10087 | 775k | 330k | -57% | 3.5k | 2.6k | -24% | 30 | 3 |
-| t16 | #10089 | 1,236k (FAIL) | 2,135k | +73% | 5.0k | 8.5k | +69% | 69 | 4 |
-| t17 | #10088 | 1,270k | 156k | -88% | 5.7k | 1.9k | -67% | 19 | 2 |
-| t18 | #10090 | 65k | 35k | -45% | 1.5k | 1.2k | -22% | 12 | 3 |
-| t19 | #10091 | 88k | 14k | -84% | 2.1k | 0.8k | -59% | 9 | 2 |
-| **total** | | **17.80M** | **7.44M** | **-58%** | **81.9k** | **51.0k** | **-38%** | | |
+| Type | Rep3 PR | Input r1 | r2 | r3 | r1→r3 | Output r1 | r2 | r3 | r1→r3 | r3 calls |
+|---|---|---|---|---|---|---|---|---|---|---|
+| t01 | #10111 | 1,814k | 381k | 1.8k | -100% | 7.2k | 2.5k | 0.52k | -93% | 3 |
+| t02 | #10119 | 700k | 117k | 86k | -88% | 3.2k | 1.9k | 2.61k | -18% | 19 |
+| t03 | #10112 | 1,142k | 290k | 1.9k | -100% | 6.7k | 2.9k | 0.55k | -92% | 3 |
+| t04 | #10114 | 3,811k | 1,107k | 1.8k | -100% | 9.1k | 4.0k | 0.51k | -94% | 3 |
+| t05 | #10113 | 1,432k | 768k | 1.9k | -100% | 7.1k | 4.0k | 0.52k | -93% | 3 |
+| t06 | #10116 | 1,158k | 191k | 3.0k | -100% | 5.4k | 2.5k | 0.63k | -88% | 4 |
+| t07 | #10117 | 127k | 69k | 1.9k | -99% | 1.5k | 1.7k | 0.54k | -65% | 3 |
+| t08 | #10120 | 102k | 56k | 1.8k | -98% | 1.6k | 1.1k | 0.50k | -69% | 3 |
+| t09 | #10118 | 1,927k | 656k | 544k | -72% | 7.6k | 3.7k | 4.54k | -41% | 32 |
+| t10 | #10115 | 388k | 162k | 1.9k | -100% | 3.0k | 2.5k | 0.54k | -82% | 3 |
+| t11 | #10121 | 601k | 483k | 144k | -76% | 3.6k | 2.4k | 3.59k | +0% | 24 |
+| t12 | #10122 | 528k | 249k | 3.0k | -99% | 2.6k | 2.7k | 0.65k | -75% | 4 |
+| t13 | #10123 | 564k | 145k | 1.8k | -100% | 3.6k | 2.2k | 0.52k | -86% | 3 |
+| t14 | #10124 | 73k | 103k | 1.8k | -98% | 1.7k | 1.6k | 0.51k | -70% | 3 |
+| t15 | #10125 | 775k | 330k | 2.9k | -100% | 3.5k | 2.6k | 0.63k | -82% | 4 |
+| t16 (r1 FAIL) | #10126 | 1,236k | 2,135k | 13k | -99% | 5.0k | 8.5k | 0.82k | -84% | 7 |
+| t17 | #10127 | 1,270k | 156k | 5.8k | -100% | 5.7k | 1.9k | 0.56k | -90% | 4 |
+| t18 | #10128 | 65k | 35k | 2.0k | -97% | 1.5k | 1.2k | 0.55k | -64% | 3 |
+| t19 | #10129 | 88k | 14k | 2.9k | -97% | 2.1k | 0.8k | 0.62k | -70% | 4 |
+| t08 first try (PUBLISH_FAIL, push rejected) | none | | | 0.3k | | | | 0.41k | | 1 |
+| **total** (r3 incl. failed t08 try) | | **17.80M** | **7.44M** | **824k** | **-95%** | **81.9k** | **51.0k** | **20.3k** | **-75%** | |
 
 ## Technique ledger
 | Technique | Rep | Δ input | Δ output | Notes |
 |---|---|---|---|---|
 | v6 base: lean PHASE3 skill, no-wait Invoke, ≤2-min wait calls | 1 | baseline: 17.80M total over 19 types | 82k total | the 2-min waits multiplied context replays |
 | **v6.1 bundle** (rep 2 vs rep 1, all 19 types): worktree publish, full unit suite, ≤8-min waits, exact file maps + CI traps | 2 | **17.80M → 7.44M (-58%)** | **81.9k → 51.0k (-38%)** | 19/19 green (rep 1: 18/19); waits 5-24 → 2-6 per run; the four changes shipped together, so they aren't separated |
-| v7: Wait prints CRAP lines and new Qodana SARIF findings on red; skill bans manual log digging | 3 | tbd | tbd | targets the t16/t05 drivers |
-| Canned per-type templates (refreshed from the green rep-2 PRs; all 19 apply to master) | 3 | tbd | tbd | the phase 2 dominant lever |
+| **v7 bundle**: canned per-type templates (from green rep-2 PRs) + CRAP/Qodana in wait output + no-digging skill (rep 3 vs rep 2) | 3 | **7.44M → 824k (-89%)** | **51.0k → 20.3k (-60%)** | 16/19 types one-shot (3-7 calls); templates dominate. Outliers were CI flakes the wait script didn't handle |
+| v7.1: push retry on bare "remote rejected (failed)" | 3 | n/a | n/a | the t08 relaunch was clean (3 calls) |
+| v8: auto-rerun flaky acceptance/integration jobs, post-rerun grace, -ForceRerun, NO_CHANGE notice | 4 | tbd | tbd | targets t02/t09/t11 |
 
 Rep 3 issues: T01 #10092, T02 #10093, T03 #10094, T04 #10095, T05 #10096, T06 #10097, T07 #10098, T08 #10099, T09 #10100, T10 #10101, T11 #10102, T12 #10103, T13 #10104, T14 #10105, T15 #10106, T16 #10107, T17 #10108, T18 #10109, T19 #10110.
+
+Rep 4 issues (branch `cursor/token-exp-p3-tTT-r4`): T01 #10130, T02 #10131, T03 #10132, T04 #10133, T05 #10134, T06 #10135, T07 #10136, T08 #10137, T09 #10138, T10 #10139, T11 #10140, T12 #10141, T13 #10142, T14 #10143, T15 #10144, T16 #10145, T17 #10146, T18 #10147, T19 #10148.

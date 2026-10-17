@@ -1,4 +1,4 @@
-# v7 general lean loop (phase 3 rep 3): -Template tNN applies a canned per-type patch (from the green rep-2 PR) when src is clean.
+# v8 (wait: flaky acceptance/integration auto-rerun, post-rerun grace, -ForceRerun; publish: NO_CHANGE notice). v7 general lean loop (phase 3 rep 3): -Template tNN applies a canned per-type patch (from the green rep-2 PR) when src is clean.
 #   FULL unit tests (rep 1: CI failed on unit tests outside the old filter) + IntegrationTests build -> publish (temp worktree on
 #   origin/master, src only; the workspace branch never changes) -> prints WAIT_CMD. Rerun after any fix: it pushes a follow-up commit.
 # WAIT_CMD waits up to 8 min per call (rep 1's 2-min calls cost ~10 wait turns per CI cycle, each replaying the whole context).
@@ -19,5 +19,6 @@ if ($LASTEXITCODE) { $b | Select-String 'error' | Select-Object -First 10; 'IT_B
 $title = gh api "repos/$Repo/issues/$Issue" --jq .title
 $out = & "$tools/Publish-AgentPr.ps1" -Issue $Issue -Branch $Branch -Title $title
 if ($out -match 'PUBLISH_FAIL') { $out; exit 2 }
+$out | Where-Object { $_ -match 'NO_CHANGE' }
 $pr = [int](($out | Select-String 'pull/(\d+)').Matches[0].Groups[1].Value)
 "WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 8"

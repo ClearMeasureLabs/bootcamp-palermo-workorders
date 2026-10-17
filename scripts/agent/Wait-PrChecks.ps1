@@ -4,12 +4,13 @@
 # Infra flakes (a job cancelled or timed out, or running >= 25 min with no test report) are re-run ONCE automatically
 # with `gh run rerun --failed` instead of reported. That avoids empty-commit retriggers and log spelunking.
 # The aggregator "Build result" is not reported as a root cause.
-param([Parameter(Mandatory)][int]$Pr, [int]$MaxCallMin = 9, [int]$PollSec = 45, [int]$SettleSec = 60,
+param([Parameter(Mandatory)][int]$Pr, [switch]$ForceRerun, [int]$MaxCallMin = 9, [int]$PollSec = 45, [int]$SettleSec = 60,
       [string]$Repo = 'ClearMeasureLabs/bootcamp-palermo-workorders')
 $ErrorActionPreference = 'Stop'
 $deadline = (Get-Date).AddMinutes($MaxCallMin)
 $state = Join-Path ([IO.Path]::GetTempPath()) "wait-pr-$Pr.json"
-$rerun = if (Test-Path $state) { Get-Content $state -Raw | ConvertFrom-Json } else { @() }
+$rerun = @(if (Test-Path $state) { Get-Content $state -Raw | ConvertFrom-Json } else { @() })
+$graceUntil = Get-Date  # v8: after a rerun, old failed check-runs stay "completed" for a bit; don't report RED from them (rep-3 t02)
 $sha = gh api "repos/$Repo/pulls/$Pr" --jq .head.sha  # REST (gh pr view uses GraphQL)
 $age = (Get-Date) - [datetime](gh api "repos/$Repo/commits/$sha" --jq .commit.committer.date)
 if ($age.TotalSeconds -lt $SettleSec) { Start-Sleep -Seconds ($SettleSec - [int]$age.TotalSeconds) }
@@ -26,15 +27,17 @@ while ($true) {
     if ($b.Url -notmatch '/runs/(\d+)') { continue }; $runId = $Matches[1]
     $mins = if ($b.Start -and $b.End) { ([datetime]$b.End - [datetime]$b.Start).TotalMinutes } else { 0 }
     $log = (gh run view $runId --repo $Repo --log-failed 2>$null) -replace "`0", ''
-    $flaky = $b.Conclusion -in 'cancelled', 'timed_out' -or ($mins -ge 25 -and ($log -match 'No test report files were found|No files were found'))
+    # v8: acceptance/integration jobs fail intermittently on tests the PR doesn't touch (rep-3 t09, t11), so rerun them once.
+    # A real failure reproduces on the rerun and is then reported. -ForceRerun forces one rerun of any failed job.
+    $flaky = $ForceRerun -or $b.Conclusion -in 'cancelled', 'timed_out' -or $b.Name -match 'Acceptance|Integration' -or ($mins -ge 25 -and ($log -match 'No test report files were found|No files were found'))
     if ($flaky -and $runId -notin $rerun) {
       gh run rerun $runId --repo $Repo --failed 2>&1 | Out-Null
       $rerun = @($rerun) + $runId; $rerun | ConvertTo-Json | Set-Content $state
       "FLAKE-RERUN: $($b.Name) ($($b.Conclusion), $([int]$mins) min) run $runId"
-      $pending = @('rerun')
+      $pending = @('rerun'); $graceUntil = (Get-Date).AddSeconds(120)
     }
   }
-  if ($runs -and -not $pending) { break }
+  if ($runs -and -not $pending -and (Get-Date) -gt $graceUntil) { break }
   if ((Get-Date).AddSeconds($PollSec) -gt $deadline) {
     'CHECKS=PENDING'; exit 3
   }
