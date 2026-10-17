@@ -118,6 +118,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Mode = mode,
             WorkOrderNumber = workOrder.Number,
             Status = workOrder.Status.FriendlyName,
+            Priority = workOrder.Priority.Key,
             CreatorFullName = workOrder.Creator!.GetFullName(),
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
@@ -170,6 +171,9 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
         workOrder.DueDate = Model.DueDateInput;
+        workOrder.Priority = string.IsNullOrEmpty(Model.Priority)
+            ? WorkOrderPriority.Normal
+            : WorkOrderPriority.FromKey(Model.Priority);
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);

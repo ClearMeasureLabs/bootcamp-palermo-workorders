@@ -14,6 +14,7 @@ public class WorkOrderTests
         Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
+        Assert.That(workOrder.Priority, Is.EqualTo(WorkOrderPriority.Normal));
         Assert.That(workOrder.Number, Is.EqualTo(null));
         Assert.That(workOrder.Creator, Is.EqualTo(null));
         Assert.That(workOrder.Assignee, Is.EqualTo(null));
