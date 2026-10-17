@@ -212,10 +212,13 @@ public class McpSaveWorkOrderAcceptanceTests : AcceptanceTestBase
         saveResult.ShouldContain("cannot be executed");
 
         await NavigateToManageEditAsync(workOrderNumber);
-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title)))
-            .ToHaveValueAsync($"[{TestTag}] {originalTitle}");
+        var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        await Expect(titleField).ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+        await Expect(titleField)
+            .ToHaveValueAsync($"[{TestTag}] {originalTitle}",
+                new LocatorAssertionsToHaveValueOptions { Timeout = 30_000 });
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
-            .ToHaveTextAsync("Assigned");
+            .ToHaveTextAsync("Assigned", new LocatorAssertionsToHaveTextOptions { Timeout = 30_000 });
     }
 
     [Test, Retry(2)]
