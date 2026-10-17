@@ -253,6 +253,43 @@ public class WorkOrderSpecificationHandlerTests
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
     }
     [Test]
+    public async Task ShouldSearchBySpecificationWithTitleContains()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var matching = new WorkOrder
+        {
+            Creator = employee,
+            Number = "TIT-001",
+            Title = "Fix Plumbing Leak"
+        };
+        var other = new WorkOrder
+        {
+            Creator = employee,
+            Number = "TIT-002",
+            Title = "Paint hallway"
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(matching);
+            context.Add(other);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchTitleContains("plumbing");
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Number.ShouldBe("TIT-001");
+    }
+
+    [Test]
     public async Task ShouldReturnOnlyOverdueWorkOrders_WhenOverdueOnlyFilterIsTrue()
     {
         new DatabaseTests().Clean();

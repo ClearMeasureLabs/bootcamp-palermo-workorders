@@ -19,9 +19,16 @@ public class WorkOrderSearchSpecification
         Creator = creator;
     }
 
+    public void MatchTitleContains(string? text)
+    {
+        TitleContains = string.IsNullOrWhiteSpace(text) ? null : text;
+    }
+
     public WorkOrderStatus? Status { get; private set; }
 
     public Employee? Assignee { get; private set; }
 
     public Employee? Creator { get; private set; }
+
+    public string? TitleContains { get; private set; }
 }
