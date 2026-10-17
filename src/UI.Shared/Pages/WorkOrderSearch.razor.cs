@@ -146,6 +146,7 @@ public partial class WorkOrderSearch : AppComponentBase
         if (_sortColumn == null) return;
         if (_sortColumn == "Status") ApplySortByStatus();
         else if (_sortColumn == "DueDate") ApplySortByDueDate();
+        else if (_sortColumn == "Created") ApplySortByCreated();
         else if (_sortColumn == "Title") ApplySortByTitle();
         else if (_sortColumn == "Room") ApplySortByRoom();
     }
@@ -164,6 +165,15 @@ public partial class WorkOrderSearch : AppComponentBase
                            .ThenBy(r => r.WorkOrder.DueDate).ToArray()
             : Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
                            .ThenByDescending(r => r.WorkOrder.DueDate).ToArray();
+    }
+
+    private void ApplySortByCreated()
+    {
+        Model.Results = _sortAscending
+            ? Model.Results.OrderBy(r => r.WorkOrder.CreatedDate.HasValue ? 0 : 1)
+                           .ThenBy(r => r.WorkOrder.CreatedDate).ToArray()
+            : Model.Results.OrderBy(r => r.WorkOrder.CreatedDate.HasValue ? 0 : 1)
+                           .ThenByDescending(r => r.WorkOrder.CreatedDate).ToArray();
     }
 
     private void ApplySortByTitle()

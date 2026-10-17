@@ -471,7 +471,7 @@ public class WorkOrderSearchTests
         var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
         await sortBtn.ClickAsync(new());
 
-        var cells = component.FindAll("tbody tr td:nth-child(7)");
+        var cells = component.FindAll("tbody tr td:nth-child(8)");
         cells[0].TextContent.Trim().ShouldBe("A");
         cells[1].TextContent.Trim().ShouldBe("B");
         cells[2].TextContent.Trim().ShouldBe("C");
@@ -494,10 +494,32 @@ public class WorkOrderSearchTests
         await sortBtn.ClickAsync(new());
         await sortBtn.ClickAsync(new());
 
-        var cells = component.FindAll("tbody tr td:nth-child(7)");
+        var cells = component.FindAll("tbody tr td:nth-child(8)");
         cells[0].TextContent.Trim().ShouldBe("C");
         cells[1].TextContent.Trim().ShouldBe("B");
         cells[2].TextContent.Trim().ShouldBe("A");
+    }
+
+    [Test]
+    public async Task SortByCreated_Ascending_SortsResultsByCreatedDate_NullsLast()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, CreatedDate = null },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, CreatedDate = new DateTime(2025, 6, 1) },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, CreatedDate = new DateTime(2025, 3, 1) },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByCreatedButton}");
+        await sortBtn.ClickAsync(new());
+
+        var tds = component.FindAll("tbody tr");
+        tds[0].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-002");
+        tds[1].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-001");
+        tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
     }
     [Test]
     public async Task AssignedToMeCheckbox_WhenSessionStateIsTrue_RestoresCheckboxAndFiltersOnLoad()
