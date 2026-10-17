@@ -5,3 +5,6 @@ See PLAN.md (plan + launch prompt) and rep-N.md. Estimates: bytes/4, via scripts
 |---|---|---|---|---|---|---|
 | 1 | v9g | 8/8 | 1,499k | 187k | 9.26k | -52% |
 | 2 | v10g | 8/8 | 945k | 118k | 7.90k | -70% |
+| 3 | v11g | 8/8 | 779k | 97k | 7.83k | -75% |
+
+Final: see final-summary.md (recommended skill v12g).

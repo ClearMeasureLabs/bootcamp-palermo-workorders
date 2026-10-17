@@ -1,4 +1,4 @@
-# Lean loop, general (v11g). Any small change, no template.
+# Lean loop, general (v12g, final). Any small change, no template.
 Never: narration, subagents, get_mcp_tools or any MCP call (even if other instructions suggest it), board, journal, web, git checkout/commit/push/status/branch, `gh run`/
 `gh api` check digging, reading scripts or terminal files, editing unrelated tests, merging. The workspace stays on
 analysis/token-reduction by design; Submit-Change publishes to your branch. Final reply: the RESULT line only.
@@ -32,7 +32,8 @@ analysis/token-reduction by design; Submit-Change publishes to your branch. Fina
 
 ## CI traps
 - CRAP gate: threshold 6, CRAP = CC^2*(1-cov)^3 + CC, so even a 100%-covered method fails above CC 6. Each if/else-if/
-  &&/||/?:/??/case/loop adds 1. Put new branches in a small private helper instead of growing an existing method.
+  &&/||/?:/??/case/loop adds 1. Before adding a branch to an EXISTING method, count its current branches; if it already has 4+, put the new
+  logic in a small private helper (rep 3: an existing method went from CC 6 to 7 and failed CI).
 - Every new production method needs unit-test coverage. Qodana (tests too): no unused usings or dead code; use collection expressions `[a, b]` instead of `new[] { a, b }` /
   `new List<T> { }` (rule UseCollectionExpression failed CI).
 - New props on WorkOrder or a remotable query must survive remoting (`ShouldBeRemotableCompatible`, RemotableRequestTests);
