@@ -13,10 +13,12 @@ Run ONE command and then stop:
 
 That script edits SRC and TEST, builds quietly with warnings as errors, runs the filtered tests, opens the PR to master and posts the issue comment. Reply with the `PR=` line. If it prints FAIL, fix only the reported error, rerun once, then stop.
 
-## Other fully specified items
-1. `pwsh -NoProfile scripts/agent/Get-AgentTarget.ps1 -Type <Type>`. Edit using its output only; don't re-read.
-2. `pwsh -NoProfile scripts/agent/Invoke-AgentBuildTest.ps1 -Filter "FullyQualifiedName~<Type>Tests"`
-3. `pwsh -NoProfile scripts/agent/Publish-AgentPr.ps1 -Issue <N> -Branch <branch> -Title "<title>"`
+## General path (any fully specified item without a type script): 2 scripted calls
+1. `pwsh -NoProfile scripts/agent/Get-ItemContext.ps1 -Issue <N> [-Focus <Member>,...]`. This prints the issue, every file it names (plus matching unit-test files) compactly, and the last test as the house pattern. **That's all the context you get. Do not read the issue, the files, the scripts or sibling tests again.**
+2. Make the edits with your editor tool, anchoring on text exactly as printed. New tests go right after the printed LAST TEST.
+3. `pwsh -NoProfile scripts/agent/Complete-AgentItem.ps1 -Issue <N> -Type <TestClassPrefix> -Branch <branch>`. On FAIL, fix only the reported error and rerun once. Then stop.
+
+**Bug fix + regression test** uses the same path with `-Focus <buggy member>`.
 
 ## Unit tests for an untested class
 Three calls, then stop:

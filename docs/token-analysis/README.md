@@ -15,9 +15,14 @@ Cursor transcripts carry no token usage fields. Proxy = cumulative replayed cont
 | 6 | #9947 | #9948 | bc-54d95a8d | 6 | 6 | ~10k | -99.7% | type C (seal), generic lean |
 | 7 | #9949 | #9951 | bc-43a2211a | 1 | 1 | ~0.27k | -99.99% | type C canned |
 | 8 | #9950 | #9952 | bc-c199a536 | 13 | 13 | ~50k | -98.3% | type D generic lean |
-| 9 | #9953 | | | | | | | type D canned |
-| 10 | #9954 | | | | | | | type E (bug fix + regression test), generic lean |
-| 12 | #9955 | | | | | | | mixed multi-project refactor, generic lean |
+| 9 | #9953 | #9956 | bc-30f95531 | 1 | 1 | ~0.31k | -99.99% | type D canned |
+| 10 | #9954 | #9957 | bc-57c1aa8b | 6 | 6 | ~17k | -99.4% | type E generic lean |
+| 11 | #9959 | | | | | | | type E via general path v3 (-Focus) |
+| 12 | #9955 | #9958 | bc-5761780f | 14 | 14 | ~63k | -97.8% | mixed, generic lean |
+| 13 | #9960 | | | | | | | small feature, general v3 |
+| 14 | #9961 | | | | | | | guard on factory method, general v3 |
+| 15 | #9962 | | | | | | | ToString override, general v3 |
+| 16 | #9963 | | | | | | | name trimming bug, general v3 |
 
 ## Progress notes
 - 2026-10-16: Run 0 analysed. It is an invalid baseline. A repeatable template was created and issue #9937 filed for baseline run 1. Board writes were not possible: the gh token lacks the project scope.
@@ -31,3 +36,4 @@ Cursor transcripts carry no token usage fields. Proxy = cumulative replayed cont
 ## Finding: the Qodana checklists are already fixed on master
 Checklist items in #9436 (P1 mechanical) and #9437 (P2 naming/nullability), and a sample from #9439 (P4 dead symbols), were spot-checked on master on 2026-10-16; all of them are already fixed (#9437-#9439 are CLOSED; #9438 has no file-level checklist). The run-0 agent independently found its P1 target already fixed. The committed `qodana.sarif.json` holds a single result (`Html.AttributeValueNotResolved`, Settings.razor:16), which is not a mechanical fix. That is why run 0 found nothing to change. Experiment work types are therefore drawn from verified live code (missing tests, sealable classes, validation gaps) instead of the stale checklists. The issues still show unchecked boxes and should be reconciled.
 - 2026-10-16: Runs 7 and 8 recorded. Validator recipe added. Runs 9, 10 and 12 pre-filed; run 11 (type E canned) waits for run 10.
+- 2026-10-16: Runs 9, 10 and 12 recorded. General path v3 (Get-ItemContext) built. Runs 11 and 13-16 test it without type scripts.
