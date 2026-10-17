@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -97,5 +98,34 @@ public class WorkOrderTests
         var order = new WorkOrder() { Status = WorkOrderStatus.Draft };
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void CanEditTitle_WhenDraft_ShouldAllowAnyEmployee()
+    {
+        var creator = new Employee("creator", "Cre", "Ator", "c@example.com");
+        var other = new Employee("other", "Oth", "Er", "o@example.com");
+        var order = new WorkOrder { Status = WorkOrderStatus.Draft, Creator = creator };
+
+        order.CanEditTitle(creator).ShouldBeTrue();
+        order.CanEditTitle(other).ShouldBeTrue();
+    }
+
+    [TestCase(nameof(WorkOrderStatus.Assigned))]
+    [TestCase(nameof(WorkOrderStatus.InProgress))]
+    [TestCase(nameof(WorkOrderStatus.Complete))]
+    [TestCase(nameof(WorkOrderStatus.Cancelled))]
+    public void CanEditTitle_WhenNotDraft_ShouldAllowOnlyCreator(string statusKey)
+    {
+        var creator = new Employee("creator", "Cre", "Ator", "c@example.com");
+        var other = new Employee("other", "Oth", "Er", "o@example.com");
+        var order = new WorkOrder
+        {
+            Status = WorkOrderStatus.FromKey(statusKey),
+            Creator = creator
+        };
+
+        order.CanEditTitle(creator).ShouldBeTrue();
+        order.CanEditTitle(other).ShouldBeFalse();
     }
 }
