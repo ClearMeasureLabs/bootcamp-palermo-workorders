@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
@@ -50,10 +51,14 @@ internal static class WorkOrderQueryFilters
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,
         WorkOrderSearchSpecification specification) =>
-        Apply(query, specification.Assignee, specification.Creator, specification.Status);
+        Apply(query, specification.Assignee, specification.Creator, specification.Status)
+            .Include(wo => wo.Creator)
+            .Include(wo => wo.Assignee);
 
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,
         WorkOrderSpecificationQuery specification) =>
-        Apply(query, specification.Assignee, specification.Creator, specification.Status, specification.OverdueOnly);
+        Apply(query, specification.Assignee, specification.Creator, specification.Status, specification.OverdueOnly)
+            .Include(wo => wo.Creator)
+            .Include(wo => wo.Assignee);
 }

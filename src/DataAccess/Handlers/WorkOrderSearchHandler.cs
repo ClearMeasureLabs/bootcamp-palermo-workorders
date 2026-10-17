@@ -11,7 +11,9 @@ public class WorkOrderSearchHandler(DataContext context) : IRequestHandler<WorkO
     public async Task<WorkOrder[]> Handle(WorkOrderSpecificationQuery specification,
         CancellationToken cancellationToken = default)
     {
-        var query = WorkOrderQueryFilters.Apply(context.Set<WorkOrder>(), specification);
+        var query = WorkOrderQueryFilters.Apply(context.Set<WorkOrder>(), specification)
+            .Include(wo => wo.Creator)
+            .Include(wo => wo.Assignee);
         return await query.ToArrayAsync(cancellationToken);
     }
 }
