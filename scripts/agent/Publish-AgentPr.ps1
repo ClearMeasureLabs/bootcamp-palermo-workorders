@@ -2,7 +2,11 @@
 param([Parameter(Mandatory)][int]$Issue, [Parameter(Mandatory)][string]$Branch, [Parameter(Mandatory)][string]$Title,
       [string]$AgentUrl = $env:CURSOR_AGENT_URL, [string]$Repo = 'ClearMeasureLabs/bootcamp-palermo-workorders')
 $ErrorActionPreference = 'Stop'
-git checkout -q -B $Branch
+# Branch from master so the PR carries only the src edit (not the analysis-branch commits).
+git fetch -q origin master
+git stash push -q -- src
+git checkout -q -B $Branch origin/master
+git stash pop -q
 git add -A src | Out-Null
 git commit -q -m "$Title (#$Issue)"
 git push -q -u origin $Branch 2>&1 | Out-Null
