@@ -252,22 +252,15 @@ public class WorkOrderTools
             return "The Title field is required.";
         }
 
-        if (IsInvalidDueDatePatch(dueDate))
+        if (!DatedWorkOrderScheduling.TryParseOptionalDueDate(dueDate, out _, out var dueDateError))
         {
-            return $"Invalid due date '{dueDate}'. Use yyyy-MM-dd.";
+            return dueDateError!;
         }
 
         return null;
     }
 
     private static bool IsBlankPatch(string? value) => value != null && string.IsNullOrWhiteSpace(value);
-
-    private static bool IsInvalidDueDatePatch(string? dueDate) =>
-        dueDate != null && !string.IsNullOrWhiteSpace(dueDate) && !TryParseDueDatePatch(dueDate, out _);
-
-    private static bool TryParseDueDatePatch(string dueDate, out DateOnly parsedDueDate) =>
-        DateOnly.TryParseExact(dueDate.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture,
-            DateTimeStyles.None, out parsedDueDate);
 
     private static void ApplySavePatches(
         WorkOrder workOrder,
@@ -320,19 +313,9 @@ public class WorkOrderTools
     {
         if (dueDate != null)
         {
-            workOrder.DueDate = ParseDueDatePatch(dueDate);
+            DatedWorkOrderScheduling.TryParseOptionalDueDate(dueDate, out var parsed, out _);
+            workOrder.DueDate = parsed;
         }
-    }
-
-    private static DateOnly? ParseDueDatePatch(string dueDate)
-    {
-        if (string.IsNullOrWhiteSpace(dueDate))
-        {
-            return null;
-        }
-
-        TryParseDueDatePatch(dueDate, out var parsedDueDate);
-        return parsedDueDate;
     }
 
     private static string BlankToEmpty(string value) =>
