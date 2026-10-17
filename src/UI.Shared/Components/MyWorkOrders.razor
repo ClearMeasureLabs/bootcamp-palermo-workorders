@@ -5,13 +5,14 @@
 @inject IUserSession UserSession
 
 <span data-testid="@Elements.MyWorkOrdersTooltip" title="Work orders assigned to you">
-    My Work Orders (@Count)
+    My Work Orders (@CountLabel)
 </span>
 
 @code {
     private Employee? _currentUser;
     private readonly HashSet<WorkOrder> _myWorkOrders = new();
     public int Count => _myWorkOrders.Count;
+    private string CountLabel => Count == 0 ? "none" : Count.ToString();
 
     public enum Elements
     {

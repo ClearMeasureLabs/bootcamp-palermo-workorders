@@ -40,6 +40,24 @@ public class MyWorkOrdersTests
     }
 
     [Test]
+    public async Task ShouldRenderNoneWhenCountIsZero()
+    {
+        await using var ctx = new BunitContext();
+
+        var stubBus = new StubBusWithNoWorkOrders();
+        var stubUserSession = new StubUserSession();
+        var stubUiBus = new StubUiBus();
+
+        ctx.Services.AddSingleton<IBus>(stubBus);
+        ctx.Services.AddSingleton<IUserSession>(stubUserSession);
+        ctx.Services.AddSingleton<IUiBus>(stubUiBus);
+
+        var component = ctx.Render<MyWorkOrders>();
+
+        component.Markup.ShouldContain("My Work Orders (none)");
+    }
+
+    [Test]
     public async Task ShouldRenderTooltipWithExactTitle()
     {
         await using var ctx = new BunitContext();
