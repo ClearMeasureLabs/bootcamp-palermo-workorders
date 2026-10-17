@@ -56,6 +56,21 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
             : $"{FirstName} {MiddleName} {LastName}";
     }
 
+    /// <summary>
+    /// Returns upper-case initials from first, optional middle, and last name.
+    /// Blank or whitespace names contribute nothing.
+    /// </summary>
+    public string GetInitials()
+    {
+        return string.Concat(
+            InitialOf(FirstName),
+            string.IsNullOrWhiteSpace(MiddleName) ? "" : InitialOf(MiddleName),
+            InitialOf(LastName));
+    }
+
+    private static string InitialOf(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? "" : char.ToUpperInvariant(name.Trim()[0]).ToString();
+
     public override string ToString()
     {
         return GetFullName();
