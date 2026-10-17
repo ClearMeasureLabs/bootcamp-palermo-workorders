@@ -103,6 +103,20 @@ public class WorkOrder : EntityBase<WorkOrder>
     }
 
     /// <summary>
+    /// Returns whether <paramref name="employee"/> may edit the title.
+    /// Draft work orders allow title edits; after leaving Draft, only the creator may edit the title.
+    /// </summary>
+    public bool CanEditTitle(Employee employee)
+    {
+        if (Status == WorkOrderStatus.Draft)
+        {
+            return true;
+        }
+
+        return employee == Creator;
+    }
+
+    /// <summary>
     /// Returns the urgency classification for this work order's due date relative to today
     /// in America/Chicago.
     /// </summary>

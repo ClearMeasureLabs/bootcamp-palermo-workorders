@@ -21,6 +21,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private WorkOrderAttachment[] _attachments = [];
     private string _preferredLanguage = "en-US";
     private DictationTarget _dictationTarget = DictationTarget.None;
+    private bool _canEditTitle = true;
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
@@ -102,6 +103,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         var commandList = new StateCommandList();
         Model.IsReadOnly = !commandList.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
+        _canEditTitle = workOrder.CanEditTitle(currentUser);
         _workOrder = workOrder;
 
         if (workOrder.Id != Guid.Empty)
