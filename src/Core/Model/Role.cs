@@ -14,4 +14,9 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
 
     public bool CanFulfillWorkOrder { get; set; } = canFulfill;
     public override Guid Id { get; set; }
+
+    public override string ToString()
+    {
+        return Name;
+    }
 }
