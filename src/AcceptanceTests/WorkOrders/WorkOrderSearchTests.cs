@@ -599,14 +599,14 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await roomSortBtn.ClickAsync();
         await TakeScreenshotAsync(1, "SortedAscending");
 
-        await Expect(roomSortBtn).ToHaveTextAsync("Room ▲");
+        await Expect(roomSortBtn).ToHaveTextAsync("Room / Area ▲");
         var firstRoomCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(7)");
         await Expect(firstRoomCell).ToContainTextAsync("Atrium");
 
         await roomSortBtn.ClickAsync();
         await TakeScreenshotAsync(2, "SortedDescending");
 
-        await Expect(roomSortBtn).ToHaveTextAsync("Room ▼");
+        await Expect(roomSortBtn).ToHaveTextAsync("Room / Area ▼");
         await Expect(firstRoomCell).ToContainTextAsync("Zeppelin");
     }
 
