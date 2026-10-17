@@ -39,7 +39,7 @@ Top causes (input is driven by how big the context is when the many later turns 
    doesn't exist; g02: 16, tracing spec -> query -> filter -> tests and BogusOverrides). This bloats every later turn.
 2. **CRAP gate RED -> second CI cycle** (g02 `WorkOrderQueryFilters.Apply`, g04 `ListWorkOrders` at CC 8): methods grew
    past cyclomatic complexity 6 (threshold 6; 100% coverage still fails above CC 6). Each cost a resubmit + more waits.
-3. **Wait handling:** 8-min WAIT_CMD calls came back empty in every run (22 of 32 wait calls); some agents then read terminal
+3. **Wait handling:** (Correction in rep-2.md: "empty" = non-zero exit hidden by the transcript, i.e. PENDING.) 8-min WAIT_CMD calls came back empty in every run (22 of 32 wait calls); some agents then read terminal
    files. g04: a `QDNETC` check sat `queued` >1 h after everything else finished; the wait script reported PENDING forever,
    so the agent read the script and polled check-runs by hand (12 waits, 5 gh api calls).
 4. **Stray calls:** get_mcp_tools in 5 of 8 runs (1.9-4.6 KB each); git status/branch checks because the workspace branch

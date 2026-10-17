@@ -1,4 +1,4 @@
-# v10 (stuck-queued ignore). v3. Wait for every check-run on the PR head and print a compact verdict. Each call returns within -MaxCallMin
+# v11 (PENDING exits 0). v10 (stuck-queued ignore). v3. Wait for every check-run on the PR head and print a compact verdict. Each call returns within -MaxCallMin
 # (default 9, under the agent runtime's ~10 min terminal cap, so the call never gets backgrounded):
 #   exit 0 CHECKS=GREEN | 1 CHECKS=RED (code failures, with log tail) | 3 CHECKS=PENDING (just rerun the same command)
 # Infra flakes (a job cancelled or timed out, or running >= 25 min with no test report) are re-run ONCE automatically
@@ -48,7 +48,7 @@ while ($true) {
   }
   if ($runs -and -not $pending -and (Get-Date) -gt $graceUntil) { break }
   if ((Get-Date).AddSeconds($PollSec) -gt $deadline) {
-    'CHECKS=PENDING'; exit 3
+    "CHECKS=PENDING (run the same command again)"; exit 0  # v11: exit 0 so the output is recorded; was exit 3
   }
   Start-Sleep -Seconds $PollSec
 }

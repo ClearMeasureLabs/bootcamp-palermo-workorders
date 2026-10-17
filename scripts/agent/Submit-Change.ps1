@@ -1,4 +1,4 @@
-# v10g: WAIT_CMD 5-min calls (rep 1: 8-min calls often came back empty). v9g (phase 4): general submit for ANY change, no template. Verify (full unit suite + IntegrationTests build, quiet,
+# v11g: WAIT_CMD back to 9-min calls (rep 2: "empty" returns were PENDING exits the transcript hides; 5-min calls added wait turns). v10g: v9g (phase 4): general submit for ANY change, no template. Verify (full unit suite + IntegrationTests build, quiet,
 # warnings as errors) -> publish the workspace src/ diff from a temp worktree on origin/master (workspace branch never
 # changes; rerun pushes a follow-up commit) -> prints WAIT_CMD (wait script auto-reruns flaky acceptance/integration jobs
 # once, v9 records a rerun only when GitHub accepted it). -VerifyOnly = the single local verify command, no publish.
@@ -18,4 +18,4 @@ $out = & "$tools/Publish-AgentPr.ps1" -Issue $Issue -Branch $Branch -Title $titl
 if ($out -match 'PUBLISH_FAIL') { $out; exit 2 }
 $out | Where-Object { $_ -match 'NO_CHANGE' }
 $pr = [int](($out | Select-String 'pull/(\d+)').Matches[0].Groups[1].Value)
-"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 5"
+"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9"

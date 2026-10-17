@@ -4,3 +4,4 @@ See PLAN.md (plan + launch prompt) and rep-N.md. Estimates: bytes/4, via scripts
 | Rep | Skill | Green | Input total | Input/run | Output total | vs P3 rep 2 input/run (392k) |
 |---|---|---|---|---|---|---|
 | 1 | v9g | 8/8 | 1,499k | 187k | 9.26k | -52% |
+| 2 | v10g | 8/8 | 945k | 118k | 7.90k | -70% |
