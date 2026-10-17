@@ -149,7 +149,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task WorkOrderManage_InstructionsTextareaShouldCarryMaxLength4000()
+    public async Task WorkOrderManage_InstructionsTextareaShouldCarryMaxLength2000()
     {
         await LoginAsCurrentUser();
         await Click(nameof(NavMenu.Elements.NewWorkOrder));
@@ -189,7 +189,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
 
-        await Expect(Page.GetByText("Instructions cannot exceed 4000 characters.")).ToBeVisibleAsync(
+        await Expect(Page.GetByText("Instructions cannot exceed 2000 characters.")).ToBeVisibleAsync(
             new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
     }
