@@ -9,7 +9,7 @@ Each type gets one run with the generic lean skill (no type script), then a cann
 | Qodana P1 mechanical fix (real finding) | _pending_ | | | |
 | Visibility: seal non-inherited class | `Invoke-SealItem.ps1` (1 call) | ~10k (run 6, 6 calls) | ~0.27k (run 7, 1 call) | 6-7 |
 | Validation rule + unit test | `Invoke-ValidatorRuleItem.ps1` (1 call) | ~50k (run 8, 13 calls) | ~0.31k (run 9, 1 call) | 8-9 |
-| Bug fix + regression test | general v3 + `-Focus` | ~17k (run 10, 6 calls) | run 11 | 10-11 |
-| Mixed / uncanned (general skill) | general v3: `Get-ItemContext` + `Complete-AgentItem` | ~63k (run 12, 14 calls) | runs 13-16 | 12-16 |
+| Bug fix + regression test | general v3 + `-Focus` | ~17k (run 10, 6 calls) | ~5.7k (run 11, 5 calls) | 10-11 |
+| Mixed / uncanned (general skill) | general v3: `Get-ItemContext` + `Complete-AgentItem` | ~63k (run 12, 14 calls) | ~4.3k-11.2k (runs 13-16, avg ~8.2k) | 12-16 |
 
 Baseline (stock feature loop, guard type): ~2.90M (run 1).
