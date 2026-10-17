@@ -38,7 +38,11 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 | **T3 one-call CI wait**: removed in iter 4 | 4 | removing it: **+7.1k (+53%)** vs iter 2 | **-0.4k** | cheap on a green run (runtime sleep between polls); T3's value shows on reds/flakes |
 | **T2 canned whole-change script**: removed in iter 5 | 5 | removing it: **+593k (~45x)** | **+1.3k (+70%)** | the dominant technique: 13 reads + 12 edits, each replaying context |
 | Flake cost (iter 3, v2 wait without flake handling) | 3 | +84k | +0.9k | one CI flake = 7 diagnostic calls with 26 KB of log dumps plus an empty-commit retrigger |
-| v3: Wait-PrChecks per-call cap 9 min (never backgrounded), auto-rerun of infra flakes (`gh run rerun --failed`), aggregator filtered, null bytes stripped | 9 | tbd | tbd | targets the iter 3 failure mode |
+| v3: Wait-PrChecks per-call cap 9 min (never backgrounded), auto-rerun of infra flakes, aggregator filtered | 9 | **~0.86k total** (-12.5k vs iter 2, -96.5k vs iter 3) | **~0.45k** (-1.35k vs iter 2) | 2 tool calls / 4 turns; best run so far: input **-99.95%**, output **-96.4%** vs baseline |
+| **T1 file map**: removed in iter 6 (hand-edit path, vs iter 5) | 6 | removing it: **+577k (+95%)** | **+1.5k (+49%)** | matters only when the agent edits by hand |
+| **T4 local SQLite IT**: removed in iter 7 (vs iter 9) | 7 | ~+0.1k (noise) | ~+0.04k (noise) | token-neutral on a green run; its value is catching mapping errors before ~13 min of CI |
+| **T5 lean skill**: removed in iter 8 (vs iter 9) | 8 | removing it: **+692k (~800x)** | **+10.2k (~23x)** | the stock loop adds board, MCP and journal work even when scripts exist; the largest *output* lever |
+| v4: terse prompt + "no narration" + one `RESULT pr= head= CHECKS=` line; generic `Set-WorkOrderFieldMaxLength.ps1` (`-Field`) | 10 | tbd | tbd | targets output (narration) and generalization |
 
 ## Plan
 1. **Iter 1 (baseline):** stock feature-loop skill from master, no lean scripts. The agent must poll CI to green and fix reds.
@@ -53,7 +57,11 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 | 3 | #9981 | #9985 | ~97.4k | ~2.65k | 14 | 1 flake | v2 reference (flake) |
 | 4 | #9982 | #9984 | ~20.5k | ~1.4k | 7 | 0 | ablate T3 |
 | 5 | #9983 | #9986 | ~606k | ~3.1k | 42 | 0 | ablate T2 |
-| 6 | #9987 | | | | | | ablate T1 (hand edits, no file map; compare to iter 5) |
-| 7 | #9988 | | | | | | ablate T4 (no local SQLite IT) |
-| 8 | #9989 | | | | | | ablate T5 (stock skill + scripts available) |
-| 9 | #9990 | | | | | | v3 reference |
+| 6 | #9987 | #9993 | ~1,183k | ~4.6k | 59 | 0 | ablate T1 |
+| 7 | #9988 | #9992 | ~0.95k | ~0.49k | 2 | 0 | ablate T4 |
+| 8 | #9989 | #9994 | ~693k | ~10.6k | 38 | 0 | ablate T5 (card moved to Functional Testing; needs reset) |
+| 9 | #9990 | #9991 | ~0.86k | ~0.45k | 2 | 0 | v3 reference |
+| 10 | #9995 | | | | | | v4 reference (terse) |
+| 11 | #9996 | | | | | | v4 reference repeat (variance) |
+| 12 | #9997 | | | | | | generalization: RoomNumber 900→1200 via `-Field` |
+| 13 | #9998 | | | | | | ablate terse prompt (v3 prompt on v4 scripts) to attribute output |

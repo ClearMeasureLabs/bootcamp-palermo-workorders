@@ -36,13 +36,12 @@ while ($true) {
   }
   if ($runs -and -not $pending) { break }
   if ((Get-Date).AddSeconds($PollSec) -gt $deadline) {
-    "HEAD=$sha TOTAL=$($runs.Count) PENDING=$($pending.Count) (" + (($runs | Where-Object Status -ne 'completed' | ForEach-Object Name) -join ', ') + ')'
-    'CHECKS=PENDING (rerun the same command)'; exit 3
+    'CHECKS=PENDING'; exit 3
   }
   Start-Sleep -Seconds $PollSec
 }
-"HEAD=$sha TOTAL=$($runs.Count) FAILED=$($bad.Count)"
-if (-not $bad) { 'CHECKS=GREEN'; Remove-Item $state -ErrorAction SilentlyContinue; exit 0 }
+if (-not $bad) { "RESULT pr=$Pr head=$sha CHECKS=GREEN"; Remove-Item $state -ErrorAction SilentlyContinue; exit 0 }
+"HEAD=$sha FAILED=$($bad.Count)"
 foreach ($b in $bad) {
   "--- FAILED: $($b.Name) ($($b.Conclusion))"
   if ($b.Url -match '/runs/(\d+)') {
