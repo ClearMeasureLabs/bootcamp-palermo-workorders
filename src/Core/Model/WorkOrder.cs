@@ -21,6 +21,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public const int InstructionsMaxLength = 4000;
 
+    /// <summary>
+    /// Maximum length of <see cref="LocationNotes"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int LocationNotesMaxLength = 500;
+
     public string? Title { get; set; } = "";
 
     public string? Description
@@ -36,6 +41,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     } = "";
 
     public string? RoomNumber { get; set; }
+
+    /// <summary>
+    /// Optional free-text notes about the work-order location (max <see cref="LocationNotesMaxLength"/>).
+    /// </summary>
+    public string? LocationNotes { get; set; }
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
