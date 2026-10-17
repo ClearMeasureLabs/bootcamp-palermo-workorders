@@ -17,3 +17,9 @@ That script edits SRC and TEST, builds quietly with warnings as errors, runs the
 1. `pwsh -NoProfile scripts/agent/Get-AgentTarget.ps1 -Type <Type>`. Edit using its output only; don't re-read.
 2. `pwsh -NoProfile scripts/agent/Invoke-AgentBuildTest.ps1 -Filter "FullyQualifiedName~<Type>Tests"`
 3. `pwsh -NoProfile scripts/agent/Publish-AgentPr.ps1 -Issue <N> -Branch <branch> -Title "<title>"`
+
+## Unit tests for an untested class
+Three calls, then stop:
+1. `pwsh -NoProfile scripts/agent/Get-TestContext.ps1 -Type <Type>`. This prints the TEST path, the class source, referenced sibling types and the test header. Don't read any other file.
+2. Create the TEST file in one write (header + tests named `Should...`, Shouldly asserts).
+3. `pwsh -NoProfile scripts/agent/Complete-AgentItem.ps1 -Issue <N> -Type <Type> -Branch <branch>`. Builds, tests, opens the PR and comments. On FAIL, fix only the reported error, rerun once.
