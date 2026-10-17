@@ -42,7 +42,10 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 | **T1 file map**: removed in iter 6 (hand-edit path, vs iter 5) | 6 | removing it: **+577k (+95%)** | **+1.5k (+49%)** | matters only when the agent edits by hand |
 | **T4 local SQLite IT**: removed in iter 7 (vs iter 9) | 7 | ~+0.1k (noise) | ~+0.04k (noise) | token-neutral on a green run; its value is catching mapping errors before ~13 min of CI |
 | **T5 lean skill**: removed in iter 8 (vs iter 9) | 8 | removing it: **+692k (~800x)** | **+10.2k (~23x)** | the stock loop adds board, MCP and journal work even when scripts exist; the largest *output* lever |
-| v4: terse prompt + "no narration" + one `RESULT pr= head= CHECKS=` line; generic `Set-WorkOrderFieldMaxLength.ps1` (`-Field`) | 10 | tbd | tbd | targets output (narration) and generalization |
+| v4: terse prompt + "no narration" + one `RESULT` line | 10-11 | **~0.63k** (-0.23k, -27% vs iter 9) | **~0.31k** (-0.14k, -31%) | best clean run; one run was backgrounded at the ~600 s cap (+3.6k) |
+| **Prompt terseness** removed (iter 13: v3 prompt on v4) | 13 | confounded by the publish bug (~33.6k) | ~2.2k | clean estimate = iter 9 vs 11: +0.23k input / +0.14k output |
+| v4 generic field script (`-Field RoomNumber -Max 1200`) | 12 | ~0.64k (≈ Title) | ~0.32k | the canned path generalizes at the same cost |
+| v5: REST-only gh, guarded and resumable publish (non-src guard, PUBLISH_FAIL line) | 14 | tbd | tbd | prevents the iter 13 failure mode (+33k input) |
 
 ## Plan
 1. **Iter 1 (baseline):** stock feature-loop skill from master, no lean scripts. The agent must poll CI to green and fix reds.
@@ -61,7 +64,14 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 | 7 | #9988 | #9992 | ~0.95k | ~0.49k | 2 | 0 | ablate T4 |
 | 8 | #9989 | #9994 | ~693k | ~10.6k | 38 | 0 | ablate T5 (card moved to Functional Testing; needs reset) |
 | 9 | #9990 | #9991 | ~0.86k | ~0.45k | 2 | 0 | v3 reference |
-| 10 | #9995 | | | | | | v4 reference (terse) |
-| 11 | #9996 | | | | | | v4 reference repeat (variance) |
-| 12 | #9997 | | | | | | generalization: RoomNumber 900→1200 via `-Field` |
-| 13 | #9998 | | | | | | ablate terse prompt (v3 prompt on v4 scripts) to attribute output |
+| 10 | #9995 | #10000 | ~4.5k | ~0.44k | 4 | 0 | v4 reference (backgrounded at cap) |
+| 11 | #9996 | #9999 | ~0.63k | ~0.31k | 2 | 0 | v4 repeat |
+| 12 | #9997 | #10001 | ~0.64k | ~0.32k | 2 | 0 | RoomNumber 1200 |
+| 13 | #9998 | #10003 | ~33.6k | ~2.2k | 11 | 0 | v3 prompt; publish bug, 54-file PR |
+| 14 | #10004 | | | | | | v5 reference (REST, guarded publish, call under the 600 s cap) |
+| 15 | #10005 | | | | | | command-list prompt (output technique) |
+| 16 | #10006 | | | | | | Title -Max 1200 (value generalization) |
+| 17 | #10007 | | | | | | v5 repeat (variance) |
+| 18 | #10008 | | | | | | hand edits with file map + `-SkipApply` (non-canned floor) |
+| 19 | #10009 | | | | | | v5 repeat |
+| 20 | #10010 | | | | | | v5 final repeat |

@@ -4,7 +4,7 @@
 param([Parameter(Mandatory)][int]$Issue, [string[]]$Focus = @(), [int]$WholeFileMaxLines = 80,
       [string]$Repo = 'ClearMeasureLabs/bootcamp-palermo-workorders')
 $ErrorActionPreference = 'Stop'
-$j = gh issue view $Issue --repo $Repo --json title,body | ConvertFrom-Json
+$j = gh api repos/$Repo/issues/$Issue --jq "{title,body}" | ConvertFrom-Json
 "TITLE=$($j.title)"
 $body = ($j.body -split "`n" | Where-Object { $_ -notmatch 'token-reduction experiment|closed without merging' }) -join "`n"
 "--- ISSUE"; $body.Trim()

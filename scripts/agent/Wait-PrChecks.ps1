@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 $deadline = (Get-Date).AddMinutes($MaxCallMin)
 $state = Join-Path ([IO.Path]::GetTempPath()) "wait-pr-$Pr.json"
 $rerun = if (Test-Path $state) { Get-Content $state -Raw | ConvertFrom-Json } else { @() }
-$sha = gh pr view $Pr --repo $Repo --json headRefOid -q .headRefOid
+$sha = gh api "repos/$Repo/pulls/$Pr" --jq .head.sha  # REST (gh pr view uses GraphQL)
 $age = (Get-Date) - [datetime](gh api "repos/$Repo/commits/$sha" --jq .commit.committer.date)
 if ($age.TotalSeconds -lt $SettleSec) { Start-Sleep -Seconds ($SettleSec - [int]$age.TotalSeconds) }
 function Get-Runs {

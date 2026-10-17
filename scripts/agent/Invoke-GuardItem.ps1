@@ -4,5 +4,5 @@ $ErrorActionPreference = 'Stop'
 $here = $PSScriptRoot
 & "$here/Add-NullGuard.ps1" -Type $Type
 & "$here/Invoke-AgentBuildTest.ps1" -Filter "FullyQualifiedName~${Type}Tests"; if ($LASTEXITCODE) { exit 1 }
-$title = gh issue view $Issue --repo ClearMeasureLabs/bootcamp-palermo-workorders --json title -q .title
+$title = gh api repos/ClearMeasureLabs/bootcamp-palermo-workorders/issues/$Issue --jq .title
 & "$here/Publish-AgentPr.ps1" -Issue $Issue -Branch $Branch -Title $title -AgentUrl $AgentUrl
