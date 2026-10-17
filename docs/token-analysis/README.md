@@ -23,10 +23,10 @@ Cursor transcripts carry no token usage fields. Proxy = cumulative replayed cont
 | 14 | #9961 | #9965 | bc-786f0852 | 4 | 4 | ~4.3k | -99.9% | guard, general v3 |
 | 15 | #9962 | #9966 | bc-48cab441 | 5 | 5 | ~9.9k | -99.7% | ToString, general v3 |
 | 16 | #9963 | #9968 | bc-be8dc9ef | 4 | 4 | ~7.4k | -99.7% | trim bug, general v3 |
-| 17 | #9969 | | | | | | | Blazor tooltip + bUnit, general v4 |
-| 18 | #9970 | | | | | | | CSV duplicate header, general v4 |
-| 19 | #9971 | | | | | | | Employee.HasRole, general v4 |
-| 20 | #9972 | | | | | | | MyWorkOrders count bug + bUnit, general v4 |
+| 17 | #9969 | #9974 | bc-603a4bd5 | 6 | 6 | ~12.4k | -99.6% | Blazor + bUnit, general v4 |
+| 18 | #9970 | #9976 | bc-5a088dc6 | 16 | 16 | ~251k | -91.3% | CSV parser, general v4 (context gap; see run-18.md) |
+| 19 | #9971 | #9973 | bc-98a70dad | 4 | 4 | ~7.5k | -99.7% | 3 files, general v4 |
+| 20 | #9972 | #9975 | bc-5dc7740e | 9 | 9 | ~44.6k | -98.5% | Blazor bug + bUnit, general v4 |
 
 ## Progress notes
 - 2026-10-16: Run 0 analysed. It is an invalid baseline. A repeatable template was created and issue #9937 filed for baseline run 1. Board writes were not possible: the gh token lacks the project scope.
@@ -42,3 +42,4 @@ Checklist items in #9436 (P1 mechanical) and #9437 (P2 naming/nullability), and 
 - 2026-10-16: Runs 7 and 8 recorded. Validator recipe added. Runs 9, 10 and 12 pre-filed; run 11 (type E canned) waits for run 10.
 - 2026-10-16: Runs 9, 10 and 12 recorded. General path v3 (Get-ItemContext) built. Runs 11 and 13-16 test it without type scripts.
 - 2026-10-16: The general path v3 averages ~7.7k over 5 runs with no type scripts. v4 trims context. Final runs 17-20 are larger, realistic items.
+- 2026-10-16: Runs 17-20 recorded. Experiment complete; see final-summary.md.
