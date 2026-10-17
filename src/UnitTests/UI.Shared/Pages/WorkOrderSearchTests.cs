@@ -299,6 +299,28 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task SortByCreated_Ascending_SortsResultsByCreatedDate_NullsLast()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, CreatedDate = null },
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, CreatedDate = new DateTime(2025, 6, 1) },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, CreatedDate = new DateTime(2025, 3, 1) },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByCreatedButton}");
+        await sortBtn.ClickAsync(new());
+
+        var tds = component.FindAll("tbody tr");
+        tds[0].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-002");
+        tds[1].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-001");
+        tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
+    }
+
+    [Test]
     public async Task SortByDueDate_ClickingAgain_ReversesToDescending_NullsLast()
     {
         var rows = new[]
