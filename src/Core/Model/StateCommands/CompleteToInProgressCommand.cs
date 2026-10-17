@@ -5,7 +5,7 @@ namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 public record CompleteToInProgressCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder,
     CurrentUser)
 {
-    private const string Name = "Reopen";
+    public const string Name = "Reopen";
     public override string TransitionVerbPresentTense => Name;
 
     public override string TransitionVerbPastTense => "Reopened";
