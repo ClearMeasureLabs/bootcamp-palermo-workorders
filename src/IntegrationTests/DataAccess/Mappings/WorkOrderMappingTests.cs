@@ -401,7 +401,7 @@ public class WorkOrderMappingTests
         new DatabaseTests().Clean();
 
         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
-        var longInstructions = new string('I', 4001);
+        var longInstructions = new string('I', WorkOrder.InstructionsMaxLength + 1);
         var workOrder = new WorkOrder
         {
             Number = "WO-08",
@@ -426,6 +426,6 @@ public class WorkOrderMappingTests
                 .Single(wo => wo.Id == workOrder.Id);
         }
 
-        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
+        rehydratedWorkOrder.Instructions!.Length.ShouldBe(WorkOrder.InstructionsMaxLength);
     }
 }
