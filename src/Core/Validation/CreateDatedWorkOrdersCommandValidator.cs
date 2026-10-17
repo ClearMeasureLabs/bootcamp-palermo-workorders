@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using FluentValidation;
 
@@ -15,7 +16,7 @@ public sealed class CreateDatedWorkOrdersCommandValidator : AbstractValidator<Cr
     {
         RuleFor(x => x.CreatorUsername).NotEmpty();
         RuleFor(x => x.AssigneeUsername).NotEmpty();
-        RuleFor(x => x.Title).NotEmpty();
+        RuleFor(x => x.Title).NotEmpty().MaximumLength(WorkOrder.TitleMaxLength);
         RuleFor(x => x.DueDates)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
