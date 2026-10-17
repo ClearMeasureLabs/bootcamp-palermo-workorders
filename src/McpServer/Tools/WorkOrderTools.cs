@@ -21,49 +21,95 @@ public class WorkOrderTools
         [Description("Optional assignee username filter")] string? assigneeUsername = null,
         [Description("Optional maximum number of work orders to return (1-100), ordered by Number")] int? limit = null)
     {
-        if (limit is < 1 or > 100)
+        if (IsInvalidLimit(limit))
         {
             return "limit must be between 1 and 100";
         }
 
+        var filtered = await QueryFilteredWorkOrders(bus, status, creatorUsername, assigneeUsername);
+        if (filtered == null)
+        {
+            return "[]";
+        }
+
+        return JsonSerializer.Serialize(ApplyLimit(filtered, limit).Select(FormatWorkOrderSummary).ToArray(),
+            new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static bool IsInvalidLimit(int? limit) => limit is < 1 or > 100;
+
+    private static async Task<WorkOrder[]?> QueryFilteredWorkOrders(
+        IBus bus,
+        string? status,
+        string? creatorUsername,
+        string? assigneeUsername)
+    {
         var query = new WorkOrderSpecificationQuery();
+        ApplyStatusFilter(query, status);
+
+        if (!await TryApplyCreatorFilter(bus, query, creatorUsername))
+        {
+            return null;
+        }
+
+        if (!await TryApplyAssigneeFilter(bus, query, assigneeUsername))
+        {
+            return null;
+        }
+
+        return await bus.Send(query);
+    }
+
+    private static void ApplyStatusFilter(WorkOrderSpecificationQuery query, string? status)
+    {
         if (!string.IsNullOrWhiteSpace(status))
         {
             query.MatchStatus(WorkOrderStatus.FromKey(status));
         }
-
-        if (!string.IsNullOrWhiteSpace(creatorUsername))
-        {
-            var creator = await FindEmployeeByUsername(bus, creatorUsername);
-            if (creator == null)
-            {
-                return "[]";
-            }
-
-            query.MatchCreator(creator);
-        }
-
-        if (!string.IsNullOrWhiteSpace(assigneeUsername))
-        {
-            var assignee = await FindEmployeeByUsername(bus, assigneeUsername);
-            if (assignee == null)
-            {
-                return "[]";
-            }
-
-            query.MatchAssignee(assignee);
-        }
-
-        var workOrders = await bus.Send(query);
-        IEnumerable<WorkOrder> results = workOrders;
-        if (limit.HasValue)
-        {
-            results = results.OrderBy(wo => wo.Number).Take(limit.Value);
-        }
-
-        return JsonSerializer.Serialize(results.Select(FormatWorkOrderSummary).ToArray(),
-            new JsonSerializerOptions { WriteIndented = true });
     }
+
+    private static async Task<bool> TryApplyCreatorFilter(
+        IBus bus,
+        WorkOrderSpecificationQuery query,
+        string? creatorUsername)
+    {
+        if (string.IsNullOrWhiteSpace(creatorUsername))
+        {
+            return true;
+        }
+
+        var creator = await FindEmployeeByUsername(bus, creatorUsername);
+        if (creator == null)
+        {
+            return false;
+        }
+
+        query.MatchCreator(creator);
+        return true;
+    }
+
+    private static async Task<bool> TryApplyAssigneeFilter(
+        IBus bus,
+        WorkOrderSpecificationQuery query,
+        string? assigneeUsername)
+    {
+        if (string.IsNullOrWhiteSpace(assigneeUsername))
+        {
+            return true;
+        }
+
+        var assignee = await FindEmployeeByUsername(bus, assigneeUsername);
+        if (assignee == null)
+        {
+            return false;
+        }
+
+        query.MatchAssignee(assignee);
+        return true;
+    }
+
+    private static IEnumerable<WorkOrder> ApplyLimit(WorkOrder[] workOrders, int? limit) =>
+        limit.HasValue ? workOrders.OrderBy(wo => wo.Number).Take(limit.Value) : workOrders;
 
     [McpServerTool(Name = "get-work-order"), Description("Retrieves a single work order by its number, including full details.")]
     public static async Task<string> GetWorkOrder(
