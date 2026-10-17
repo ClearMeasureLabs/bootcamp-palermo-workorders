@@ -11,3 +11,5 @@ Reference = **iter 3, full v2** (T1-T5 plus the path fix). Each ablation removes
 | 7 | **T4** local SQLite tests | skip local IT; push and rely on CI |
 | 8 | **T5** lean skill (no subagents/board/MCP) | stock feature-loop skill, but scripts available |
 | 9+ | repeat the reference / v3 refinements | variance check (the ledger needs >=2 samples) |
+
+**Revision (after iters 3-5):** T1 (file map) only matters when the agent edits by hand, so iter 6 = iter-5 setup *without* the file map (Δ vs iter 5). The reference is re-run as iter 9 on v3, because iter 3 was flake-contaminated; iter 2 (minus its 4 recovery calls) is the interim reference.

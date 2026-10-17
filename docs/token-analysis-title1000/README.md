@@ -34,8 +34,11 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 |---|---|---|---|---|
 | (baseline: stock bootcamp feature loop) | 1 | ~1.68M (lower bound; 7 subagents uncounted) | ~12.4k | 60 parent calls, 0 CI reds, 1 review-fix cycle, 1 extra notification run |
 | T1-T5 together (file map, canned change, one-call CI wait, local SQLite tests, no subagents/board/MCP) | 2 | -1.67M (-99.2%) | -10.6k (-85.5%) | 7 calls, 4 of them recovery from a path bug |
-| v2 fix: scripts copied to temp before the branch switch | 3 | tbd | tbd | expect ~4 fewer calls |
-| per-technique ablations | 4-8 | see ablation-plan.md | | |
+| v2 fix: scripts copied to temp before the branch switch | 3 | +84k vs iter 2 (masked by a CI flake) | +0.9k | the fix worked (no missing-script calls); the flake dominated |
+| **T3 one-call CI wait**: removed in iter 4 | 4 | removing it: **+7.1k (+53%)** vs iter 2 | **-0.4k** | cheap on a green run (runtime sleep between polls); T3's value shows on reds/flakes |
+| **T2 canned whole-change script**: removed in iter 5 | 5 | removing it: **+593k (~45x)** | **+1.3k (+70%)** | the dominant technique: 13 reads + 12 edits, each replaying context |
+| Flake cost (iter 3, v2 wait without flake handling) | 3 | +84k | +0.9k | one CI flake = 7 diagnostic calls with 26 KB of log dumps plus an empty-commit retrigger |
+| v3: Wait-PrChecks per-call cap 9 min (never backgrounded), auto-rerun of infra flakes (`gh run rerun --failed`), aggregator filtered, null bytes stripped | 9 | tbd | tbd | targets the iter 3 failure mode |
 
 ## Plan
 1. **Iter 1 (baseline):** stock feature-loop skill from master, no lean scripts. The agent must poll CI to green and fix reds.
@@ -47,6 +50,10 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 |---|---|---|---|---|---|---|---|
 | 1 | #9977 | #9978 | ~1.68M+ | ~12.4k | 60 (+7 subagents) | 0 | baseline |
 | 2 | #9979 | #9980 | ~13.4k | ~1.8k | 7 | 0 | lean v1 |
-| 3 | #9981 | | | | | | v2 reference |
-| 4 | #9982 | | | | | | ablate T3 (CI wait) |
-| 5 | #9983 | | | | | | ablate T2 (canned change) |
+| 3 | #9981 | #9985 | ~97.4k | ~2.65k | 14 | 1 flake | v2 reference (flake) |
+| 4 | #9982 | #9984 | ~20.5k | ~1.4k | 7 | 0 | ablate T3 |
+| 5 | #9983 | #9986 | ~606k | ~3.1k | 42 | 0 | ablate T2 |
+| 6 | #9987 | | | | | | ablate T1 (hand edits, no file map; compare to iter 5) |
+| 7 | #9988 | | | | | | ablate T4 (no local SQLite IT) |
+| 8 | #9989 | | | | | | ablate T5 (stock skill + scripts available) |
+| 9 | #9990 | | | | | | v3 reference |
