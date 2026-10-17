@@ -34,13 +34,20 @@ internal static class WorkOrderQueryFilters
             query = ApplyOverdueFilter(query);
         }
 
-        if (!string.IsNullOrWhiteSpace(titleContains))
+        return ApplyTitleContainsFilter(query, titleContains);
+    }
+
+    private static IQueryable<WorkOrder> ApplyTitleContainsFilter(
+        IQueryable<WorkOrder> query,
+        string? titleContains)
+    {
+        if (string.IsNullOrWhiteSpace(titleContains))
         {
-            var lowered = titleContains.ToLower();
-            query = query.Where(wo => wo.Title != null && wo.Title.ToLower().Contains(lowered));
+            return query;
         }
 
-        return query;
+        var lowered = titleContains.ToLower();
+        return query.Where(wo => wo.Title != null && wo.Title.ToLower().Contains(lowered));
     }
 
     private static IQueryable<WorkOrder> ApplyOverdueFilter(IQueryable<WorkOrder> query)
