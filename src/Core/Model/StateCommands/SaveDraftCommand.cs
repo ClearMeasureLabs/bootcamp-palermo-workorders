@@ -28,6 +28,7 @@ StateCommandBase(WorkOrder, CurrentUser)
 
     public override void Execute(StateCommandContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
         if (WorkOrder.CreatedDate.Equals(null))
         {
             WorkOrder.CreatedDate = context.CurrentDateTime;

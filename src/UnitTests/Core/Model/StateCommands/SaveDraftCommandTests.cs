@@ -71,4 +71,16 @@ public class SaveDraftCommandTests : StateCommandBaseTests
     {
         return new SaveDraftCommand(order, employee);
     }
+
+    [Test]
+    public void ShouldThrowArgumentNullExceptionWhenContextIsNull()
+    {
+        var employee = new Employee();
+        var order = new WorkOrder();
+        var command = new SaveDraftCommand(order, employee);
+
+        var exception = Assert.Throws<ArgumentNullException>(() => command.Execute(null!));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("context"));
+    }
 }
