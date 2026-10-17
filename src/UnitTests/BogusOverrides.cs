@@ -29,6 +29,9 @@ internal class BogusOverrides : AutoGeneratorOverride
             case WorkOrderStatus:
                 context.Instance = context.Faker.PickRandom(WorkOrderStatus.GetAllItems());
                 break;
+            case WorkOrderPriority:
+                context.Instance = context.Faker.PickRandom(WorkOrderPriority.GetAllItems());
+                break;
             case WorkOrderSpecificationQuery query:
                 query.StatusKey = context.Faker.PickRandom(WorkOrderStatus.GetAllItems()).Key;
                 break;
