@@ -1,0 +1,358 @@
+diff --git a/src/Core/Model/WorkOrder.cs b/src/Core/Model/WorkOrder.cs
+index ddd1b06a8..f6da24845 100644
+--- a/src/Core/Model/WorkOrder.cs
++++ b/src/Core/Model/WorkOrder.cs
+@@ -39,6 +39,11 @@ public string? Instructions
+ 
+     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
+ 
++    /// <summary>
++    /// Priority classification (Low / Normal / High). Defaults to <see cref="WorkOrderPriority.Normal"/>.
++    /// </summary>
++    public WorkOrderPriority Priority { get; set; } = WorkOrderPriority.Normal;
++
+     public Employee? Creator { get; set; }
+ 
+     public Employee? Assignee { get; set; }
+diff --git a/src/Core/Model/WorkOrderPriority.cs b/src/Core/Model/WorkOrderPriority.cs
+new file mode 100644
+index 000000000..a1c9aa229
+--- /dev/null
++++ b/src/Core/Model/WorkOrderPriority.cs
+@@ -0,0 +1,84 @@
++using System.Text.Json;
++using System.Text.Json.Serialization;
++
++namespace ClearMeasure.Bootcamp.Core.Model;
++
++/// <summary>
++/// Work-order priority value list persisted as NVARCHAR (Low / Normal / High).
++/// </summary>
++[JsonConverter(typeof(WorkOrderPriorityJsonConverter))]
++public class WorkOrderPriority : IEquatable<WorkOrderPriority>
++{
++    public static readonly WorkOrderPriority Low = new("Low");
++    public static readonly WorkOrderPriority Normal = new("Normal");
++    public static readonly WorkOrderPriority High = new("High");
++
++    public WorkOrderPriority()
++    {
++        Key = null!;
++    }
++
++    protected WorkOrderPriority(string key)
++    {
++        Key = key;
++    }
++
++    public string Key { get; }
++
++    public static WorkOrderPriority[] GetAllItems() => [Low, Normal, High];
++
++    public static WorkOrderPriority FromKey(string? key)
++    {
++        ArgumentNullException.ThrowIfNull(key);
++
++        var match = Array.Find(GetAllItems(),
++            instance => instance.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
++
++        return match ?? throw new ArgumentOutOfRangeException(
++            nameof(key),
++            $"Key '{key}' is not a valid key for {nameof(WorkOrderPriority)}");
++    }
++
++    public bool Equals(WorkOrderPriority? other) =>
++        ReferenceEquals(this, other) || HasSameKey(other);
++
++    private bool HasSameKey(WorkOrderPriority? other) =>
++        other is not null
++        && GetType() == other.GetType()
++        && KeysEqual(other.Key);
++
++    private bool KeysEqual(string? otherKey) =>
++        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
++        Key is not null && string.Equals(Key, otherKey, StringComparison.Ordinal);
++
++    public override bool Equals(object? obj) => Equals(obj as WorkOrderPriority);
++
++    public override int GetHashCode()
++    {
++        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
++        return Key is null ? 0 : Key.GetHashCode();
++    }
++
++    public override string ToString() => Key;
++
++    public static bool operator ==(WorkOrderPriority? left, WorkOrderPriority? right) =>
++        left?.Equals(right) ?? right is null;
++
++    public static bool operator !=(WorkOrderPriority? left, WorkOrderPriority? right) =>
++        !(left == right);
++}
++
++public class WorkOrderPriorityJsonConverter : JsonConverter<WorkOrderPriority>
++{
++    public override WorkOrderPriority Read(ref Utf8JsonReader reader, Type typeToConvert,
++        JsonSerializerOptions options)
++    {
++        var key = reader.GetString();
++        return WorkOrderPriority.FromKey(key);
++    }
++
++    public override void Write(Utf8JsonWriter writer, WorkOrderPriority value, JsonSerializerOptions options)
++    {
++        writer.WriteStringValue(value.Key);
++    }
++}
+diff --git a/src/DataAccess/Mappings/WorkOrderMap.cs b/src/DataAccess/Mappings/WorkOrderMap.cs
+index 6b09a16ac..f6b02ce37 100644
+--- a/src/DataAccess/Mappings/WorkOrderMap.cs
++++ b/src/DataAccess/Mappings/WorkOrderMap.cs
+@@ -8,6 +8,7 @@ public class WorkOrderMap : IEntityFrameworkMapping
+     public void Map(ModelBuilder modelBuilder)
+     {
+         var statusConverter = new WorkOrderStatusConverter();
++        var priorityConverter = new WorkOrderPriorityConverter();
+ 
+         modelBuilder.Entity<WorkOrder>(entity =>
+         {
+@@ -44,6 +45,11 @@ public void Map(ModelBuilder modelBuilder)
+             entity.Property(e => e.Status)
+                 .HasConversion(statusConverter)
+                 .HasMaxLength(3);
++
++            entity.Property(e => e.Priority)
++                .HasConversion(priorityConverter)
++                .HasMaxLength(10)
++                .IsRequired();
+         });
+     }
+ }
+\ No newline at end of file
+diff --git a/src/DataAccess/Mappings/WorkOrderPriorityConverter.cs b/src/DataAccess/Mappings/WorkOrderPriorityConverter.cs
+new file mode 100644
+index 000000000..3bd2c6710
+--- /dev/null
++++ b/src/DataAccess/Mappings/WorkOrderPriorityConverter.cs
+@@ -0,0 +1,8 @@
++using ClearMeasure.Bootcamp.Core.Model;
++using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
++
++namespace ClearMeasure.Bootcamp.DataAccess.Mappings;
++
++public class WorkOrderPriorityConverter() : ValueConverter<WorkOrderPriority, string>(
++    v => v.Key,
++    v => WorkOrderPriority.FromKey(v));
+diff --git a/src/Database/scripts/Update/033_AddWorkOrderPriority.sql b/src/Database/scripts/Update/033_AddWorkOrderPriority.sql
+new file mode 100644
+index 000000000..15390a820
+--- /dev/null
++++ b/src/Database/scripts/Update/033_AddWorkOrderPriority.sql
+@@ -0,0 +1,14 @@
++BEGIN TRY
++	BEGIN TRANSACTION
++	PRINT N'Adding Priority column to [dbo].[WorkOrder]'
++	ALTER TABLE [dbo].[WorkOrder] ADD [Priority] NVARCHAR(10) NOT NULL
++		CONSTRAINT [DF_WorkOrder_Priority] DEFAULT N'Normal'
++	PRINT 'The database update succeeded'
++	COMMIT TRANSACTION
++END TRY
++BEGIN CATCH
++	IF @@TRANCOUNT > 0
++		ROLLBACK TRANSACTION
++	THROW
++END CATCH
++GO
+diff --git a/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs b/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs
+index 3baf68ece..aba838283 100644
+--- a/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs
++++ b/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs
+@@ -47,10 +47,44 @@ public void ShouldMapWorkOrderBasicProperties()
+         rehydratedWorkOrder.Instructions.ShouldBe("Lock out panel before work.");
+         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
+         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
++        rehydratedWorkOrder.Priority.ShouldBe(WorkOrderPriority.Normal);
+         rehydratedWorkOrder.Creator.ShouldNotBeNull();
+         rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);
+     }
+ 
++    [Test]
++    public void ShouldPersistAndRetrieveWorkOrderPriority()
++    {
++        new DatabaseTests().Clean();
++
++        var creator = new Employee("creator-pri", "Pri", "Oity", "pri@example.com");
++        var workOrder = new WorkOrder
++        {
++            Number = "WO-P1",
++            Title = "Priority mapping",
++            Description = "Round-trip High priority",
++            Status = WorkOrderStatus.Draft,
++            Priority = WorkOrderPriority.High,
++            Creator = creator
++        };
++
++        using (var context = TestHost.GetRequiredService<DbContext>())
++        {
++            context.Add(creator);
++            context.Add(workOrder);
++            context.SaveChanges();
++        }
++
++        WorkOrder rehydrated;
++        using (var context = TestHost.GetRequiredService<DbContext>())
++        {
++            rehydrated = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
++        }
++
++        rehydrated.Priority.ShouldBe(WorkOrderPriority.High);
++        rehydrated.Priority.Key.ShouldBe("High");
++    }
++
+     [Test]
+     public async Task ShouldSaveWorkOrder()
+     {
+diff --git a/src/UI.Shared/Models/WorkOrderManageModel.cs b/src/UI.Shared/Models/WorkOrderManageModel.cs
+index 4416fa227..c24e19e3a 100644
+--- a/src/UI.Shared/Models/WorkOrderManageModel.cs
++++ b/src/UI.Shared/Models/WorkOrderManageModel.cs
+@@ -14,6 +14,11 @@ public class WorkOrderManageModel
+ 
+     public string? Status { get; set; }
+ 
++    /// <summary>
++    /// Bound priority key (Low / Normal / High).
++    /// </summary>
++    public string? Priority { get; set; }
++
+     public string? CreatorFullName { get; set; }
+ 
+     public string? AssignedToUserName { get; set; }
+diff --git a/src/UI.Shared/Pages/WorkOrderManage.razor b/src/UI.Shared/Pages/WorkOrderManage.razor
+index dc1927d40..08494b25d 100644
+--- a/src/UI.Shared/Pages/WorkOrderManage.razor
++++ b/src/UI.Shared/Pages/WorkOrderManage.razor
+@@ -42,6 +42,27 @@
+                     </div>
+                 </div>
+ 
++                <div class="form-group">
++                    <label for="Priority" class="form-label">Priority:</label>
++                    <div>
++                        @if (!Model.IsReadOnly)
++                        {
++                            <InputSelect data-testid="@Elements.Priority" id="Priority"
++                                         @bind-Value="Model.Priority"
++                                         class="form-control input-select">
++                                @foreach (var priority in WorkOrderPriority.GetAllItems())
++                                {
++                                    <option value="@priority.Key">@priority.Key</option>
++                                }
++                            </InputSelect>
++                        }
++                        else
++                        {
++                            <span data-testid="@Elements.PriorityDisplay" class="value">@Model.Priority</span>
++                        }
++                    </div>
++                </div>
++
+                 <div class="form-group">
+                     <label for="Title" class="form-label">Title:</label>
+                     <div>
+@@ -197,6 +218,8 @@
+         CommandButton,
+         WorkOrderNumber,
+         Status,
++        Priority,
++        PriorityDisplay,
+         AttachmentsSection,
+         AttachmentRow,
+         AttachmentFileName,
+diff --git a/src/UI.Shared/Pages/WorkOrderManage.razor.cs b/src/UI.Shared/Pages/WorkOrderManage.razor.cs
+index ef2e521cd..870d6ca96 100644
+--- a/src/UI.Shared/Pages/WorkOrderManage.razor.cs
++++ b/src/UI.Shared/Pages/WorkOrderManage.razor.cs
+@@ -118,6 +118,7 @@ private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)
+             Mode = mode,
+             WorkOrderNumber = workOrder.Number,
+             Status = workOrder.Status.FriendlyName,
++            Priority = workOrder.Priority.Key,
+             CreatorFullName = workOrder.Creator!.GetFullName(),
+             AssignedToUserName = workOrder.Assignee?.UserName,
+             Title = workOrder.Title,
+@@ -170,6 +171,9 @@ private async Task HandleSubmit()
+         workOrder.Instructions = Model.Instructions;
+         workOrder.RoomNumber = Model.RoomNumber;
+         workOrder.DueDate = Model.DueDateInput;
++        workOrder.Priority = string.IsNullOrEmpty(Model.Priority)
++            ? WorkOrderPriority.Normal
++            : WorkOrderPriority.FromKey(Model.Priority);
+ 
+         var matchingCommand = new StateCommandList()
+             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
+diff --git a/src/UnitTests/BogusOverrides.cs b/src/UnitTests/BogusOverrides.cs
+index 33b51ebe3..d47c2a452 100644
+--- a/src/UnitTests/BogusOverrides.cs
++++ b/src/UnitTests/BogusOverrides.cs
+@@ -29,6 +29,9 @@ public override void Generate(AutoGenerateOverrideContext context)
+             case WorkOrderStatus:
+                 context.Instance = context.Faker.PickRandom(WorkOrderStatus.GetAllItems());
+                 break;
++            case WorkOrderPriority:
++                context.Instance = context.Faker.PickRandom(WorkOrderPriority.GetAllItems());
++                break;
+             case WorkOrderSpecificationQuery query:
+                 query.StatusKey = context.Faker.PickRandom(WorkOrderStatus.GetAllItems()).Key;
+                 break;
+diff --git a/src/UnitTests/Core/Model/WorkOrderPriorityTests.cs b/src/UnitTests/Core/Model/WorkOrderPriorityTests.cs
+new file mode 100644
+index 000000000..299ac7342
+--- /dev/null
++++ b/src/UnitTests/Core/Model/WorkOrderPriorityTests.cs
+@@ -0,0 +1,33 @@
++using ClearMeasure.Bootcamp.Core.Model;
++using Shouldly;
++
++namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
++
++[TestFixture]
++public class WorkOrderPriorityTests
++{
++    [Test]
++    public void ShouldListAllPriorities()
++    {
++        var priorities = WorkOrderPriority.GetAllItems();
++
++        priorities.Length.ShouldBe(3);
++        priorities[0].ShouldBe(WorkOrderPriority.Low);
++        priorities[1].ShouldBe(WorkOrderPriority.Normal);
++        priorities[2].ShouldBe(WorkOrderPriority.High);
++    }
++
++    [Test]
++    public void FromKey_ShouldReturnMatchingPriority()
++    {
++        WorkOrderPriority.FromKey("Low").ShouldBe(WorkOrderPriority.Low);
++        WorkOrderPriority.FromKey("normal").ShouldBe(WorkOrderPriority.Normal);
++        WorkOrderPriority.FromKey("HIGH").ShouldBe(WorkOrderPriority.High);
++    }
++
++    [Test]
++    public void FromKey_WhenUnknown_ShouldThrow()
++    {
++        Should.Throw<ArgumentOutOfRangeException>(() => WorkOrderPriority.FromKey("Urgent"));
++    }
++}
+diff --git a/src/UnitTests/Core/Model/WorkOrderTests.cs b/src/UnitTests/Core/Model/WorkOrderTests.cs
+index a8e7414c4..fe1450287 100644
+--- a/src/UnitTests/Core/Model/WorkOrderTests.cs
++++ b/src/UnitTests/Core/Model/WorkOrderTests.cs
+@@ -14,6 +14,7 @@ public void PropertiesShouldInitializeToProperDefaults()
+         Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
+         Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
+         Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
++        Assert.That(workOrder.Priority, Is.EqualTo(WorkOrderPriority.Normal));
+         Assert.That(workOrder.Number, Is.EqualTo(null));
+         Assert.That(workOrder.Creator, Is.EqualTo(null));
+         Assert.That(workOrder.Assignee, Is.EqualTo(null));

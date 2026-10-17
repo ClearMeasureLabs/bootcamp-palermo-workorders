@@ -1,0 +1,26 @@
+diff --git a/src/Core/Core.csproj b/src/Core/Core.csproj
+index 14fd6a97b..e8856dddb 100644
+--- a/src/Core/Core.csproj
++++ b/src/Core/Core.csproj
+@@ -16,7 +16,7 @@
+   </ItemGroup>
+ 
+   <ItemGroup>
+-    <PackageReference Include="FluentValidation" Version="11.11.0" />
++    <PackageReference Include="FluentValidation" Version="11.12.0" />
+     <PackageReference Include="MediatR.Contracts" Version="2.0.1" />
+     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.0" />
+     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+diff --git a/src/UI/Server/UI.Server.csproj b/src/UI/Server/UI.Server.csproj
+index 0c0c7cc0e..db1dcc585 100644
+--- a/src/UI/Server/UI.Server.csproj
++++ b/src/UI/Server/UI.Server.csproj
+@@ -17,7 +17,7 @@
+ 
+ 	<ItemGroup>
+ 		<PackageReference Include="Asp.Versioning.Http" Version="8.1.0" />
+-		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
++		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.12.0" />
+ 		<PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
+ 		<PackageReference Include="Google.Protobuf" Version="3.27.0" />
+ 		<PackageReference Include="Grpc.AspNetCore" Version="2.70.0" />

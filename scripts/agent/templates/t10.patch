@@ -1,0 +1,74 @@
+diff --git a/src/McpServer/Tools/WorkOrderTools.cs b/src/McpServer/Tools/WorkOrderTools.cs
+index db35a856c..113207e45 100644
+--- a/src/McpServer/Tools/WorkOrderTools.cs
++++ b/src/McpServer/Tools/WorkOrderTools.cs
+@@ -236,6 +236,13 @@ public static async Task<string> ListWorkOrderAttachments(
+         }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
+     }
+ 
++    [McpServerTool(Name = "get-work-order-counts-by-status"), Description("Returns the count of work orders for each status (Draft, Assigned, InProgress, Complete, Cancelled).")]
++    public static async Task<string> GetWorkOrderCountsByStatus(IBus bus)
++    {
++        var counts = await bus.Send(new WorkOrderCountByStatusQuery());
++        return JsonSerializer.Serialize(counts, new JsonSerializerOptions { WriteIndented = true });
++    }
++
+     private static string? ValidateSave(
+         WorkOrder workOrder,
+         Employee executingUser,
+diff --git a/src/UnitTests/McpServer/WorkOrderToolsCountByStatusTests.cs b/src/UnitTests/McpServer/WorkOrderToolsCountByStatusTests.cs
+new file mode 100644
+index 000000000..266edad11
+--- /dev/null
++++ b/src/UnitTests/McpServer/WorkOrderToolsCountByStatusTests.cs
+@@ -0,0 +1,50 @@
++using System.Text.Json;
++using ClearMeasure.Bootcamp.Core;
++using ClearMeasure.Bootcamp.Core.Model;
++using ClearMeasure.Bootcamp.Core.Queries;
++using ClearMeasure.Bootcamp.McpServer.Tools;
++using MediatR;
++using Shouldly;
++
++namespace ClearMeasure.Bootcamp.UnitTests.McpServer;
++
++[TestFixture]
++public class WorkOrderToolsCountByStatusTests
++{
++    [Test]
++    public async Task GetWorkOrderCountsByStatus_ShouldReturnSerializedStatusCounts()
++    {
++        var expected = WorkOrderStatus.GetAllItems().ToDictionary(s => s.Key, _ => 0);
++        expected[WorkOrderStatus.Draft.Key] = 2;
++        expected[WorkOrderStatus.Assigned.Key] = 1;
++        expected[WorkOrderStatus.InProgress.Key] = 3;
++        var bus = new StubBus(expected);
++
++        var result = await WorkOrderTools.GetWorkOrderCountsByStatus(bus);
++
++        bus.LastRequest.ShouldBeOfType<WorkOrderCountByStatusQuery>();
++        var parsed = JsonSerializer.Deserialize<Dictionary<string, int>>(result);
++        parsed.ShouldNotBeNull();
++        parsed.ShouldBe(expected);
++    }
++
++    private sealed class StubBus(Dictionary<string, int> counts) : IBus
++    {
++        public object? LastRequest { get; private set; }
++
++        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
++        {
++            LastRequest = request;
++            if (request is WorkOrderCountByStatusQuery)
++            {
++                return Task.FromResult((TResponse)(object)counts);
++            }
++
++            throw new InvalidOperationException($"No stub response for {request.GetType().Name}");
++        }
++
++        public Task<object?> Send(object request) => throw new NotImplementedException();
++
++        public Task Publish(INotification notification) => Task.CompletedTask;
++    }
++}

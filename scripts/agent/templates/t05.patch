@@ -1,0 +1,152 @@
+diff --git a/src/AcceptanceTests/WorkOrders/WorkOrderSearchTests.cs b/src/AcceptanceTests/WorkOrders/WorkOrderSearchTests.cs
+index 01f426f44..7e6570b5c 100644
+--- a/src/AcceptanceTests/WorkOrders/WorkOrderSearchTests.cs
++++ b/src/AcceptanceTests/WorkOrders/WorkOrderSearchTests.cs
+@@ -600,7 +600,7 @@ public async Task SortByRoomHeader_SortsResultsAscending_ThenDescendingOnSecondC
+         await TakeScreenshotAsync(1, "SortedAscending");
+ 
+         await Expect(roomSortBtn).ToHaveTextAsync("Room ▲");
+-        var firstRoomCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(7)");
++        var firstRoomCell = Page.Locator(".grid-data tbody tr").First.Locator("td:nth-child(8)");
+         await Expect(firstRoomCell).ToContainTextAsync("Atrium");
+ 
+         await roomSortBtn.ClickAsync();
+diff --git a/src/UI.Shared/Pages/WorkOrderSearch.razor b/src/UI.Shared/Pages/WorkOrderSearch.razor
+index c692ecd0b..8bf36d3f4 100644
+--- a/src/UI.Shared/Pages/WorkOrderSearch.razor
++++ b/src/UI.Shared/Pages/WorkOrderSearch.razor
+@@ -105,6 +105,11 @@
+                                    Due Date @if (_sortColumn == "DueDate") { <span>@(_sortAscending ? "▲" : "▼")</span> }
+                                </button>
+                            </th>
++                           <th>
++                               <button id="@Elements.SortByCreatedButton" class="sort-btn @(_sortColumn == "Created" ? "sort-active" : "")" @onclick='() => SortBy("Created")'>
++                                   Created @if (_sortColumn == "Created") { <span>@(_sortAscending ? "▲" : "▼")</span> }
++                               </button>
++                           </th>
+                            <th>
+                                <button id="@Elements.SortByRoomButton" class="sort-btn @(_sortColumn == "Room" ? "sort-active" : "")" @onclick='() => SortBy("Room")'>
+                                    Room @if (_sortColumn == "Room") { <span>@(_sortAscending ? "▲" : "▼")</span> }
+@@ -151,6 +156,7 @@
+                                               aria-label="@badgeText">@badgeText</span>
+                                     }
+                                 </td>
++                                <td>@order.WorkOrder.CreatedDate?.ToString("MMM d, yyyy")</td>
+                                 <td>@order.WorkOrder.RoomNumber</td>
+                             </tr>
+                         }
+@@ -177,6 +183,7 @@
+         UrgencyBadge,
+         SortByStatusButton,
+         SortByDueDateButton,
++        SortByCreatedButton,
+         SortByTitleButton,
+         SortByRoomButton,
+         AssignedToMeCheckbox,
+diff --git a/src/UI.Shared/Pages/WorkOrderSearch.razor.cs b/src/UI.Shared/Pages/WorkOrderSearch.razor.cs
+index 7f252d6ba..2497b368f 100644
+--- a/src/UI.Shared/Pages/WorkOrderSearch.razor.cs
++++ b/src/UI.Shared/Pages/WorkOrderSearch.razor.cs
+@@ -143,11 +143,30 @@ private void SortBy(string column)
+ 
+     private void ApplySort()
+     {
+-        if (_sortColumn == null) return;
+-        if (_sortColumn == "Status") ApplySortByStatus();
+-        else if (_sortColumn == "DueDate") ApplySortByDueDate();
+-        else if (_sortColumn == "Title") ApplySortByTitle();
+-        else if (_sortColumn == "Room") ApplySortByRoom();
++        if (_sortColumn is null) return;
++        ApplySortColumn(_sortColumn);
++    }
++
++    private void ApplySortColumn(string column)
++    {
++        switch (column)
++        {
++            case "Status":
++                ApplySortByStatus();
++                break;
++            case "DueDate":
++                ApplySortByDueDate();
++                break;
++            case "Created":
++                ApplySortByCreated();
++                break;
++            case "Title":
++                ApplySortByTitle();
++                break;
++            case "Room":
++                ApplySortByRoom();
++                break;
++        }
+     }
+ 
+     private void ApplySortByStatus()
+@@ -166,6 +185,15 @@ private void ApplySortByDueDate()
+                            .ThenByDescending(r => r.WorkOrder.DueDate).ToArray();
+     }
+ 
++    private void ApplySortByCreated()
++    {
++        Model.Results = _sortAscending
++            ? Model.Results.OrderBy(r => r.WorkOrder.CreatedDate.HasValue ? 0 : 1)
++                           .ThenBy(r => r.WorkOrder.CreatedDate).ToArray()
++            : Model.Results.OrderBy(r => r.WorkOrder.CreatedDate.HasValue ? 0 : 1)
++                           .ThenByDescending(r => r.WorkOrder.CreatedDate).ToArray();
++    }
++
+     private void ApplySortByTitle()
+     {
+         Model.Results = _sortAscending
+diff --git a/src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs b/src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs
+index 2bf36d695..0ee41c5d8 100644
+--- a/src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs
++++ b/src/UnitTests/UI.Shared/Pages/WorkOrderSearchTests.cs
+@@ -298,6 +298,28 @@ public async Task SortByDueDate_Ascending_SortsResultsByDueDate_NullsLast()
+         tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
+     }
+ 
++    [Test]
++    public async Task SortByCreated_Ascending_SortsResultsByCreatedDate_NullsLast()
++    {
++        var rows = new[]
++        {
++            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, CreatedDate = null },
++            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, CreatedDate = new DateTime(2025, 6, 1) },
++            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, CreatedDate = new DateTime(2025, 3, 1) },
++        };
++        await using var ctx = CreateContext(new StubBus(rows));
++
++        var component = ctx.Render<WorkOrderSearch>();
++
++        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByCreatedButton}");
++        await sortBtn.ClickAsync(new());
++
++        var tds = component.FindAll("tbody tr");
++        tds[0].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-002");
++        tds[1].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-001");
++        tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
++    }
++
+     [Test]
+     public async Task SortByDueDate_ClickingAgain_ReversesToDescending_NullsLast()
+     {
+@@ -471,7 +493,7 @@ public async Task SortByRoom_Ascending_SortsResultsByRoomNumber()
+         var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
+         await sortBtn.ClickAsync(new());
+ 
+-        var cells = component.FindAll("tbody tr td:nth-child(7)");
++        var cells = component.FindAll("tbody tr td:nth-child(8)");
+         cells[0].TextContent.Trim().ShouldBe("A");
+         cells[1].TextContent.Trim().ShouldBe("B");
+         cells[2].TextContent.Trim().ShouldBe("C");
+@@ -494,7 +516,7 @@ public async Task SortByRoom_ClickingAgain_ReversesToDescending()
+         await sortBtn.ClickAsync(new());
+         await sortBtn.ClickAsync(new());
+ 
+-        var cells = component.FindAll("tbody tr td:nth-child(7)");
++        var cells = component.FindAll("tbody tr td:nth-child(8)");
+         cells[0].TextContent.Trim().ShouldBe("C");
+         cells[1].TextContent.Trim().ShouldBe("B");
+         cells[2].TextContent.Trim().ShouldBe("A");

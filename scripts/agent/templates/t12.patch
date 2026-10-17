@@ -1,0 +1,68 @@
+diff --git a/src/Core/Model/Events/WorkOrderCompletedEvent.cs b/src/Core/Model/Events/WorkOrderCompletedEvent.cs
+new file mode 100644
+index 000000000..4907e2bee
+--- /dev/null
++++ b/src/Core/Model/Events/WorkOrderCompletedEvent.cs
+@@ -0,0 +1,4 @@
++// ReSharper disable NotAccessedPositionalProperty.Global
++namespace ClearMeasure.Bootcamp.Core.Model.Events;
++
++public record WorkOrderCompletedEvent(string Number, string AssigneeName) : IStateTransitionEvent;
+diff --git a/src/Core/Model/StateCommands/InProgressToCompleteCommand.cs b/src/Core/Model/StateCommands/InProgressToCompleteCommand.cs
+index 48601b9a0..3b2d60ea5 100644
+--- a/src/Core/Model/StateCommands/InProgressToCompleteCommand.cs
++++ b/src/Core/Model/StateCommands/InProgressToCompleteCommand.cs
+@@ -1,3 +1,4 @@
++using ClearMeasure.Bootcamp.Core.Model.Events;
+ using ClearMeasure.Bootcamp.Core.Services;
+ 
+ namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
+@@ -29,5 +30,8 @@ public override void Execute(StateCommandContext context)
+     {
+         WorkOrder.CompletedDate = context.CurrentDateTime;
+         base.Execute(context);
++        StateTransitionEvent = new WorkOrderCompletedEvent(
++            WorkOrder.Number ?? string.Empty,
++            WorkOrder.Assignee?.GetFullName() ?? string.Empty);
+     }
+ }
+\ No newline at end of file
+diff --git a/src/UnitTests/Core/Model/StateCommands/InProgressToCompleteCommandTests.cs b/src/UnitTests/Core/Model/StateCommands/InProgressToCompleteCommandTests.cs
+index 717316ec8..6de54e296 100644
+--- a/src/UnitTests/Core/Model/StateCommands/InProgressToCompleteCommandTests.cs
++++ b/src/UnitTests/Core/Model/StateCommands/InProgressToCompleteCommandTests.cs
+@@ -1,6 +1,8 @@
+ using ClearMeasure.Bootcamp.Core.Model;
++using ClearMeasure.Bootcamp.Core.Model.Events;
+ using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+ using ClearMeasure.Bootcamp.Core.Services;
++using Shouldly;
+ 
+ namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
+ 
+@@ -67,6 +69,25 @@ public void ShouldTransitionStateProperly()
+         Assert.That(order.CompletedDate, Is.Not.Null);
+     }
+ 
++    [Test]
++    public void ShouldRaiseWorkOrderCompletedEvent_WhenExecuted()
++    {
++        var employee = new Employee("jdoe", "Jane", "Doe", "jane@example.com");
++        var order = new WorkOrder
++        {
++            Number = "WO-42",
++            Status = WorkOrderStatus.InProgress,
++            Assignee = employee
++        };
++
++        var command = new InProgressToCompleteCommand(order, employee);
++        command.Execute(new StateCommandContext());
++
++        var completedEvent = command.StateTransitionEvent.ShouldBeOfType<WorkOrderCompletedEvent>();
++        completedEvent.Number.ShouldBe("WO-42");
++        completedEvent.AssigneeName.ShouldBe("Jane Doe");
++    }
++
+     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
+     {
+         return new InProgressToCompleteCommand(order, employee);

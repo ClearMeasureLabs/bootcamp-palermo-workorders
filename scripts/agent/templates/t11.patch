@@ -1,0 +1,170 @@
+diff --git a/src/Core/Export/WorkOrderCsvFormatter.cs b/src/Core/Export/WorkOrderCsvFormatter.cs
+new file mode 100644
+index 000000000..da2c34e94
+--- /dev/null
++++ b/src/Core/Export/WorkOrderCsvFormatter.cs
+@@ -0,0 +1,66 @@
++using System.Text;
++using ClearMeasure.Bootcamp.Core.Model;
++
++namespace ClearMeasure.Bootcamp.Core.Export;
++
++/// <summary>
++/// Formats work orders as RFC 4180 CSV with columns Number,Title,Status,Assignee,DueDate.
++/// </summary>
++public static class WorkOrderCsvFormatter
++{
++    /// <summary>
++    /// Header row for the export format.
++    /// </summary>
++    public const string Header = "Number,Title,Status,Assignee,DueDate";
++
++    /// <summary>
++    /// Formats <paramref name="workOrders"/> as CSV including the header row.
++    /// </summary>
++    public static string Format(IEnumerable<WorkOrder> workOrders)
++    {
++        ArgumentNullException.ThrowIfNull(workOrders);
++
++        var sb = new StringBuilder();
++        sb.AppendLine(Header);
++        foreach (var workOrder in workOrders)
++        {
++            sb.Append(Escape(workOrder.Number));
++            sb.Append(',');
++            sb.Append(Escape(workOrder.Title));
++            sb.Append(',');
++            sb.Append(Escape(workOrder.Status.ToString()));
++            sb.Append(',');
++            sb.Append(Escape(workOrder.Assignee?.UserName));
++            sb.Append(',');
++            sb.Append(Escape(FormatDueDate(workOrder.DueDate)));
++            sb.AppendLine();
++        }
++
++        return sb.ToString();
++    }
++
++    /// <summary>
++    /// Escapes a field per RFC 4180 (quote when needed; double embedded quotes).
++    /// </summary>
++    public static string Escape(string? value)
++    {
++        if (value is null)
++        {
++            return string.Empty;
++        }
++
++        var needsQuotes = value.Contains(',')
++                          || value.Contains('"')
++                          || value.Contains('\r')
++                          || value.Contains('\n');
++        if (!needsQuotes)
++        {
++            return value;
++        }
++
++        return "\"" + value.Replace("\"", "\"\"") + "\"";
++    }
++
++    private static string FormatDueDate(DateOnly? dueDate) =>
++        dueDate?.ToString("yyyy-MM-dd") ?? string.Empty;
++}
+diff --git a/src/UI/Api/Controllers/WorkOrdersExportController.cs b/src/UI/Api/Controllers/WorkOrdersExportController.cs
+new file mode 100644
+index 000000000..77890f897
+--- /dev/null
++++ b/src/UI/Api/Controllers/WorkOrdersExportController.cs
+@@ -0,0 +1,39 @@
++using Asp.Versioning;
++using ClearMeasure.Bootcamp.Core;
++using ClearMeasure.Bootcamp.Core.Export;
++using ClearMeasure.Bootcamp.Core.Queries;
++using Microsoft.AspNetCore.Authorization;
++using Microsoft.AspNetCore.Mvc;
++using Microsoft.AspNetCore.RateLimiting;
++
++namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
++
++/// <summary>
++/// Exports work orders as CSV for integrators and operators.
++/// </summary>
++[ApiController]
++[ApiVersion("1.0")]
++[Route("api/workorders")]
++[Route($"{ApiRoutes.VersionedApiPrefix}/workorders")]
++[EnableRateLimiting(ApiRateLimiting.PolicyName)]
++public sealed class WorkOrdersExportController(IBus bus) : ControllerBase
++{
++    /// <summary>
++    /// Returns all work orders as RFC 4180 CSV (Number,Title,Status,Assignee,DueDate).
++    /// </summary>
++    [HttpGet("export.csv")]
++    [AllowAnonymous]
++    [Produces("text/csv")]
++    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
++    public async Task<IActionResult> GetExportCsv()
++    {
++        var workOrders = await bus.Send(new WorkOrderSpecificationQuery());
++        var csv = WorkOrderCsvFormatter.Format(workOrders);
++        return new ContentResult
++        {
++            Content = csv,
++            ContentType = "text/csv; charset=utf-8",
++            StatusCode = StatusCodes.Status200OK
++        };
++    }
++}
+diff --git a/src/UnitTests/Core/Export/WorkOrderCsvFormatterTests.cs b/src/UnitTests/Core/Export/WorkOrderCsvFormatterTests.cs
+new file mode 100644
+index 000000000..f1d1eac7b
+--- /dev/null
++++ b/src/UnitTests/Core/Export/WorkOrderCsvFormatterTests.cs
+@@ -0,0 +1,47 @@
++using ClearMeasure.Bootcamp.Core.Export;
++using ClearMeasure.Bootcamp.Core.Model;
++using Shouldly;
++
++namespace ClearMeasure.Bootcamp.UnitTests.Core.Export;
++
++[TestFixture]
++public class WorkOrderCsvFormatterTests
++{
++    [Test]
++    public void ShouldIncludeHeader_WhenFormattingEmptyList()
++    {
++        var csv = WorkOrderCsvFormatter.Format([]);
++
++        csv.ShouldStartWith(WorkOrderCsvFormatter.Header);
++        csv.TrimEnd().ShouldBe(WorkOrderCsvFormatter.Header);
++    }
++
++    [Test]
++    public void ShouldEscapeQuotesAndCommas_WhenFieldNeedsQuoting()
++    {
++        WorkOrderCsvFormatter.Escape("plain").ShouldBe("plain");
++        WorkOrderCsvFormatter.Escape("a,b").ShouldBe("\"a,b\"");
++        WorkOrderCsvFormatter.Escape("He said \"hi\"").ShouldBe("\"He said \"\"hi\"\"\"");
++        WorkOrderCsvFormatter.Escape("line\nbreak").ShouldBe("\"line\nbreak\"");
++        WorkOrderCsvFormatter.Escape(null).ShouldBe(string.Empty);
++    }
++
++    [Test]
++    public void ShouldFormatRow_WhenWorkOrderHasValues()
++    {
++        var workOrder = new WorkOrder
++        {
++            Number = "WO-1",
++            Title = "Fix, leak",
++            Status = WorkOrderStatus.InProgress,
++            Assignee = new Employee("jdoe", "Jane", "Doe", "j@example.com"),
++            DueDate = new DateOnly(2026, 10, 17)
++        };
++
++        var csv = WorkOrderCsvFormatter.Format([workOrder]);
++        var lines = csv.Split('\n', StringSplitOptions.RemoveEmptyEntries);
++
++        lines[0].TrimEnd('\r').ShouldBe(WorkOrderCsvFormatter.Header);
++        lines[1].TrimEnd('\r').ShouldBe("WO-1,\"Fix, leak\",In Progress,jdoe,2026-10-17");
++    }
++}

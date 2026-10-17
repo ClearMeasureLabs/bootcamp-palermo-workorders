@@ -1,0 +1,185 @@
+diff --git a/src/AcceptanceTests/McpServer/McpCreateWorkOrderInstructionsAcceptanceTests.cs b/src/AcceptanceTests/McpServer/McpCreateWorkOrderInstructionsAcceptanceTests.cs
+index dee276158..e039384f5 100644
+--- a/src/AcceptanceTests/McpServer/McpCreateWorkOrderInstructionsAcceptanceTests.cs
++++ b/src/AcceptanceTests/McpServer/McpCreateWorkOrderInstructionsAcceptanceTests.cs
+@@ -146,7 +146,7 @@ public async Task ShouldTruncate4001CharacterInstructionsOnManageEditWithoutVali
+ 
+         var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+         await Expect(instructionsField).ToHaveValueAsync(expectedInstructions);
+-        await Expect(Page.GetByText("Instructions cannot exceed 4000 characters.")).Not.ToBeVisibleAsync();
++        await Expect(Page.GetByText("Instructions cannot exceed 2000 characters.")).Not.ToBeVisibleAsync();
+     }
+ 
+     private async Task LoginAsTlovejoyAsync()
+diff --git a/src/AcceptanceTests/McpServer/McpSaveWorkOrderAcceptanceTests.cs b/src/AcceptanceTests/McpServer/McpSaveWorkOrderAcceptanceTests.cs
+index 189a84fc3..1cf459cee 100644
+--- a/src/AcceptanceTests/McpServer/McpSaveWorkOrderAcceptanceTests.cs
++++ b/src/AcceptanceTests/McpServer/McpSaveWorkOrderAcceptanceTests.cs
+@@ -172,7 +172,7 @@ await _helper.CallToolDirectly("save-work-order",
+ 
+         var instructionsField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions));
+         await Expect(instructionsField).ToHaveValueAsync(expectedInstructions);
+-        await Expect(Page.GetByText("Instructions cannot exceed 4000 characters.")).Not.ToBeVisibleAsync();
++        await Expect(Page.GetByText("Instructions cannot exceed 2000 characters.")).Not.ToBeVisibleAsync();
+     }
+ 
+     [Test, Retry(2)]
+diff --git a/src/AcceptanceTests/WorkOrders/WorkOrderSaveDraftTests.cs b/src/AcceptanceTests/WorkOrders/WorkOrderSaveDraftTests.cs
+index c0dcc21bc..688b0da99 100644
+--- a/src/AcceptanceTests/WorkOrders/WorkOrderSaveDraftTests.cs
++++ b/src/AcceptanceTests/WorkOrders/WorkOrderSaveDraftTests.cs
+@@ -149,7 +149,7 @@ public async Task ShouldAssignEmployeeAndSave()
+     }
+ 
+     [Test, Retry(2)]
+-    public async Task WorkOrderManage_InstructionsTextareaShouldCarryMaxLength4000()
++    public async Task WorkOrderManage_InstructionsTextareaShouldCarryMaxLength2000()
+     {
+         await LoginAsCurrentUser();
+         await Click(nameof(NavMenu.Elements.NewWorkOrder));
+@@ -189,7 +189,7 @@ await instructionsField.EvaluateAsync(
+         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
+         await Click(saveButtonTestId);
+ 
+-        await Expect(Page.GetByText("Instructions cannot exceed 4000 characters.")).ToBeVisibleAsync(
++        await Expect(Page.GetByText("Instructions cannot exceed 2000 characters.")).ToBeVisibleAsync(
+             new LocatorAssertionsToBeVisibleOptions { Timeout = 30_000 });
+         await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+     }
+diff --git a/src/Core/Model/WorkOrder.cs b/src/Core/Model/WorkOrder.cs
+index ddd1b06a8..2f6b66188 100644
+--- a/src/Core/Model/WorkOrder.cs
++++ b/src/Core/Model/WorkOrder.cs
+@@ -19,20 +19,20 @@ public class WorkOrder : EntityBase<WorkOrder>
+     /// <summary>
+     /// Maximum length of <see cref="Instructions"/> accepted by persistence and the work-order form.
+     /// </summary>
+-    public const int InstructionsMaxLength = 4000;
++    public const int InstructionsMaxLength = 2000;
+ 
+     public string? Title { get; set; } = "";
+ 
+     public string? Description
+     {
+         get;
+-        set => field = GetTruncatedString(value);
++        set => field = GetTruncatedString(value, DescriptionMaxLength);
+     } = "";
+ 
+     public string? Instructions
+     {
+         get;
+-        set => field = GetTruncatedString(value);
++        set => field = GetTruncatedString(value, InstructionsMaxLength);
+     } = "";
+ 
+     public string? RoomNumber { get; set; }
+@@ -59,14 +59,14 @@ public string? Instructions
+     /// </summary>
+     public DateOnly? DueDate { get; set; }
+ 
+-    private string GetTruncatedString(string? value)
++    private static string GetTruncatedString(string? value, int maxAllowed)
+     {
+         if (value == null)
+         {
+             return string.Empty;
+         }
+ 
+-        var maxLength = Math.Min(InstructionsMaxLength, value.Length);
++        var maxLength = Math.Min(maxAllowed, value.Length);
+         return value.Substring(0, maxLength);
+     }
+ 
+diff --git a/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs b/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs
+index 3baf68ece..1bc95623e 100644
+--- a/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs
++++ b/src/IntegrationTests/DataAccess/Mappings/WorkOrderMappingTests.cs
+@@ -401,7 +401,7 @@ public void ShouldPersistInstructionsAtMaxLength()
+         new DatabaseTests().Clean();
+ 
+         var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+-        var longInstructions = new string('I', 4001);
++        var longInstructions = new string('I', WorkOrder.InstructionsMaxLength + 1);
+         var workOrder = new WorkOrder
+         {
+             Number = "WO-08",
+@@ -426,6 +426,6 @@ public void ShouldPersistInstructionsAtMaxLength()
+                 .Single(wo => wo.Id == workOrder.Id);
+         }
+ 
+-        rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
++        rehydratedWorkOrder.Instructions!.Length.ShouldBe(WorkOrder.InstructionsMaxLength);
+     }
+ }
+\ No newline at end of file
+diff --git a/src/UI.Shared/Models/WorkOrderManageModel.cs b/src/UI.Shared/Models/WorkOrderManageModel.cs
+index 4416fa227..6a96cba82 100644
+--- a/src/UI.Shared/Models/WorkOrderManageModel.cs
++++ b/src/UI.Shared/Models/WorkOrderManageModel.cs
+@@ -22,7 +22,7 @@ public class WorkOrderManageModel
+ 
+     [Required] public string? Description { get; set; }
+ 
+-    [StringLength(WorkOrder.InstructionsMaxLength, ErrorMessage = "Instructions cannot exceed 4000 characters.")]
++    [StringLength(WorkOrder.InstructionsMaxLength, ErrorMessage = "Instructions cannot exceed 2000 characters.")]
+     public string? Instructions { get; set; }
+ 
+     public bool IsReadOnly { get; set; }
+diff --git a/src/UnitTests/Core/Model/WorkOrderTests.cs b/src/UnitTests/Core/Model/WorkOrderTests.cs
+index a8e7414c4..b942f5d76 100644
+--- a/src/UnitTests/Core/Model/WorkOrderTests.cs
++++ b/src/UnitTests/Core/Model/WorkOrderTests.cs
+@@ -71,11 +71,11 @@ public void ShouldTruncateTo4000CharactersOnDescription()
+     }
+ 
+     [Test]
+-    public void ShouldTruncateTo4000CharactersOnInstructions()
++    public void ShouldTruncateTo2000CharactersOnInstructions()
+     {
+-        var longText = new string('x', 4001);
++        var longText = new string('x', 2001);
+         var order = new WorkOrder() { Instructions = longText };
+-        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
++        Assert.That(order.Instructions.Length, Is.EqualTo(2000));
+     }
+ 
+     [Test]
+@@ -86,9 +86,9 @@ public void ShouldReturnEmptyStringWhenInstructionsSetToNull()
+     }
+ 
+     [Test]
+-    public void InstructionsMaxLength_ShouldBe4000()
++    public void InstructionsMaxLength_ShouldBe2000()
+     {
+-        Assert.That(WorkOrder.InstructionsMaxLength, Is.EqualTo(4000));
++        Assert.That(WorkOrder.InstructionsMaxLength, Is.EqualTo(2000));
+     }
+ 
+     [Test]
+diff --git a/src/UnitTests/UI.Shared/Models/WorkOrderManageModelInstructionsTests.cs b/src/UnitTests/UI.Shared/Models/WorkOrderManageModelInstructionsTests.cs
+index 63b2fe062..de21c1f4d 100644
+--- a/src/UnitTests/UI.Shared/Models/WorkOrderManageModelInstructionsTests.cs
++++ b/src/UnitTests/UI.Shared/Models/WorkOrderManageModelInstructionsTests.cs
+@@ -61,7 +61,7 @@ public void ShouldRejectInstructionsLongerThanMaxLength_WithExpectedMessage()
+         var results = Validate(model);
+ 
+         results.Single(r => r.MemberNames.Contains(nameof(WorkOrderManageModel.Instructions)))
+-            .ErrorMessage.ShouldBe("Instructions cannot exceed 4000 characters.");
++            .ErrorMessage.ShouldBe("Instructions cannot exceed 2000 characters.");
+     }
+ 
+     private static WorkOrderManageModel ValidModel()
+diff --git a/src/UnitTests/UI.Shared/Pages/WorkOrderManageInstructionsFieldTests.cs b/src/UnitTests/UI.Shared/Pages/WorkOrderManageInstructionsFieldTests.cs
+index 991deeba7..57e0efe71 100644
+--- a/src/UnitTests/UI.Shared/Pages/WorkOrderManageInstructionsFieldTests.cs
++++ b/src/UnitTests/UI.Shared/Pages/WorkOrderManageInstructionsFieldTests.cs
+@@ -18,7 +18,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
+ public class WorkOrderManageInstructionsFieldTests
+ {
+     [Test]
+-    public async Task WorkOrderManage_ShouldRenderInstructionsAsTextareaWithMaxLength4000()
++    public async Task WorkOrderManage_ShouldRenderInstructionsAsTextareaWithMaxLength2000()
+     {
+         await using var ctx = CreateNewModeContext();
+ 

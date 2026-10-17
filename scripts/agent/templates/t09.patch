@@ -1,0 +1,254 @@
+diff --git a/src/AcceptanceTests/WorkOrders/WorkOrderCompleteTests.cs b/src/AcceptanceTests/WorkOrders/WorkOrderCompleteTests.cs
+index 187666ade..a876b8f3f 100644
+--- a/src/AcceptanceTests/WorkOrders/WorkOrderCompleteTests.cs
++++ b/src/AcceptanceTests/WorkOrders/WorkOrderCompleteTests.cs
+@@ -1,4 +1,5 @@
+ using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
++using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+ using ClearMeasure.Bootcamp.Core.Queries;
+ using ClearMeasure.Bootcamp.UI.Shared.Pages;
+ 
+@@ -34,15 +35,17 @@ await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToHaveVal
+                 Timeout = 10000 // 10 seconds
+             });
+ 
+-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToBeDisabledAsync();
++        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Title))).ToBeEnabledAsync();
+         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description)))
+             .ToHaveValueAsync(expectedDescription);
+-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeDisabledAsync();
++        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Description))).ToBeEnabledAsync();
+         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions)))
+             .ToHaveValueAsync(expectedInstructions);
+-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToBeDisabledAsync();
++        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Instructions))).ToBeEnabledAsync();
+         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.Status)))
+             .ToHaveTextAsync(WorkOrderStatus.Complete.FriendlyName);
++        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + CompleteToInProgressCommand.Name))
++            .ToBeVisibleAsync();
+ 
+ 
+         var displayedDateTime = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CompletedDate));
+@@ -73,7 +76,7 @@ public async Task CompleteWorkOrderWorkflow()
+                              throw new InvalidOperationException();
+         rehyratedOrder.Status.ShouldBe(WorkOrderStatus.Complete);
+ 
+-        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage)))
+-            .ToHaveTextAsync("This work order is read-only for you at this time.");
++        await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CommandButton) + CompleteToInProgressCommand.Name))
++            .ToBeVisibleAsync();
+     }
+ }
+\ No newline at end of file
+diff --git a/src/AcceptanceTests/WorkOrders/WorkOrderDictationTests.cs b/src/AcceptanceTests/WorkOrders/WorkOrderDictationTests.cs
+index 0b60923bd..41cedb4e4 100644
+--- a/src/AcceptanceTests/WorkOrders/WorkOrderDictationTests.cs
++++ b/src/AcceptanceTests/WorkOrders/WorkOrderDictationTests.cs
+@@ -1,4 +1,5 @@
+ using System.Text.RegularExpressions;
++using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+ using ClearMeasure.Bootcamp.UI.Shared.Pages;
+ 
+ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
+@@ -66,10 +67,7 @@ public async Task ShouldHideDictateButtonsOnReadOnlyWorkOrder()
+         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
+         order = await ClickWorkOrderNumberFromSearchPage(order);
+ 
+-        order = await BeginExistingWorkOrder(order);
+-        order = await ClickWorkOrderNumberFromSearchPage(order);
+-
+-        order = await CompleteExistingWorkOrder(order);
++        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToCancelledCommand.Name);
+         await ClickWorkOrderNumberFromSearchPage(order);
+ 
+         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage))).ToBeVisibleAsync();
+diff --git a/src/AcceptanceTests/WorkOrders/WorkOrderSpeechTests.cs b/src/AcceptanceTests/WorkOrders/WorkOrderSpeechTests.cs
+index bc8107b85..d7152944a 100644
+--- a/src/AcceptanceTests/WorkOrders/WorkOrderSpeechTests.cs
++++ b/src/AcceptanceTests/WorkOrders/WorkOrderSpeechTests.cs
+@@ -1,4 +1,5 @@
+ using System.Text.RegularExpressions;
++using ClearMeasure.Bootcamp.Core.Model.StateCommands;
+ using ClearMeasure.Bootcamp.UI.Shared.Pages;
+ 
+ namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
+@@ -68,10 +69,7 @@ public async Task ShouldShowSpeakButtonsOnReadOnlyWorkOrder()
+         order = await AssignExistingWorkOrder(order, CurrentUser.UserName);
+         order = await ClickWorkOrderNumberFromSearchPage(order);
+ 
+-        order = await BeginExistingWorkOrder(order);
+-        order = await ClickWorkOrderNumberFromSearchPage(order);
+-
+-        order = await CompleteExistingWorkOrder(order);
++        await Click(nameof(WorkOrderManage.Elements.CommandButton) + AssignedToCancelledCommand.Name);
+         await ClickWorkOrderNumberFromSearchPage(order);
+ 
+         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.ReadOnlyMessage))).ToBeVisibleAsync();
+diff --git a/src/Core/Model/StateCommands/CompleteToInProgressCommand.cs b/src/Core/Model/StateCommands/CompleteToInProgressCommand.cs
+new file mode 100644
+index 000000000..3e3a2fa78
+--- /dev/null
++++ b/src/Core/Model/StateCommands/CompleteToInProgressCommand.cs
+@@ -0,0 +1,33 @@
++using ClearMeasure.Bootcamp.Core.Services;
++
++namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
++
++public record CompleteToInProgressCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder,
++    CurrentUser)
++{
++    public const string Name = "Reopen";
++    public override string TransitionVerbPresentTense => Name;
++
++    public override string TransitionVerbPastTense => "Reopened";
++
++    public override WorkOrderStatus GetBeginStatus()
++    {
++        return WorkOrderStatus.Complete;
++    }
++
++    protected override WorkOrderStatus GetEndStatus()
++    {
++        return WorkOrderStatus.InProgress;
++    }
++
++    protected override bool UserCanExecute(Employee currentUser)
++    {
++        return currentUser == WorkOrder.Assignee;
++    }
++
++    public override void Execute(StateCommandContext context)
++    {
++        WorkOrder.CompletedDate = null;
++        base.Execute(context);
++    }
++}
+diff --git a/src/Core/Services/Impl/StateCommandList.cs b/src/Core/Services/Impl/StateCommandList.cs
+index d398d23c8..73d55ab76 100644
+--- a/src/Core/Services/Impl/StateCommandList.cs
++++ b/src/Core/Services/Impl/StateCommandList.cs
+@@ -23,6 +23,7 @@ public virtual IStateCommand[] GetAllStateCommands(WorkOrder workOrder, Employee
+             new AssignedToInProgressCommand(workOrder, currentUser),
+             new InProgressToAssignedCommand(workOrder, currentUser),
+             new InProgressToCompleteCommand(workOrder, currentUser),
++            new CompleteToInProgressCommand(workOrder, currentUser),
+             new AssignedToCancelledCommand(workOrder, currentUser)
+         };
+ 
+diff --git a/src/Core/Validation/CompleteToInProgressCommandValidator.cs b/src/Core/Validation/CompleteToInProgressCommandValidator.cs
+new file mode 100644
+index 000000000..ba34777cf
+--- /dev/null
++++ b/src/Core/Validation/CompleteToInProgressCommandValidator.cs
+@@ -0,0 +1,8 @@
++using ClearMeasure.Bootcamp.Core.Model.StateCommands;
++using FluentValidation;
++
++// ReSharper disable UnusedType.Global -- Qodana C6 (#9039): discovered via FluentValidation's
++// assembly-scan/DI reflection, not by direct reference; qodana.yaml exclude is documentation-only.
++namespace ClearMeasure.Bootcamp.Core.Validation;
++
++public sealed class CompleteToInProgressCommandValidator : AbstractValidator<CompleteToInProgressCommand>;
+diff --git a/src/UnitTests/Core/Model/StateCommands/CompleteToInProgressCommandTests.cs b/src/UnitTests/Core/Model/StateCommands/CompleteToInProgressCommandTests.cs
+new file mode 100644
+index 000000000..ed439c51b
+--- /dev/null
++++ b/src/UnitTests/Core/Model/StateCommands/CompleteToInProgressCommandTests.cs
+@@ -0,0 +1,75 @@
++using ClearMeasure.Bootcamp.Core.Model;
++using ClearMeasure.Bootcamp.Core.Model.StateCommands;
++using ClearMeasure.Bootcamp.Core.Services;
++
++namespace ClearMeasure.Bootcamp.UnitTests.Core.Model.StateCommands;
++
++[TestFixture]
++public class CompleteToInProgressCommandTests : StateCommandBaseTests
++{
++    [Test]
++    public void ShouldNotBeValidInWrongStatus()
++    {
++        var employee = new Employee();
++        var order = new WorkOrder()
++        {
++            Status = WorkOrderStatus.InProgress,
++            Assignee = employee
++        };
++
++        var command = new CompleteToInProgressCommand(order, employee);
++        Assert.That(command.IsValid(), Is.False);
++    }
++
++    [Test]
++    public void ShouldNotBeValidWithWrongEmployee()
++    {
++        var employee = new Employee();
++        var order = new WorkOrder()
++        {
++            Status = WorkOrderStatus.Complete,
++            Assignee = employee
++        };
++
++        var command = new CompleteToInProgressCommand(order, new Employee());
++        Assert.That(command.IsValid(), Is.False);
++    }
++
++    [Test]
++    public void ShouldBeValid()
++    {
++        var employee = new Employee();
++        var order = new WorkOrder()
++        {
++            Status = WorkOrderStatus.Complete,
++            Assignee = employee
++        };
++
++        var command = new CompleteToInProgressCommand(order, employee);
++        Assert.That(command.IsValid(), Is.True);
++    }
++
++    [Test]
++    public void ShouldTransitionStateProperly()
++    {
++        var employee = new Employee();
++        var order = new WorkOrder()
++        {
++            Number = "123",
++            Status = WorkOrderStatus.Complete,
++            Assignee = employee,
++            CompletedDate = DateTime.Now
++        };
++
++        var command = new CompleteToInProgressCommand(order, employee);
++        command.Execute(new StateCommandContext());
++
++        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.InProgress));
++        Assert.That(order.CompletedDate, Is.Null);
++    }
++
++    protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
++    {
++        return new CompleteToInProgressCommand(order, employee);
++    }
++}
+diff --git a/src/UnitTests/Core/Services/StateCommandListTests.cs b/src/UnitTests/Core/Services/StateCommandListTests.cs
+index af5d8a44c..3cd9bfdce 100644
+--- a/src/UnitTests/Core/Services/StateCommandListTests.cs
++++ b/src/UnitTests/Core/Services/StateCommandListTests.cs
+@@ -25,14 +25,15 @@ public void ShouldReturnAllStateCommandsInCorrectOrder()
+         var facilitator = new StateCommandList();
+         var commands = facilitator.GetAllStateCommands(new WorkOrder(), new Employee());
+ 
+-        Assert.That(commands.Length, Is.EqualTo(6));
++        Assert.That(commands.Length, Is.EqualTo(7));
+ 
+         Assert.That(commands[0], Is.InstanceOf(typeof(SaveDraftCommand)));
+         Assert.That(commands[1], Is.InstanceOf(typeof(DraftToAssignedCommand)));
+         Assert.That(commands[2], Is.InstanceOf(typeof(AssignedToInProgressCommand)));
+         Assert.That(commands[3], Is.InstanceOf(typeof(InProgressToAssignedCommand)));
+         Assert.That(commands[4], Is.InstanceOf(typeof(InProgressToCompleteCommand)));
+-        Assert.That(commands[5], Is.InstanceOf(typeof(AssignedToCancelledCommand)));
++        Assert.That(commands[5], Is.InstanceOf(typeof(CompleteToInProgressCommand)));
++        Assert.That(commands[6], Is.InstanceOf(typeof(AssignedToCancelledCommand)));
+     }
+ 
+     [Test]
