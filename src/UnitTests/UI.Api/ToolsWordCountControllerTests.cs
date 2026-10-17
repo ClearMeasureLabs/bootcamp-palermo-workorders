@@ -69,6 +69,19 @@ public class ToolsWordCountControllerTests
         payload.LineCount.ShouldBe(3);
     }
 
+    [TestCase("a\n", 1)]
+    [TestCase("a\r\n", 1)]
+    [TestCase("a\r", 1)]
+    [TestCase("a\nb\n", 2)]
+    public void Post_Should_NotCountTrailingLineBreak_AsExtraLine(string text, int expectedLineCount)
+    {
+        var result = CreateController().Post(new WordCountRequest(text));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WordCountResponse>();
+        payload.LineCount.ShouldBe(expectedLineCount);
+    }
+
     private static ToolsWordCountController CreateController() =>
         new()
         {
