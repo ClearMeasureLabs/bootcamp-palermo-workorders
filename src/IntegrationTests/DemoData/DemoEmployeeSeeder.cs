@@ -27,6 +27,7 @@ public class DemoEmployeeSeeder
     private const string ChurchOrganist = "Church Organist";
     private const string Parishioner = "Parishioner";
     private const string Groundskeeper = "Groundskeeper";
+    private const string FacilitiesManager = "Facilities Manager";
 
     private static readonly DemoRole[] DemoRoles =
     [
@@ -38,7 +39,8 @@ public class DemoEmployeeSeeder
         new(ChoirMember, false, false),
         new(ChurchOrganist, false, true),
         new(Parishioner, false, false),
-        new(Groundskeeper, false, true)
+        new(Groundskeeper, false, true),
+        new(FacilitiesManager, true, true)
     ];
 
     private static readonly DemoEmployee[] DemoEmployees =
@@ -69,7 +71,8 @@ public class DemoEmployeeSeeder
         new("anahasapeemapetilon", "Apu", "Nahasapeemapetilon", "apu@kwikmart.com", null, [Parishioner]),
         new("mszyslak", "Moe", "Szyslak", "moe@moestab.com", null, [Parishioner]),
         new("lleonard", "Lenny", "Leonard", "lenny@powerplant.com", null, [Parishioner]),
-        new("malbright", "Ms.", "Albright", "albright@firstchurchspringfield.com", null, [ChoirMember])
+        new("malbright", "Ms.", "Albright", "albright@firstchurchspringfield.com", null, [ChoirMember]),
+        new("fmanager", "Facilities", "Manager", "fmanager@firstchurchspringfield.org", null, [FacilitiesManager])
     ];
 
     /// <summary>

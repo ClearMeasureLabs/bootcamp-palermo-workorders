@@ -16,11 +16,11 @@ public class DemoEmployeeSeederTests
 
         var result = Seed();
 
-        result.RolesAdded.ShouldBe(9);
+        result.RolesAdded.ShouldBe(10);
         result.RolesFound.ShouldBe(0);
-        result.EmployeesAdded.ShouldBe(27);
+        result.EmployeesAdded.ShouldBe(28);
         result.EmployeesFound.ShouldBe(0);
-        result.RoleLinksAdded.ShouldBe(39);
+        result.RoleLinksAdded.ShouldBe(40);
         using var context = TestHost.GetRequiredService<DbContext>();
         var lovejoy = context.Set<Employee>().Include(e => e.Roles).Single(e => e.UserName == "tlovejoy");
         lovejoy.GetFullName().ShouldBe("Timothy Lovejoy Jr");
@@ -30,6 +30,10 @@ public class DemoEmployeeSeederTests
         lovejoy.CanCreateWorkOrder().ShouldBeTrue();
         lovejoy.CanFulfillWorkOrder().ShouldBeTrue();
         context.Set<Employee>().Single(e => e.UserName == "jcuevas").PreferredLanguage.ShouldBe("es-ES");
+        var fmanager = context.Set<Employee>().Include(e => e.Roles).Single(e => e.UserName == "fmanager");
+        fmanager.Roles.Single().Name.ShouldBe("Facilities Manager");
+        fmanager.CanCreateWorkOrder().ShouldBeTrue();
+        fmanager.CanFulfillWorkOrder().ShouldBeTrue();
     }
 
     [Test]
@@ -40,10 +44,11 @@ public class DemoEmployeeSeederTests
 
         var result = Seed();
 
-        result.ShouldBe(new DemoEmployeeSeedResult(0, 9, 0, 27, 0));
+        result.ShouldBe(new DemoEmployeeSeedResult(0, 10, 0, 28, 0));
         using var context = TestHost.GetRequiredService<DbContext>();
-        context.Set<Employee>().Count().ShouldBe(27);
-        context.Set<Role>().Count().ShouldBe(9);
+        context.Set<Employee>().Count().ShouldBe(28);
+        context.Set<Role>().Count().ShouldBe(10);
+        context.Set<Employee>().Count(e => e.UserName == "fmanager").ShouldBe(1);
     }
 
     [Test]
@@ -65,11 +70,11 @@ public class DemoEmployeeSeederTests
 
         var result = Seed();
 
-        result.RolesAdded.ShouldBe(8);
+        result.RolesAdded.ShouldBe(9);
         result.RolesFound.ShouldBe(1);
-        result.EmployeesAdded.ShouldBe(26);
+        result.EmployeesAdded.ShouldBe(27);
         result.EmployeesFound.ShouldBe(1);
-        result.RoleLinksAdded.ShouldBe(38);
+        result.RoleLinksAdded.ShouldBe(39);
         using var verify = TestHost.GetRequiredService<DbContext>();
         var ned = verify.Set<Employee>().Include(e => e.Roles).Single(e => e.UserName == "nflanders");
         ned.Id.ShouldBe(existing.Id);
