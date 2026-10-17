@@ -32,6 +32,11 @@ public static class WorkOrderBulkImportCsvParser
         var missingColumn = columnIndex.FindMissingRequiredColumn(RequiredHeaders);
         if (missingColumn != null)
         {
+            if (missingColumn.StartsWith("Duplicate column ", StringComparison.Ordinal))
+            {
+                return WorkOrderBulkImportParseResult.Fail(missingColumn);
+            }
+
             return WorkOrderBulkImportParseResult.Fail(
                 $"Missing required column \"{missingColumn}\". Expected header: Title, Description, CreatorUsername, RoomNumber (optional).");
         }
@@ -77,29 +82,57 @@ public static class WorkOrderBulkImportCsvParser
 
         private CsvColumnIndex(Dictionary<string, int> columns) => _columns = columns;
 
+        private string? _duplicateRequiredColumn;
+
         public static CsvColumnIndex FromHeader(string headerLine)
         {
             var headerValues = CsvLineReader.SplitCsvLine(headerLine);
             var columnIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            string? duplicateRequiredColumn = null;
             for (var i = 0; i < headerValues.Count; i++)
             {
-                AddUniqueHeader(columnIndex, headerValues[i], i);
+                duplicateRequiredColumn ??= AddUniqueHeader(columnIndex, headerValues[i], i);
             }
 
-            return new CsvColumnIndex(columnIndex);
+            var parsed = new CsvColumnIndex(columnIndex);
+            parsed._duplicateRequiredColumn = duplicateRequiredColumn;
+            return parsed;
         }
 
-        private static void AddUniqueHeader(Dictionary<string, int> columnIndex, string rawName, int index)
+        private static string? AddUniqueHeader(Dictionary<string, int> columnIndex, string rawName, int index)
         {
             var name = rawName.Trim();
-            if (name.Length > 0)
+            if (name.Length == 0)
             {
-                columnIndex.TryAdd(name, index);
+                return null;
             }
+
+            foreach (var required in RequiredHeaders)
+            {
+                if (!required.Equals(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (columnIndex.ContainsKey(name))
+                {
+                    return required;
+                }
+
+                break;
+            }
+
+            columnIndex.TryAdd(name, index);
+            return null;
         }
 
         public string? FindMissingRequiredColumn(IEnumerable<string> requiredHeaders)
         {
+            if (_duplicateRequiredColumn != null)
+            {
+                return $"Duplicate column \"{_duplicateRequiredColumn}\".";
+            }
+
             foreach (var required in requiredHeaders)
             {
                 if (!_columns.ContainsKey(required))

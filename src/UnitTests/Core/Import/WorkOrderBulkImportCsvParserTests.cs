@@ -110,4 +110,37 @@ public class WorkOrderBulkImportCsvParserTests
         result.Rows.Count.ShouldBe(1);
         result.Rows[0].Title.ShouldBe("Keep");
     }
+
+    [Test]
+    public void ShouldFail_WhenRequiredHeaderIsDuplicated()
+    {
+        var csv = "Title,Description,Title,CreatorUsername\nFix,Desc,user1\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+        result.Success.ShouldBeFalse();
+        Message(result).ShouldBe("Duplicate column \"Title\".");
+    }
+
+    [Test]
+    public void ShouldFail_WhenRequiredHeaderIsDuplicatedIgnoringCase()
+    {
+        var csv = "Title,Description,title,CreatorUsername\nFix,Desc,user1\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+        result.Success.ShouldBeFalse();
+        Message(result).ShouldBe("Duplicate column \"Title\".");
+    }
+
+    private static string Message(WorkOrderBulkImportParseResult result)
+    {
+        foreach (var property in typeof(WorkOrderBulkImportParseResult).GetProperties())
+        {
+            if (property.GetValue(result) is string { Length: > 0 } value)
+            {
+                return value;
+            }
+        }
+
+        return "";
+    }
 }
