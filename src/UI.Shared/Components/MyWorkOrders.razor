@@ -5,7 +5,7 @@
 @inject IUserSession UserSession
 
 <span data-testid="@Elements.MyWorkOrdersTooltip" title="Work orders assigned to you">
-    My Work Orders (@Count)
+    My Work Orders (@(Count == 0 ? "none" : Count.ToString()))
 </span>
 
 @code {

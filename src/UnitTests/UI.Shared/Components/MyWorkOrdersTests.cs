@@ -37,6 +37,7 @@ public class MyWorkOrdersTests
 
         // Assert
         component.Instance.Count.ShouldBe(0);
+        component.Markup.ShouldContain("My Work Orders (none)");
     }
 
     [Test]
