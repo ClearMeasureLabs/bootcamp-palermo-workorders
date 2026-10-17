@@ -31,7 +31,10 @@ while ($true) {
     # A real failure reproduces on the rerun and is then reported. -ForceRerun forces one rerun of any failed job.
     $flaky = $ForceRerun -or $b.Conclusion -in 'cancelled', 'timed_out' -or $b.Name -match 'Acceptance|Integration' -or ($mins -ge 25 -and ($log -match 'No test report files were found|No files were found'))
     if ($flaky -and $runId -notin $rerun) {
+      # v9: `gh run rerun` fails while other jobs of the run are still in progress. v8 recorded the run as rerun anyway, so neither the
+      # auto rerun nor -ForceRerun ever happened (rep-5 t04). Record it only on success; otherwise keep polling and retry later.
       gh run rerun $runId --repo $Repo --failed 2>&1 | Out-Null
+      if ($LASTEXITCODE) { if ($pending.Count) { continue } else { "RERUN_FAILED: run $runId"; continue } }  # defer only while other jobs still run
       $rerun = @($rerun) + $runId; $rerun | ConvertTo-Json | Set-Content $state
       "FLAKE-RERUN: $($b.Name) ($($b.Conclusion), $([int]$mins) min) run $runId"
       $pending = @('rerun'); $graceUntil = (Get-Date).AddSeconds(120)
