@@ -107,7 +107,7 @@
                            </th>
                            <th>
                                <button id="@Elements.SortByRoomButton" class="sort-btn @(_sortColumn == "Room" ? "sort-active" : "")" @onclick='() => SortBy("Room")'>
-                                   Room @if (_sortColumn == "Room") { <span>@(_sortAscending ? "▲" : "▼")</span> }
+                                   Room / Area @if (_sortColumn == "Room") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                                </button>
                            </th>
                     </tr>
