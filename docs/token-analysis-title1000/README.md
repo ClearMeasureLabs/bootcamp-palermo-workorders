@@ -32,9 +32,16 @@ No token fields exist in the transcripts. Estimates, bytes/4:
 ## Technique ledger
 | Technique | Introduced (iter) | Δ input | Δ output | Notes |
 |---|---|---|---|---|
-| (baseline: stock bootcamp feature loop) | 1 | — | — | |
+| (baseline: stock bootcamp feature loop) | 1 | ~1.68M (lower bound; 7 subagents uncounted) | ~12.4k | 60 parent calls, 0 CI reds, 1 review-fix cycle, 1 extra notification run |
+| T1 file map in issue · T2 canned whole-change script · T3 one-call CI wait · T4 local SQLite mapping tests · T5 no subagents/board walk/MCP | 2 | tbd | tbd | introduced together (v1); later iterations ablate |
 
 ## Plan
 1. **Iter 1 (baseline):** stock feature-loop skill from master, no lean scripts. The agent must poll CI to green and fix reds.
 2. **Iters 2+:** start from `analysis/token-reduction`. Candidate techniques, introduced one or two at a time so their deltas can be attributed: (a) prebuilt change map, i.e. the table above; (b) Get-ItemContext for exact files; (c) a canned `Wait-PrChecks.ps1` (one blocking call: `gh pr checks --watch` with compact output, which turns many poll turns into 1); (d) canned failure-log extraction (`gh run view --log-failed` tail); (e) local targeted integration test (SQLite) before push; (f) lean skill with no exploration or board walk; (g) one canned "apply whole change" script, the template ceiling.
 3. Record per-run `iter-NN.md` plus the ledger. Stop at 20, or earlier if gains plateau over 3 runs.
+
+## Iterations
+| Iter | Issue | PR | Input est. | Output est. | Calls | CI reds | Notes |
+|---|---|---|---|---|---|---|---|
+| 1 | #9977 | #9978 | ~1.68M+ | ~12.4k | 60 (+7 subagents) | 0 | baseline |
+| 2 | #9979 | | | | | | lean v1 |
