@@ -77,6 +77,26 @@ public class EmployeeMappingTests
     }
 
     [Test]
+    public void ShouldPersistOfficeLocation()
+    {
+        new DatabaseTests().Clean();
+
+        var emp = new Employee("useroffice", "First", "Last", "emailoffice@example.com") { OfficeLocation = "Building A Room 12" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            rehydrated.OfficeLocation.ShouldBe("Building A Room 12");
+        }
+    }
+
+    [Test]
     public void ShouldPersistNullMiddleName()
     {
         new DatabaseTests().Clean();
