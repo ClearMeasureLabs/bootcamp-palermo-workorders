@@ -98,4 +98,29 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void IsCreatedBy_WhenCreatorMatchesUserName_ReturnsTrue()
+    {
+        var creator = new Employee("alice", "A", "L", "a@b.com");
+        var order = new WorkOrder { Creator = creator };
+        Assert.That(order.IsCreatedBy(creator), Is.True);
+    }
+
+    [Test]
+    public void IsCreatedBy_WhenCreatorHasDifferentUserName_ReturnsFalse()
+    {
+        var creator = new Employee("alice", "A", "L", "a@b.com");
+        var other = new Employee("bob", "B", "O", "b@b.com");
+        var order = new WorkOrder { Creator = creator };
+        Assert.That(order.IsCreatedBy(other), Is.False);
+    }
+
+    [Test]
+    public void IsCreatedBy_WhenCreatorIsNull_ReturnsFalse()
+    {
+        var employee = new Employee("alice", "A", "L", "a@b.com");
+        var order = new WorkOrder { Creator = null };
+        Assert.That(order.IsCreatedBy(employee), Is.False);
+    }
 }

@@ -103,6 +103,15 @@ public class WorkOrder : EntityBase<WorkOrder>
     }
 
     /// <summary>
+    /// Returns <c>true</c> when <paramref name="employee"/> created this work order
+    /// (same <see cref="Employee.UserName"/> as <see cref="Creator"/>).
+    /// </summary>
+    public bool IsCreatedBy(Employee employee)
+    {
+        return Creator != null && Creator.UserName == employee.UserName;
+    }
+
+    /// <summary>
     /// Returns the urgency classification for this work order's due date relative to today
     /// in America/Chicago.
     /// </summary>
