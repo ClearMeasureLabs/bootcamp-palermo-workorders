@@ -11,6 +11,7 @@ public sealed class IdempotencyOptions
     /// When false, every request is passed to the next middleware without reading or writing the cache.
     /// </summary>
     // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global -- required for IOptions<T> configuration binding
     public bool Enabled { get; set; } = true;
 
     /// <summary>

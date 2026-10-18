@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text;
 using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
@@ -15,18 +14,19 @@ public class IdempotencyMiddlewareEnabledTests
     public async Task HandleAsync_WhenDisabled_InvokesNextTwice_ForSameKey()
     {
         var callCount = 0;
-        RequestDelegate next = _ =>
+
+        Task Next(HttpContext _)
         {
             Interlocked.Increment(ref callCount);
             return Task.CompletedTask;
-        };
+        }
 
         var cache = new MemoryCache(new MemoryCacheOptions());
         var keyLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
         var monitor = new FixedOptionsMonitor(new IdempotencyOptions { Enabled = false });
 
-        await IdempotencyMiddlewareHandler.HandleAsync(CreateContext(), next, cache, keyLocks, monitor);
-        await IdempotencyMiddlewareHandler.HandleAsync(CreateContext(), next, cache, keyLocks, monitor);
+        await IdempotencyMiddlewareHandler.HandleAsync(CreateContext(), Next, cache, keyLocks, monitor);
+        await IdempotencyMiddlewareHandler.HandleAsync(CreateContext(), Next, cache, keyLocks, monitor);
 
         callCount.ShouldBe(2);
     }
@@ -35,41 +35,50 @@ public class IdempotencyMiddlewareEnabledTests
     public async Task HandleAsync_WhenEnabled_InvokesNext_ForNonInspectedRequest()
     {
         var callCount = 0;
-        RequestDelegate next = _ =>
+
+        Task Next(HttpContext _)
         {
             Interlocked.Increment(ref callCount);
             return Task.CompletedTask;
-        };
+        }
 
         var cache = new MemoryCache(new MemoryCacheOptions());
         var keyLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
         var monitor = new FixedOptionsMonitor(new IdempotencyOptions { Enabled = true });
-        var context = new DefaultHttpContext();
-        context.Request.Method = HttpMethods.Get;
-        context.Request.Path = "/";
+        var context = new DefaultHttpContext
+        {
+            Request =
+            {
+                Method = HttpMethods.Get,
+                Path = "/"
+            }
+        };
 
-        await IdempotencyMiddlewareHandler.HandleAsync(context, next, cache, keyLocks, monitor);
+        await IdempotencyMiddlewareHandler.HandleAsync(context, Next, cache, keyLocks, monitor);
 
         callCount.ShouldBe(1);
     }
 
     private static DefaultHttpContext CreateContext()
     {
-        var context = new DefaultHttpContext();
-        context.Request.Method = HttpMethods.Post;
-        context.Request.Path = "/api/tools/hash";
+        var context = new DefaultHttpContext
+        {
+            Request =
+            {
+                Method = HttpMethods.Post,
+                Path = "/api/tools/hash",
+                Body = new MemoryStream("{}"u8.ToArray())
+            }
+        };
         context.Request.Headers["Idempotency-Key"] = "same-key";
-        context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("{}"));
         return context;
     }
 
-    private sealed class FixedOptionsMonitor : IOptionsMonitor<IdempotencyOptions>
+    private sealed class FixedOptionsMonitor(IdempotencyOptions currentValue) : IOptionsMonitor<IdempotencyOptions>
     {
-        public FixedOptionsMonitor(IdempotencyOptions currentValue) => CurrentValue = currentValue;
+        public IdempotencyOptions CurrentValue => currentValue;
 
-        public IdempotencyOptions CurrentValue { get; }
-
-        public IdempotencyOptions Get(string? name) => CurrentValue;
+        public IdempotencyOptions Get(string? name) => currentValue;
 
         public IDisposable OnChange(Action<IdempotencyOptions, string?> listener) =>
             EmptyDisposable.Instance;
