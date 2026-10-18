@@ -22,7 +22,7 @@ $it = @(git status --porcelain -uall -- src/IntegrationTests | ForEach-Object { 
 if ($it) {
   $db = Join-Path ([IO.Path]::GetTempPath()) 'agent-it.db'; Remove-Item $db -ErrorAction SilentlyContinue
   $env:DATABASE_ENGINE = 'SQLite'; $env:ConnectionStrings__SqlConnectionString = "Data Source=$db"
-  $r = dotnet test src/IntegrationTests/IntegrationTests.csproj -c Release --no-build --nologo -v q --filter (($it | ForEach-Object { "FullyQualifiedName~$_" }) -join '|') 2>&1
+  $r = dotnet test src/IntegrationTests/IntegrationTests.csproj -c Release --no-build --nologo -v q --logger 'console;verbosity=minimal' --filter (($it | ForEach-Object { "FullyQualifiedName~$_" }) -join '|') 2>&1
   $code = $LASTEXITCODE; Remove-Item env:DATABASE_ENGINE, env:ConnectionStrings__SqlConnectionString
   if ($code) { $r | Select-String 'Failed |Assert|Expected|Exception|error|Status' | Select-Object -First 20; 'IT_TEST=FAIL (SQLite)'; exit 0 }
   'IT_TEST=OK'

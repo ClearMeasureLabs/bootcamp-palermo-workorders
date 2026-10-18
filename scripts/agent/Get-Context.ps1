@@ -44,7 +44,8 @@ if ($Issue -and -not $Find) {
   if (-not $Find) { 'NO_TYPES: one more call with -Find ExactTypeName'; exit 0 }
   "FIND=$Find"
 }
-if (-not $Find) { 'need -Find or -Issue'; exit 1 }  # v16g: was $PSScriptRoot/../.. which is "/" when run from the temp copy (round 2: every run broke)
+if (-not $Find) { 'need -Find or -Issue'; exit 1 }
+if ($PSBoundParameters.ContainsKey('Find') -and $Cap -eq 5500) { $Cap = 3000 }  # v22g: follow-up -Find calls were ~6 KB each in round 8 (7 of 8 runs made one)  # v16g: was $PSScriptRoot/../.. which is "/" when run from the temp copy (round 2: every run broke)
 $files = @(rg -l --glob '*.cs' --glob '*.razor' --glob '*.sql' --glob '!**/Generated/**' -e $Find src 2>$null | Sort-Object { $_.Length })
 # v20g: a brand-new type matches nothing; fall back to the EXISTING look-alikes so the agent sees the pattern to copy
 if (-not $files -and $cand) { $Find = ($cand | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) }) -join '|'; "FIND=$Find (look-alikes)"
