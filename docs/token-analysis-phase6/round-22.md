@@ -31,6 +31,7 @@ The c-set is intentionally larger and less specified than the q-u sets, so the a
 | get_mcp_tools (7/8 agents called it despite the Never rule) | 4.2% |
 | wait-call turn replay | 7.9% |
 
+0. *Correction (round 23): the failed-edit counts below were inverted; the real counts are c01 43, c05 14, c03 13, c02 5 failed edits (735k).*
 1. **c04 NO_CHANGES was a script bug, not the agent.** The agent correctly edited both workflows (verified with Select-String), but `Publish-AgentPr.ps1` only diffs `src/`, so it printed "no src changes". Submit had also run the full .NET risk/build/test cycle for a YAML-only change.
 2. **c01 LIMIT → edit probing.** After the 3-call Get-Context LIMIT ("never read files via shell"), the agent said "probing edit targets via StrReplace fuzzy matches" and made 59 search_replace calls. 16 of them failed, and those turns alone replayed 237k. Two Submits then failed on build errors in the broken test file, and one on a namespace-qualified name.
 3. **c03 read via python.** After 5 Get-Context calls it read 8 files with `python -c` (about 35KB, re-sent every later turn), and 6 of its edits failed (68k). Its final reply was empty although Wait printed RESULT=GREEN, so the parent saw no RESULT line.

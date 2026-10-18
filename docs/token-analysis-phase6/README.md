@@ -27,3 +27,4 @@ See PLAN.md and round-N.md. Estimates: bytes/4 via scripts/agent/measure_transcr
 | 20 (session size) | v33g | t01-t08 x 3 arms (A 1/session, B 4/session, C 8/session) | 24/24 | A 276k / B 708k / C 1,326k | A 34.5k, B 88.5k, C 165.7k per item | A 3.88k / B 2.34k / C 1.60k |
 | 21 | v34g | u01-u08 (-v34), unseen kinds, 1 item/session | 8/8 real GREEN (8/8 reported false RED) | 416k | 52.0k (median 42.1k; 43.6k avg w/o the 67.5k false-RED retries) | 1.02k |
 | 22 (change-type c01-c08) | v35g | c01-c08 (-v35): UI+PW, multi-layer, symptom bug, CI yaml, quality batch, test-only, CRAP trap, vague | 7/8 real GREEN (c04 script NO_CHANGES) | 2,292k | 286.5k (median 277.9k) | 2.70k |
+| 23 (change-type c09-c16) | v36g | c09-c16 (-v36): UI+PW, multi-layer, symptom bug, build ps1, refactor, test-only, trap, UI text | 8/8 GREEN | 4,167k | 520.8k (median 193.6k; 319.4k w/o c09) | 3.55k |

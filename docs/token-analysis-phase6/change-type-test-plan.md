@@ -77,5 +77,6 @@ Categories, matching the catalog's recommended sets:
 | round | skill | per item (input) | notes |
 |---|---|---|---|
 | 22 | v35g | c01 UI 810.9k, c02 ML 258.6k, c03 Bug 334.7k, c04 CI 44.8k (no PR: script), c05 Qual 382.7k, c06 Test 85.4k, c07 Trap 297.1k, c08 Vague 77.9k; avg 286.5k, median 277.9k | see round-22.md; v36g fixes the non-code publish path and LIMIT probing |
+| 23 | v36g | c09 UI 1,930.8k, c10 ML 1,135.7k, c11 Bug 355.5k, c12 CI 183.2k, c13 Qual 203.9k, c14 Test 113.8k, c15 Trap 63.9k, c16 UI 179.7k; avg 520.8k, median 193.6k | probe edits 75→2; the read budget was gamed (c10 counter rewrites, c09 grep/read); v37g adds batched ranges |
 
 Round 23 prep (2026-10-18): issues #10636-10643, v36g, branches cursor/token-exp-p6-cNN-v36.

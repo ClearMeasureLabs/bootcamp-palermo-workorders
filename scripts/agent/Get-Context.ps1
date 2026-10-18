@@ -15,11 +15,14 @@ if ($Issue -and -not $File -and -not $PSBoundParameters.ContainsKey('Find')) { $
 $used = 0; if (Test-Path $cnt) { $used = [int](@(Get-Content $cnt -ErrorAction SilentlyContinue | ForEach-Object { if ("$_" -match '(\d+)') { [int]$Matches[1] } }) + 0 | Measure-Object -Maximum).Maximum }
 # v30g: limit 3 (issue + 2). v29g's 6 became a target (round 16: 49 calls, 6.1/run, 4 runs hit LIMIT then shell-read).
 if ($File -and $Find) { 'REJECTED: use -File or -Find, not both (this call was not counted)'; exit 0 }
-# v36g: after the 3 calls, up to 3 small ranged reads (-File path:a-b, max 60 lines) instead of nothing. Round 22 c01 hit LIMIT and
-# probed with 59 failing search_replace calls (811k tokens); c03 read 8 files with python (335k).
-$ranged = $File -match ':\d+-\d+$'
-if ($used -ge 6 -or ($used -ge 3 -and -not $ranged)) { 'LIMIT: Get-Context used. Edit now with what you have; if an exact line range is missing, -File path:a-b (max 60 lines, 3 such calls). Never read via shell, never probe with edits that may not match.'; exit 0 }
-if ($used -ge 3) { $Lines = 60 }
+# v36g: after the 3 calls, small ranged reads instead of nothing (round 22 c01: 43 failed probe edits).
+# v37g: ranged reads batch: -File 'a:1-40,b:80-140' (max 5 ranges x 80 lines per call, 4 such calls, 800 lines total).
+# Round 23 c10 made 16 single-range calls (and rewrote the counter file); c09 fell back to 23 grep/read_file calls; turns, not
+# bytes, drove its 1.9M tokens.
+$parts = @($File -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+$ranged = $parts -and -not @($parts | Where-Object { $_ -notmatch ':\d+-\d+$' })
+$lnf = "$cnt.lines"; $lnUsed = if (Test-Path $lnf) { [int]("$(Get-Content $lnf)".Trim() + '0') / 10 } else { 0 }
+if ($used -ge 7 -or $lnUsed -ge 800 -or ($used -ge 3 -and -not $ranged)) { 'LIMIT: Get-Context used. Edit now. If exact lines are missing: ONE call -File ''path:a-b,path2:c-d'' (5 ranges x 80 lines; 4 calls, 800 lines total). Never read via shell or grep/read tools, never touch /tmp/agent-* files, never probe with edits.'; exit 0 }
 $tmpc = "$cnt.$PID"; Set-Content $tmpc ($used + 1); Move-Item -Force $tmpc $cnt
 # v30g: an explicit -Find is a capped grep: matching lines with 2 lines of context, max 25 hits / ~1500 chars (v29g returned
 # 3-5 KB outlines per -Find and often missed what the agent was hunting for).
@@ -35,16 +38,20 @@ if ($PSBoundParameters.ContainsKey('Find')) {
 }
 # v29g: -File path[:a-b] = capped read. Small files print whole; big files print an outline first, then ask for a range.
 if ($File) {
-  $fp, $rg = $File -split ':'; if (-not (Test-Path $fp)) { "NO_FILE $fp (use -Find to locate it)"; exit 0 }
+  $max = if ($used -ge 3) { 79 } else { 119 }; $lines = 0
+  foreach ($part in $parts | Select-Object -First 5) {
+  $fp, $rg = $part -split ':'; if (-not (Test-Path $fp)) { "NO_FILE $fp (use -Find to locate it)"; continue }
   $all = @(Get-Content $fp); $a = 1; $b = $all.Count
-  if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min([Math]::Min($b, $all.Count), $a + $(if ($used -ge 3) { 59 } else { 119 })) }
+  if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min([Math]::Min($b, $all.Count), $a + $max) }
   elseif ($all.Count -gt 120) {
-    "== $fp OUTLINE ($($all.Count) lines; read a range with -File ${fp}:a-b, max 120 lines)"
+    "== $fp OUTLINE ($($all.Count) lines; read ranges with -File '${fp}:a-b,other:c-d', max 120 lines each)"
     $n = 0; $all | ForEach-Object { $n++; if ($_ -match '^\s*(@page|@code|\[Test|(public|private|protected|internal)\b)') { "{0,4}: {1}" -f $n, $_.Trim().Substring(0, [Math]::Min(100, $_.Trim().Length)) } } | Select-Object -First 60
-    exit 0 }
+    continue }
   "== $fp $a-$b of $($all.Count)"
   $us = @($all | Where-Object { $_ -match '^\s*using [\w.]+;' } | ForEach-Object { ($_ -replace '^\s*using\s+|;\s*$', '') }); if ($us -and $a -gt 1) { "  usings: " + ($us -join '; ') }
   for ($i = $a; $i -le $b; $i++) { "{0,3}:{1}" -f $i, $all[$i - 1].TrimEnd() }
+  $lines += $b - $a + 1 }
+  if ($used -ge 3) { Set-Content $lnf (($lnUsed + $lines) * 10) }
   exit 0
 }
 # v17g: -Issue N prints the issue's Outcome/Acceptance criteria (boilerplate stripped) and, if -Find is not given, builds it
