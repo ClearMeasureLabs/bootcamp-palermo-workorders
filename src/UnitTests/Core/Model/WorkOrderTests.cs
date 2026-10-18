@@ -98,4 +98,25 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void HasRoomNumber_Null_ReturnsFalse()
+    {
+        var order = new WorkOrder { RoomNumber = null };
+        Assert.That(order.HasRoomNumber(), Is.False);
+    }
+
+    [Test]
+    public void HasRoomNumber_Whitespace_ReturnsFalse()
+    {
+        var order = new WorkOrder { RoomNumber = "   " };
+        Assert.That(order.HasRoomNumber(), Is.False);
+    }
+
+    [Test]
+    public void HasRoomNumber_Populated_ReturnsTrue()
+    {
+        var order = new WorkOrder { RoomNumber = "101" };
+        Assert.That(order.HasRoomNumber(), Is.True);
+    }
 }

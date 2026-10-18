@@ -37,6 +37,11 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public string? RoomNumber { get; set; }
 
+    /// <summary>
+    /// Returns true when <see cref="RoomNumber"/> is not null or whitespace.
+    /// </summary>
+    public bool HasRoomNumber() => !string.IsNullOrWhiteSpace(RoomNumber);
+
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 
     public Employee? Creator { get; set; }
