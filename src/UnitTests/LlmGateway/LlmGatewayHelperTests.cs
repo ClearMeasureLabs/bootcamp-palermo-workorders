@@ -36,6 +36,33 @@ public class ChatClientConfigValidatorTests
 
         result.IsAvailable.ShouldBeTrue();
     }
+
+    [Test]
+    public void ShouldReturnUnavailable_WhenUrlIsNotAbsoluteHttp()
+    {
+        var result = ChatClientConfigValidator.Validate(new ChatClientConfig
+        {
+            AiOpenAiApiKey = "key",
+            AiOpenAiUrl = "not-a-url",
+            AiOpenAiModel = "gpt-4"
+        });
+
+        result.IsAvailable.ShouldBeFalse();
+        result.Message.ShouldContain("AI_OpenAI_Url");
+    }
+
+    [Test]
+    public void ShouldReturnAvailable_WhenUrlIsHttps()
+    {
+        var result = ChatClientConfigValidator.Validate(new ChatClientConfig
+        {
+            AiOpenAiApiKey = "key",
+            AiOpenAiUrl = "https://openai.example/v1",
+            AiOpenAiModel = "gpt-4"
+        });
+
+        result.IsAvailable.ShouldBeTrue();
+    }
 }
 
 [TestFixture]
