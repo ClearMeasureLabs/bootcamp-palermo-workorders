@@ -84,6 +84,13 @@
                         <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="EstimatedHours" class="form-label">Estimated hours</label>
+                    <div>
+                        <InputNumber data-testid="@Elements.EstimatedHours" id="EstimatedHours" @bind-Value="Model.EstimatedHours" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
             </div>
 
             <div class="readonly-info">
@@ -193,6 +200,7 @@
         CreatedDate,
         DueDate,
         DueDateDisplay,
+        EstimatedHours,
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,

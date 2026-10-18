@@ -293,7 +293,7 @@ public class McpWorkOrderToolTests
         ParameterNames(nameof(WorkOrderTools.CreateWorkOrder)).ShouldBe(
             ["bus", "numberGenerator", "title", "description", "creatorUsername", "roomNumber", "dueDate", "instructions"]);
         ParameterNames(nameof(WorkOrderTools.SaveWorkOrder)).ShouldBe(
-            ["bus", "workOrderNumber", "executingUsername", "title", "description", "instructions", "roomNumber", "dueDate"]);
+            ["bus", "workOrderNumber", "executingUsername", "title", "description", "instructions", "roomNumber", "dueDate", "estimatedHours"]);
         ParameterNames(nameof(WorkOrderTools.CreateDatedWorkOrders)).ShouldBe(
             ["bus", "timeProvider", "creatorUsername", "assigneeUsername", "title", "description", "dueDates", "saturdayCount"]);
     }

@@ -166,7 +166,8 @@ public class WorkOrderTools
         [Description("Optional description patch")] string? description = null,
         [Description("Optional instructions patch")] string? instructions = null,
         [Description("Optional room number patch")] string? roomNumber = null,
-        [Description("Optional due date patch as yyyy-MM-dd; empty clears")] string? dueDate = null)
+        [Description("Optional due date patch as yyyy-MM-dd; empty clears")] string? dueDate = null,
+        [Description("Optional estimated hours patch (0-999.99)")] decimal? estimatedHours = null)
     {
         if (string.IsNullOrWhiteSpace(workOrderNumber))
         {
@@ -185,13 +186,13 @@ public class WorkOrderTools
             return $"Employee with username '{executingUsername}' not found.";
         }
 
-        var validationError = ValidateSave(workOrder, executingUser, title, dueDate);
+        var validationError = ValidateSave(workOrder, executingUser, title, dueDate, estimatedHours);
         if (validationError != null)
         {
             return validationError;
         }
 
-        ApplySavePatches(workOrder, title, description, instructions, roomNumber, dueDate);
+        ApplySavePatches(workOrder, title, description, instructions, roomNumber, dueDate, estimatedHours);
 
         var result = await bus.Send(new SaveDraftCommand(workOrder, executingUser));
         return JsonSerializer.Serialize(FormatWorkOrderDetail(result.WorkOrder),
@@ -240,7 +241,8 @@ public class WorkOrderTools
         WorkOrder workOrder,
         Employee executingUser,
         string? title,
-        string? dueDate)
+        string? dueDate,
+        decimal? estimatedHours)
     {
         if (!new SaveDraftCommand(workOrder, executingUser).IsValid())
         {
@@ -255,6 +257,11 @@ public class WorkOrderTools
         if (IsInvalidDueDatePatch(dueDate))
         {
             return $"Invalid due date '{dueDate}'. Use yyyy-MM-dd.";
+        }
+
+        if (IsInvalidEstimatedHoursPatch(estimatedHours))
+        {
+            return "Estimated hours must be between 0 and 999.99.";
         }
 
         return null;
@@ -275,13 +282,15 @@ public class WorkOrderTools
         string? description,
         string? instructions,
         string? roomNumber,
-        string? dueDate)
+        string? dueDate,
+        decimal? estimatedHours)
     {
         ApplyTitlePatch(workOrder, title);
         ApplyDescriptionPatch(workOrder, description);
         ApplyInstructionsPatch(workOrder, instructions);
         ApplyRoomNumberPatch(workOrder, roomNumber);
         ApplyDueDatePatch(workOrder, dueDate);
+        ApplyEstimatedHoursPatch(workOrder, estimatedHours);
     }
 
     private static void ApplyTitlePatch(WorkOrder workOrder, string? title)
@@ -321,6 +330,17 @@ public class WorkOrderTools
         if (dueDate != null)
         {
             workOrder.DueDate = ParseDueDatePatch(dueDate);
+        }
+    }
+
+    private static bool IsInvalidEstimatedHoursPatch(decimal? estimatedHours) =>
+        estimatedHours is < 0 or > 999.99m;
+
+    private static void ApplyEstimatedHoursPatch(WorkOrder workOrder, decimal? estimatedHours)
+    {
+        if (estimatedHours != null)
+        {
+            workOrder.EstimatedHours = estimatedHours;
         }
     }
 
@@ -383,6 +403,7 @@ public class WorkOrderTools
         wo.CreatedDate,
         wo.AssignedDate,
         wo.CompletedDate,
-        DueDate = wo.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        DueDate = wo.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        wo.EstimatedHours
     };
 }

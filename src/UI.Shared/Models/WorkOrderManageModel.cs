@@ -45,4 +45,10 @@ public class WorkOrderManageModel
 
     [StringLength(WorkOrder.RoomNumberMaxLength, ErrorMessage = "Room cannot exceed 900 characters.")]
     public string? RoomNumber { get; set; }
+
+    /// <summary>
+    /// Optional estimate of hours the job will take (0–999.99). Null when unset.
+    /// </summary>
+    [Range(typeof(decimal), "0", "999.99", ErrorMessage = "Estimated hours must be between 0 and 999.99.")]
+    public decimal? EstimatedHours { get; set; }
 }

@@ -464,6 +464,33 @@ public class McpSaveWorkOrderTests
         factories.Keys.ShouldNotContain(SaveDraftCommand.Name);
     }
 
+    [Test]
+    public async Task ShouldMapEstimatedHoursArgumentOntoWorkOrder()
+    {
+        await SeedCreatorAsync();
+        var bus = TestHost.GetRequiredService<IBus>();
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var createResult = await WorkOrderTools.CreateWorkOrder(
+            bus,
+            numberGenerator,
+            "Paint hallway",
+            "Touch up scuffs",
+            "creator1");
+        var number = ExtractWorkOrderNumber(createResult)!;
+
+        var saveResult = await WorkOrderTools.SaveWorkOrder(
+            bus,
+            number,
+            "creator1",
+            estimatedHours: 3.75m);
+
+        saveResult.ShouldContain("3.75");
+
+        var reloaded = await bus.Send(new WorkOrderByNumberQuery(number));
+        reloaded.ShouldNotBeNull();
+        reloaded.EstimatedHours.ShouldBe(3.75m);
+    }
+
     private static async Task SeedCreatorAsync()
     {
         var employee = new Employee("creator1", "Jane", "Smith", "jane@test.com");

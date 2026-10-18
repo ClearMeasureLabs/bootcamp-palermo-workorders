@@ -128,7 +128,8 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
             DueDateInput = workOrder.DueDate,
-            DueDateDisplay = FormatDueDateDisplay(workOrder.DueDate)
+            DueDateDisplay = FormatDueDateDisplay(workOrder.DueDate),
+            EstimatedHours = workOrder.EstimatedHours
         };
     }
 
@@ -170,6 +171,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
         workOrder.DueDate = Model.DueDateInput;
+        workOrder.EstimatedHours = Model.EstimatedHours;
 
         var matchingCommand = new StateCommandList()
             .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);

@@ -59,6 +59,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public DateOnly? DueDate { get; set; }
 
+    /// <summary>
+    /// Optional estimate of how many hours the job will take (0–999.99). Null when unset.
+    /// </summary>
+    public decimal? EstimatedHours { get; set; }
+
     private string GetTruncatedString(string? value)
     {
         if (value == null)
