@@ -2,6 +2,7 @@ using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
+using ClearMeasure.Bootcamp.UI.Shared.Models;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
@@ -680,5 +681,145 @@ public class WorkOrderSearchTests
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldSortByStatus_Ascending_OrdersByFriendlyName()
+    {
+        var rows = new[]
+        {
+            Row(status: WorkOrderStatus.Complete, title: "C", room: "1"),
+            Row(status: WorkOrderStatus.Assigned, title: "A", room: "2"),
+            Row(status: WorkOrderStatus.Draft, title: "B", room: "3"),
+        };
+
+        var sorted = WorkOrderSearch.SortResultsByColumn(rows, "Status", ascending: true);
+
+        sorted.Select(r => r.Status.FriendlyName).ShouldBe(
+            rows.Select(r => r.Status.FriendlyName).OrderBy(n => n));
+    }
+
+    [Test]
+    public void ShouldSortByStatus_Descending_OrdersByFriendlyName()
+    {
+        var rows = new[]
+        {
+            Row(status: WorkOrderStatus.Complete, title: "C", room: "1"),
+            Row(status: WorkOrderStatus.Assigned, title: "A", room: "2"),
+            Row(status: WorkOrderStatus.Draft, title: "B", room: "3"),
+        };
+
+        var sorted = WorkOrderSearch.SortResultsByColumn(rows, "Status", ascending: false);
+
+        sorted.Select(r => r.Status.FriendlyName).ShouldBe(
+            rows.Select(r => r.Status.FriendlyName).OrderByDescending(n => n));
+    }
+
+    [Test]
+    public void ShouldSortByTitle_Ascending_IgnoresCase()
+    {
+        var rows = new[]
+        {
+            Row(status: WorkOrderStatus.Draft, title: "charlie", room: "1"),
+            Row(status: WorkOrderStatus.Draft, title: "Alpha", room: "2"),
+            Row(status: WorkOrderStatus.Draft, title: "bravo", room: "3"),
+        };
+
+        var sorted = WorkOrderSearch.SortResultsByColumn(rows, "Title", ascending: true);
+
+        sorted.Select(r => r.Title).ShouldBe(["Alpha", "bravo", "charlie"]);
+    }
+
+    [Test]
+    public void ShouldSortByTitle_Descending_IgnoresCase()
+    {
+        var rows = new[]
+        {
+            Row(status: WorkOrderStatus.Draft, title: "charlie", room: "1"),
+            Row(status: WorkOrderStatus.Draft, title: "Alpha", room: "2"),
+            Row(status: WorkOrderStatus.Draft, title: "bravo", room: "3"),
+        };
+
+        var sorted = WorkOrderSearch.SortResultsByColumn(rows, "Title", ascending: false);
+
+        sorted.Select(r => r.Title).ShouldBe(["charlie", "bravo", "Alpha"]);
+    }
+
+    [Test]
+    public void ShouldSortByRoom_Ascending_IgnoresCase()
+    {
+        var rows = new[]
+        {
+            Row(status: WorkOrderStatus.Draft, title: "A", room: "c2"),
+            Row(status: WorkOrderStatus.Draft, title: "B", room: "A1"),
+            Row(status: WorkOrderStatus.Draft, title: "C", room: "b3"),
+        };
+
+        var sorted = WorkOrderSearch.SortResultsByColumn(rows, "Room", ascending: true);
+
+        sorted.Select(r => r.WorkOrder.RoomNumber).ShouldBe(["A1", "b3", "c2"]);
+    }
+
+    [Test]
+    public void ShouldSortByRoom_Descending_IgnoresCase()
+    {
+        var rows = new[]
+        {
+            Row(status: WorkOrderStatus.Draft, title: "A", room: "c2"),
+            Row(status: WorkOrderStatus.Draft, title: "B", room: "A1"),
+            Row(status: WorkOrderStatus.Draft, title: "C", room: "b3"),
+        };
+
+        var sorted = WorkOrderSearch.SortResultsByColumn(rows, "Room", ascending: false);
+
+        sorted.Select(r => r.WorkOrder.RoomNumber).ShouldBe(["c2", "b3", "A1"]);
+    }
+
+    [Test]
+    public void ShouldSortByDueDate_Ascending_BlankDatesLast()
+    {
+        var early = new DateOnly(2026, 1, 1);
+        var late = new DateOnly(2026, 6, 1);
+        var rows = new[]
+        {
+            Row(status: WorkOrderStatus.Draft, title: "Blank", room: "1", dueDate: null),
+            Row(status: WorkOrderStatus.Draft, title: "Late", room: "2", dueDate: late),
+            Row(status: WorkOrderStatus.Draft, title: "Early", room: "3", dueDate: early),
+        };
+
+        var sorted = WorkOrderSearch.SortResultsByColumn(rows, "DueDate", ascending: true);
+
+        sorted.Select(r => r.Title).ShouldBe(["Early", "Late", "Blank"]);
+    }
+
+    [Test]
+    public void ShouldSortByDueDate_Descending_BlankDatesLast()
+    {
+        var early = new DateOnly(2026, 1, 1);
+        var late = new DateOnly(2026, 6, 1);
+        var rows = new[]
+        {
+            Row(status: WorkOrderStatus.Draft, title: "Blank", room: "1", dueDate: null),
+            Row(status: WorkOrderStatus.Draft, title: "Early", room: "2", dueDate: early),
+            Row(status: WorkOrderStatus.Draft, title: "Late", room: "3", dueDate: late),
+        };
+
+        var sorted = WorkOrderSearch.SortResultsByColumn(rows, "DueDate", ascending: false);
+
+        sorted.Select(r => r.Title).ShouldBe(["Late", "Early", "Blank"]);
+    }
+
+    private static WorkOrderSearchResultRow Row(
+        WorkOrderStatus status, string title, string room, DateOnly? dueDate = null)
+    {
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-TEST",
+            Title = title,
+            RoomNumber = room,
+            Status = status,
+            DueDate = dueDate,
+        };
+        return new WorkOrderSearchResultRow { WorkOrder = workOrder };
     }
 }

@@ -141,43 +141,63 @@ public partial class WorkOrderSearch : AppComponentBase
         StateHasChanged();
     }
 
+    private static readonly Dictionary<string, Func<WorkOrderSearchResultRow, SortKey>> SortKeys = new()
+    {
+        ["Status"] = r => new SortKey(0, r.Status.FriendlyName),
+        ["Title"] = r => new SortKey(0, new CaseInsensitiveString(r.Title)),
+        ["Room"] = r => new SortKey(0, new CaseInsensitiveString(r.WorkOrder.RoomNumber)),
+        ["DueDate"] = r => new SortKey(
+            r.WorkOrder.DueDate.HasValue ? 0 : 1,
+            r.WorkOrder.DueDate.HasValue ? r.WorkOrder.DueDate.Value : null),
+    };
+
     private void ApplySort()
     {
-        if (_sortColumn == null) return;
-        if (_sortColumn == "Status") ApplySortByStatus();
-        else if (_sortColumn == "DueDate") ApplySortByDueDate();
-        else if (_sortColumn == "Title") ApplySortByTitle();
-        else if (_sortColumn == "Room") ApplySortByRoom();
+        if (_sortColumn is null || !SortKeys.TryGetValue(_sortColumn, out var keyOf))
+            return;
+
+        Model.Results = SortResults(Model.Results, keyOf, _sortAscending);
     }
 
-    private void ApplySortByStatus()
+    /// <summary>
+    /// Applies column sort: null-rank first (blank due dates last), then key ascending or descending.
+    /// </summary>
+    internal static WorkOrderSearchResultRow[] SortResults(
+        WorkOrderSearchResultRow[] results,
+        Func<WorkOrderSearchResultRow, SortKey> keyOf,
+        bool ascending)
     {
-        Model.Results = _sortAscending
-            ? Model.Results.OrderBy(r => r.Status.FriendlyName).ToArray()
-            : Model.Results.OrderByDescending(r => r.Status.FriendlyName).ToArray();
+        var byNullRank = results.OrderBy(r => keyOf(r).NullRank);
+        return (ascending
+            ? byNullRank.ThenBy(r => keyOf(r).Value)
+            : byNullRank.ThenByDescending(r => keyOf(r).Value)).ToArray();
     }
 
-    private void ApplySortByDueDate()
+    /// <summary>
+    /// Sorts results by a named column; used by unit tests to cover each sortable column.
+    /// </summary>
+    internal static WorkOrderSearchResultRow[] SortResultsByColumn(
+        WorkOrderSearchResultRow[] results,
+        string column,
+        bool ascending)
     {
-        Model.Results = _sortAscending
-            ? Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
-                           .ThenBy(r => r.WorkOrder.DueDate).ToArray()
-            : Model.Results.OrderBy(r => r.WorkOrder.DueDate.HasValue ? 0 : 1)
-                           .ThenByDescending(r => r.WorkOrder.DueDate).ToArray();
+        if (!SortKeys.TryGetValue(column, out var keyOf))
+            return results;
+
+        return SortResults(results, keyOf, ascending);
     }
 
-    private void ApplySortByTitle()
-    {
-        Model.Results = _sortAscending
-            ? Model.Results.OrderBy(r => r.Title, StringComparer.CurrentCultureIgnoreCase).ToArray()
-            : Model.Results.OrderByDescending(r => r.Title, StringComparer.CurrentCultureIgnoreCase).ToArray();
-    }
+    internal readonly record struct SortKey(int NullRank, IComparable? Value);
 
-    private void ApplySortByRoom()
+    private sealed class CaseInsensitiveString(string? value) : IComparable
     {
-        Model.Results = _sortAscending
-            ? Model.Results.OrderBy(r => r.WorkOrder.RoomNumber, StringComparer.CurrentCultureIgnoreCase).ToArray()
-            : Model.Results.OrderByDescending(r => r.WorkOrder.RoomNumber, StringComparer.CurrentCultureIgnoreCase).ToArray();
+        private readonly string _value = value ?? string.Empty;
+
+        public int CompareTo(object? obj) =>
+            string.Compare(
+                _value,
+                obj is CaseInsensitiveString other ? other._value : null,
+                StringComparison.CurrentCultureIgnoreCase);
     }
 
     private WorkOrderSearchResultRow MapSearchRow(WorkOrder workOrder)
