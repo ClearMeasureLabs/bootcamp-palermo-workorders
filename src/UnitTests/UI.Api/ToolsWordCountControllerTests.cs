@@ -18,6 +18,7 @@ public class ToolsWordCountControllerTests
         payload.WordCount.ShouldBe(3);
         payload.CharacterCount.ShouldBe(15);
         payload.LineCount.ShouldBe(2);
+        payload.LongestWord.ShouldBe("hello");
     }
 
     [Test]
@@ -30,6 +31,7 @@ public class ToolsWordCountControllerTests
         payload.WordCount.ShouldBe(0);
         payload.CharacterCount.ShouldBe(0);
         payload.LineCount.ShouldBe(1);
+        payload.LongestWord.ShouldBe("");
     }
 
     [Test]

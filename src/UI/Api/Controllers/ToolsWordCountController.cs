@@ -35,14 +35,30 @@ public class ToolsWordCountController : ControllerBase
         }
 
         var text = request.Text;
-        var wordCount = text.Length == 0
-            ? 0
-            : text.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries).Length;
+        var words = text.Length == 0
+            ? []
+            : text.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries);
+        var wordCount = words.Length;
         var characterCount = text.Length;
         // Normalize CRLF to LF, then split on LF to count lines (handles CR, LF, and CRLF).
         var lineCount = text.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n').Length;
+        var longestWord = FindLongestWord(words);
 
-        return Ok(new WordCountResponse(wordCount, characterCount, lineCount));
+        return Ok(new WordCountResponse(wordCount, characterCount, lineCount, longestWord));
+    }
+
+    private static string FindLongestWord(string[] words)
+    {
+        var longest = "";
+        foreach (var word in words)
+        {
+            if (word.Length > longest.Length)
+            {
+                longest = word;
+            }
+        }
+
+        return longest;
     }
 }
 
@@ -54,4 +70,4 @@ public record WordCountRequest(string? Text);
 /// <summary>
 /// JSON payload for <c>POST /api/tools/word-count</c>.
 /// </summary>
-public record WordCountResponse(int WordCount, int CharacterCount, int LineCount);
+public record WordCountResponse(int WordCount, int CharacterCount, int LineCount, string LongestWord);
