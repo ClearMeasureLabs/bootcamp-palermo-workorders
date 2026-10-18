@@ -14,9 +14,19 @@ $t0 = Get-Date
 $tools = Join-Path ([IO.Path]::GetTempPath()) 'agent-scripts'
 New-Item -ItemType Directory -Force $tools | Out-Null; Copy-Item "$PSScriptRoot/*.ps1" $tools -Force
 # v33g: a changed .proto regenerates the checked-in gRPC C# first (round 19 s08 hand-edited it: 77 edits, 1.71M tokens)
+# v36g: non-code change (only .github/docs/root *.ps1): skip risk/build/tests, syntax-check instead, publish (round 22 c04)
+$srcChg = git status --porcelain -uall -- src; $nonSrc = @(git status --porcelain -uall -- .github docs ':(glob)*.ps1' | ForEach-Object { $_.Substring(3) })
+$nonCode = -not $srcChg -and $nonSrc
+if ($nonCode) {
+  python3 -c 'import yaml' 2>$null; $hasYaml = $LASTEXITCODE -eq 0
+  foreach ($p in $nonSrc | Where-Object { Test-Path $_ }) {
+    if ($p -like '*.ps1') { $e = $null; [void][Management.Automation.Language.Parser]::ParseFile((Resolve-Path $p), [ref]$null, [ref]$e); if ($e) { "SYNTAX_FAIL ${p}: $($e[0].Message) line $($e[0].Extent.StartLineNumber)"; exit 0 } }
+    if ($p -match '\.ya?ml$' -and $hasYaml) { $y = python3 -c "import sys,yaml;yaml.safe_load(open(sys.argv[1]))" $p 2>&1; if ($LASTEXITCODE) { "SYNTAX_FAIL ${p}: $($y | Select-Object -Last 1)"; exit 0 } } }
+  'NON_CODE: syntax OK; .NET build/tests skipped' }
 if (git status --porcelain -- 'src/**/*.proto') { & "$tools/Update-GrpcGenerated.ps1" }
-$risk = @(& "$tools/Test-ChangeRisk.ps1")
+$risk = if ($nonCode) { @() } else { @(& "$tools/Test-ChangeRisk.ps1") }
 if ($risk -and -not $IgnoreRisk) { $risk; 'RISK=FIX (fix these, rerun; -IgnoreRisk only if clearly false)'; exit 0 }
+if (-not $nonCode) {
 $f = if ($Filter) { $Filter } else { 'FullyQualifiedName!~__none__' }
 $u = @(& "$tools/Invoke-AgentBuildTest.ps1" -Filter $f); if ($LASTEXITCODE) { $u | Where-Object { $_ -notmatch '^(BUILD=OK)$' }; 'SUBMIT=FAIL (fix the items above, rerun Submit)'; exit 0 }
 $b = dotnet build src/IntegrationTests/IntegrationTests.csproj -c Release -warnaserror -p:NuGetAudit=false -v q -nologo -clp:NoSummary 2>&1
@@ -35,11 +45,12 @@ if ($it) {
   if ($code) { $r | Select-String 'Failed |Assert|Expected|Exception|error|Status' | Select-Object -First 20; 'IT_TEST=FAIL (SQLite)'; exit 0 }
   'IT_TEST=OK'
 }
+}
 if ($VerifyOnly) { 'VERIFY=OK'; exit 0 }
 if (-not $Issue -or -not $Branch) { 'need -Issue and -Branch to publish'; exit 1 }
 $title = gh api "repos/$Repo/issues/$Issue" --jq .title
 $out = & "$tools/Publish-AgentPr.ps1" -Issue $Issue -Branch $Branch -Title $title
-if ($out -match 'no src changes') { 'NO_CHANGES: nothing to publish. If the criteria are already met, reply RESULT=ALREADY_DONE <file:line evidence>'; exit 0 }
+if ($out -match 'no src changes' -and -not $nonCode) { 'NO_CHANGES: nothing to publish. If the criteria are already met, reply RESULT=ALREADY_DONE <file:line evidence>'; exit 0 }
 if ($out -match 'PUBLISH_FAIL') { $out; exit 0 }
 $out | Where-Object { $_ -match 'NO_CHANGE' }
 # v26g: never index a missing match (round 12 s03 "Cannot index into a null array."); fall back to a REST lookup.

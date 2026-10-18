@@ -15,13 +15,17 @@ if ($Issue -and -not $File -and -not $PSBoundParameters.ContainsKey('Find')) { $
 $used = 0; if (Test-Path $cnt) { $used = [int](@(Get-Content $cnt -ErrorAction SilentlyContinue | ForEach-Object { if ("$_" -match '(\d+)') { [int]$Matches[1] } }) + 0 | Measure-Object -Maximum).Maximum }
 # v30g: limit 3 (issue + 2). v29g's 6 became a target (round 16: 49 calls, 6.1/run, 4 runs hit LIMIT then shell-read).
 if ($File -and $Find) { 'REJECTED: use -File or -Find, not both (this call was not counted)'; exit 0 }
-if ($used -ge 3) { 'LIMIT: Get-Context used 3 times. Edit now with what you have (never read files via shell); Submit names what is missing.'; exit 0 }
+# v36g: after the 3 calls, up to 3 small ranged reads (-File path:a-b, max 60 lines) instead of nothing. Round 22 c01 hit LIMIT and
+# probed with 59 failing search_replace calls (811k tokens); c03 read 8 files with python (335k).
+$ranged = $File -match ':\d+-\d+$'
+if ($used -ge 6 -or ($used -ge 3 -and -not $ranged)) { 'LIMIT: Get-Context used. Edit now with what you have; if an exact line range is missing, -File path:a-b (max 60 lines, 3 such calls). Never read via shell, never probe with edits that may not match.'; exit 0 }
+if ($used -ge 3) { $Lines = 60 }
 $tmpc = "$cnt.$PID"; Set-Content $tmpc ($used + 1); Move-Item -Force $tmpc $cnt
 # v30g: an explicit -Find is a capped grep: matching lines with 2 lines of context, max 25 hits / ~1500 chars (v29g returned
 # 3-5 KB outlines per -Find and often missed what the agent was hunting for).
 if ($PSBoundParameters.ContainsKey('Find')) {
   $out = [Text.StringBuilder]::new(); $hits = 0
-  $raw = @(rg -n -C2 --max-count 5 --glob '*.cs' --glob '*.razor' --glob '*.sql' --glob '!**/Generated/**' -e $Find src 2>$null)
+  $raw = @(rg -n -C2 --max-count 5 --glob '*.cs' --glob '*.razor' --glob '*.sql' --glob '*.css' --glob '*.yml' --glob '*.ps1' --glob '!**/Generated/**' -e $Find src .github *.ps1 2>$null)  # v36g: workflow/build-script items
   foreach ($l in $raw) {
     if ($l -match '^[^:]+:\d+:') { $hits++ }
     if ($hits -gt 25 -or $out.Length -gt 1500) { [void]$out.AppendLine('...(capped: narrow the regex)'); break }
@@ -33,7 +37,7 @@ if ($PSBoundParameters.ContainsKey('Find')) {
 if ($File) {
   $fp, $rg = $File -split ':'; if (-not (Test-Path $fp)) { "NO_FILE $fp (use -Find to locate it)"; exit 0 }
   $all = @(Get-Content $fp); $a = 1; $b = $all.Count
-  if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min([Math]::Min($b, $all.Count), $a + 119) }
+  if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min([Math]::Min($b, $all.Count), $a + $(if ($used -ge 3) { 59 } else { 119 })) }
   elseif ($all.Count -gt 120) {
     "== $fp OUTLINE ($($all.Count) lines; read a range with -File ${fp}:a-b, max 120 lines)"
     $n = 0; $all | ForEach-Object { $n++; if ($_ -match '^\s*(@page|@code|\[Test|(public|private|protected|internal)\b)') { "{0,4}: {1}" -f $n, $_.Trim().Substring(0, [Math]::Min(100, $_.Trim().Length)) } } | Select-Object -First 60
@@ -94,6 +98,10 @@ if ($Issue -and -not $Find) {
   $ids = @([regex]::Matches($keep, '`([A-Z][a-z]\w*)`') | ForEach-Object { 'class ' + $_.Groups[1].Value + '\b' }) + @($ids)
   $ids = @([regex]::Matches($keep, '`([A-Z]\w+)\.[A-Z]\w*') | ForEach-Object { 'class ' + $_.Groups[1].Value + '\b' }) + @($ids)  # Type.NewMember -> the type
   $Find = (@($ids) | Select-Object -Unique -First 6) -join '|'
+  # v36g: non-code items (workflow, build script, docs): print the named files whole (round 22 c04 spent 2 calls fetching them)
+  $nc = @([regex]::Matches($body, '[\w./-]+\.(ya?ml|ps1|md)\b') | ForEach-Object Value | Select-Object -Unique | Where-Object { $_ -notmatch '^src/' -and (Test-Path $_) } | Select-Object -First 3)
+  foreach ($p in $nc) { $all = @(Get-Content $p); "== $p FULL ($($all.Count) lines)"; for ($i = 1; $i -le [Math]::Min(150, $all.Count); $i++) { "{0,3}:{1}" -f $i, $all[$i - 1].TrimEnd() } }
+  if ($nc -and -not $Find) { 'NON_CODE: edit these, then Submit (it skips the .NET build/tests when src/ is unchanged)'; exit 0 }
   if (-not $Find) { 'NO_TYPES: one more call with -Find ExactTypeName'; exit 0 }
   "FIND=$Find"
 }

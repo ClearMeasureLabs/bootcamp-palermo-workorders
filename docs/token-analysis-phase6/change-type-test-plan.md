@@ -72,3 +72,8 @@ Categories, matching the catalog's recommended sets:
 | 24 | c17 UI, c18 ML, c19 Bug, c20 CI, c21 Qual, c22 Test, c23 Vague, c24 Bug |
 | 25 | c25 UI, c26 ML, c27 Bug, c28 CI, c29 Qual, c30 Trap, c31 Vague, c32 CI |
 | 26 | c33 UI, c34 ML, c35 Bug, c36 CI, c37 Test, c38 Trap, c39 Vague, c40 ML |
+
+## Results
+| round | skill | per item (input) | notes |
+|---|---|---|---|
+| 22 | v35g | c01 UI 810.9k, c02 ML 258.6k, c03 Bug 334.7k, c04 CI 44.8k (no PR: script), c05 Qual 382.7k, c06 Test 85.4k, c07 Trap 297.1k, c08 Vague 77.9k; avg 286.5k, median 277.9k | see round-22.md; v36g fixes the non-code publish path and LIMIT probing |

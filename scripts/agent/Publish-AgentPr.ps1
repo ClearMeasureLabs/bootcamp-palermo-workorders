@@ -9,8 +9,10 @@ function Fail($m) { "PUBLISH_FAIL: $m (do not repair by hand; reply with this li
 $tmp = [IO.Path]::GetTempPath(); $patch = Join-Path $tmp 'agent-src.patch'; $wt = Join-Path $tmp 'agent-pub-wt'
 git fetch -q origin master
 $start = if (git rev-parse -q --verify origin/analysis/token-reduction 2>$null) { 'origin/analysis/token-reduction' } else { 'origin/master' }
-git add -A src | Out-Null
-git diff --cached --binary --output=$patch $start -- src
+# v36g: also publish .github, docs and root build scripts (round 22 c04: a workflow-only change hit NO_CHANGES)
+$paths = @('src', '.github', 'docs', ':(glob)*.ps1', ':(exclude)docs/token-analysis*')
+git add -A -- @paths 2>$null | Out-Null
+git diff --cached --binary --output=$patch $start -- @paths
 if (-not (Get-Item $patch).Length) { Fail 'no src changes' }
 if (Test-Path $wt) { git worktree remove --force $wt 2>$null | Out-Null; Remove-Item -Recurse -Force $wt -ErrorAction SilentlyContinue }
 git worktree prune
@@ -25,7 +27,7 @@ try {
     if ((git rev-parse 'FETCH_HEAD^{tree}') -eq $tree) { $c = $null } else { $c = git commit-tree $tree -p FETCH_HEAD -m "Follow-up (#$Issue)" }
   }
   if ($c) {
-    $bad = git diff --name-only origin/master $c | Where-Object { $_ -notlike 'src/*' }
+    $bad = git diff --name-only origin/master $c | Where-Object { $_ -notmatch '^(src|\.github|docs)/|^[^/]+\.ps1$' }
     if ($bad) { Fail "non-src files: $($bad -join ',')" }
     # v7.1: GitHub intermittently answers "! [remote rejected] ... (failed)" with no reason (phase 2 iter 14, phase 3 rep 3 t08;
     # same rules/path succeeded for the other 9 concurrent pushes). Retry with backoff before declaring PUBLISH_FAIL.
