@@ -21,7 +21,7 @@ public class HealthCheckLinkTests
         var component = ctx.Render<HealthCheckLink>();
 
         var link = component.Find($"[data-testid='{nameof(HealthCheckLink.Elements.HealthCheckLink)}']");
-        link.GetAttribute("title").ShouldBe("View application health status");
+        link.GetAttribute("title").ShouldBe("View system health");
         link.GetAttribute("href").ShouldBe("/_clienthealthcheck");
     }
 }
