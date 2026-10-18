@@ -832,4 +832,13 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowResultsHeaderOnSearchPage()
+    {
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.ResultsHeader))).ToBeVisibleAsync();
+    }
 }

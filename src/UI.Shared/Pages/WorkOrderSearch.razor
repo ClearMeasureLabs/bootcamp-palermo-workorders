@@ -68,8 +68,8 @@
         </div>
 
         <div class="results-card">
-            <div class="results-header">
-                <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
+            <div class="results-header" data-testid="@Elements.ResultsHeader">
+                <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length @(Model.Results.Length == 1 ? "work order" : "work orders"))
             </div>
 
             @if (Model.Results.Length == 0)
@@ -181,7 +181,8 @@
         SortByRoomButton,
         AssignedToMeCheckbox,
         SearchHint,
-        SearchHeadingTooltip
+        SearchHeadingTooltip,
+        ResultsHeader
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();

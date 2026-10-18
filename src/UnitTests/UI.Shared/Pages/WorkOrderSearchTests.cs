@@ -681,4 +681,36 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task ShouldRenderResultsHeaderSingular_WhenOneResult()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "One", Status = WorkOrderStatus.Draft }
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var header = component.Find($"[data-testid='{WorkOrderSearch.Elements.ResultsHeader}']");
+        header.TextContent.ShouldContain("1 work order");
+        header.TextContent.ShouldNotContain("1 work orders");
+    }
+
+    [Test]
+    public async Task ShouldRenderResultsHeaderPlural_WhenTwoResults()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "One", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-002", Title = "Two", Status = WorkOrderStatus.Draft }
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var header = component.Find($"[data-testid='{WorkOrderSearch.Elements.ResultsHeader}']");
+        header.TextContent.ShouldContain("2 work orders");
+    }
 }
