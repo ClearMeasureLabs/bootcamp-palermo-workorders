@@ -40,7 +40,12 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public int CompareTo(Employee? other)
     {
-        var compareResult = string.Compare(LastName, other!.LastName, StringComparison.Ordinal);
+        if (other is null)
+        {
+            return 1;
+        }
+
+        var compareResult = string.Compare(LastName, other.LastName, StringComparison.Ordinal);
         if (compareResult == 0)
         {
             compareResult = string.Compare(FirstName, other.FirstName, StringComparison.Ordinal);
