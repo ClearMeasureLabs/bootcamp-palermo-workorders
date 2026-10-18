@@ -197,3 +197,18 @@ Each target was checked against master (rg) and is absent. Same work-type mix.
 | t08 Employee.CompareTo(null) (bug fix) | #10420 | cursor/token-exp-p6-t08-k11 |
 
 Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-tNN-k11. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-tNN-k11`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does (if a wait shows no output, run it again; never read terminal files). If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
+
+## Round 12 (v25g, 1e02cd43)
+Each target was checked against master (rg) and is absent. Same work-type mix.
+| Item | Issue | Branch |
+|---|---|---|
+| s01 Employee.GetInitials (domain) | #10429 | cursor/token-exp-p6-s01-k12 |
+| s02 Counter goal message (UI/bUnit) | #10430 | cursor/token-exp-p6-s02-k12 |
+| s03 MCP get-employee blank guard (MCP) | #10431 | cursor/token-exp-p6-s03-k12 |
+| s04 WorkOrderCountByAssigneeQuery (query) | #10432 | cursor/token-exp-p6-s04-k12 |
+| s05 word-count averageWordLength (API JSON) | #10433 | cursor/token-exp-p6-s05-k12 |
+| s06 work order number max 7 (validation) | #10434 | cursor/token-exp-p6-s06-k12 |
+| s07 Employee OfficeLocation column (DbUp) | #10435 | cursor/token-exp-p6-s07-k12 |
+| s08 case-insensitive Employee.CompareTo (bug fix) | #10436 | cursor/token-exp-p6-s08-k12 |
+
+Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-sNN-k12. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-sNN-k12`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does (if a wait shows no output, run it again; never read terminal files). If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
