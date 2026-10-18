@@ -145,4 +145,27 @@ public class EmployeeQueryHandlerTests
             rehydrated.LastName.ShouldBe("Simpson");
         }
     }
+
+    [Test]
+    public async Task Should_OrderByUserName_When_EmployeesShareFirstAndLastName()
+    {
+        new DatabaseTests().Clean();
+
+        var zebra = new Employee("zebra", "Same", "Name", "zebra@test.com");
+        var alpha = new Employee("alpha", "Same", "Name", "alpha@test.com");
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(zebra);
+            context.Add(alpha);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+        var employees = await handler.Handle(new EmployeeGetAllQuery());
+
+        employees.Length.ShouldBe(2);
+        employees[0].UserName.ShouldBe("alpha");
+        employees[1].UserName.ShouldBe("zebra");
+    }
 }

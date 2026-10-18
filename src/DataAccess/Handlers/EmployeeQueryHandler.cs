@@ -25,6 +25,6 @@ public class EmployeeQueryHandler(DataContext context)
             .Include("Roles");
         var employees = await query.ToListAsync(cancellationToken);
 
-        return employees.OrderBy(e => e.LastName).ThenBy(e => e.FirstName).ToArray();
+        return employees.OrderBy(e => e.LastName).ThenBy(e => e.FirstName).ThenBy(e => e.UserName).ToArray();
     }
 }
