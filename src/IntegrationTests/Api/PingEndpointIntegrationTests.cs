@@ -1,4 +1,5 @@
 using System.Net;
+using ClearMeasure.Bootcamp.UI.Server.Middleware;
 using ClearMeasure.Bootcamp.UnitTests.UI.Server;
 using Shouldly;
 
@@ -34,6 +35,16 @@ public class PingEndpointIntegrationTests
         mediaType.ShouldNotBeNull();
         mediaType.ShouldContain("text/plain");
         (await response.Content.ReadAsStringAsync()).ShouldBe("pong");
+    }
+
+    [Test]
+    public async Task Should_IncludeNosniffContentTypeOptions_When_GetPing()
+    {
+        var response = await _client!.GetAsync("/api/ping");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Headers.TryGetValues(ContentTypeOptionsMiddleware.HeaderName, out var values).ShouldBeTrue();
+        values!.Single().ShouldBe(ContentTypeOptionsMiddleware.HeaderValue);
     }
 
     [Test]
