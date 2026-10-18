@@ -165,7 +165,7 @@ public class CorrelationIdResolverTests
     public void ShouldGenerateGuid_WhenHeaderContainsControlCharacter()
     {
         var context = new DefaultHttpContext();
-        context.Request.Headers[CorrelationIdConstants.HeaderName] = "abc\x01def";
+        context.Request.Headers[CorrelationIdConstants.HeaderName] = "abc" + (char)1 + "def";
 
         Guid.TryParse(CorrelationIdResolver.Resolve(context), out _).ShouldBeTrue();
     }
