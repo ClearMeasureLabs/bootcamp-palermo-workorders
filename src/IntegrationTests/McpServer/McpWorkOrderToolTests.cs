@@ -606,6 +606,55 @@ public class McpWorkOrderToolTests
         wo.Status.ShouldBe(WorkOrderStatus.Complete);
     }
 
+    [Test]
+    public async Task ShouldListWorkOrderAttachmentsOrderedByUploadedDateDescending()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com") { Id = Guid.NewGuid() };
+        var workOrder = new WorkOrder
+        {
+            Id = Guid.NewGuid(),
+            Creator = employee,
+            Number = "WO-ATT",
+            Title = "Has attachments"
+        };
+        var older = new WorkOrderAttachment
+        {
+            WorkOrderId = workOrder.Id,
+            FileName = "older.pdf",
+            ContentType = "application/pdf",
+            FileSize = 100,
+            UploadedById = employee.Id,
+            UploadedBy = employee,
+            UploadedDate = new DateTime(2025, 1, 1, 10, 0, 0, DateTimeKind.Utc)
+        };
+        var newer = new WorkOrderAttachment
+        {
+            WorkOrderId = workOrder.Id,
+            FileName = "newer.pdf",
+            ContentType = "application/pdf",
+            FileSize = 200,
+            UploadedById = employee.Id,
+            UploadedBy = employee,
+            UploadedDate = new DateTime(2025, 6, 1, 10, 0, 0, DateTimeKind.Utc)
+        };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(workOrder);
+        context.Add(older);
+        context.Add(newer);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ListWorkOrderAttachments(bus, "WO-ATT");
+
+        using var document = JsonDocument.Parse(result);
+        var fileNames = document.RootElement.EnumerateArray()
+            .Select(item => item.GetProperty("FileName").GetString())
+            .ToArray();
+        fileNames.ShouldBe(["newer.pdf", "older.pdf"]);
+    }
+
     private static async Task SeedFilterWorkOrders()
     {
         var lovejoy = new Employee("tlovejoy", "Timothy", "Lovejoy Jr", "lovejoy@test.com");

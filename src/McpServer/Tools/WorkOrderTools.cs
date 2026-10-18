@@ -224,16 +224,18 @@ public class WorkOrderTools
         }
 
         var attachments = await bus.Send(new WorkOrderAttachmentsQuery(workOrder.Id));
-        return JsonSerializer.Serialize(attachments.Select(a => new
-        {
-            a.Id,
-            a.FileName,
-            a.ContentType,
-            a.FileSize,
-            UploadedBy = a.UploadedBy?.GetFullName(),
-            UploadedByUsername = a.UploadedBy?.UserName,
-            a.UploadedDate
-        }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
+        return JsonSerializer.Serialize(attachments
+            .OrderByDescending(a => a.UploadedDate)
+            .Select(a => new
+            {
+                a.Id,
+                a.FileName,
+                a.ContentType,
+                a.FileSize,
+                UploadedBy = a.UploadedBy?.GetFullName(),
+                UploadedByUsername = a.UploadedBy?.UserName,
+                a.UploadedDate
+            }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
     }
 
     private static string? ValidateSave(
