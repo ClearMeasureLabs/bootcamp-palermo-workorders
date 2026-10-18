@@ -64,10 +64,24 @@ public class ToolsRandomControllerTests
         HexColorRegex.IsMatch(content.Content).ShouldBeTrue();
     }
 
+    [Test]
+    public void Get_Should_ReturnPlainTextBool_When_TypeBool()
+    {
+        var result = CreateController().Get("bool");
+
+        var content = result.ShouldBeOfType<ContentResult>();
+        content.StatusCode.ShouldBe(200);
+        content.ContentType.ShouldNotBeNull();
+        content.ContentType.ShouldContain("text/plain");
+        content.Content.ShouldNotBeNull();
+        (content.Content == "true" || content.Content == "false").ShouldBeTrue();
+    }
+
     [TestCase("UUID")]
     [TestCase("Number")]
     [TestCase("CoLoR")]
     [TestCase("STRING")]
+    [TestCase("BoOl")]
     public void Get_Should_BeCaseInsensitive_When_TypeMixedCase(string type)
     {
         var result = CreateController().Get(type);

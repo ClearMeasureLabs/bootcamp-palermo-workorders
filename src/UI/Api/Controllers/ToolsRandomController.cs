@@ -29,12 +29,13 @@ public class ToolsRandomController : ControllerBase
             ["number"] = () => Random.Shared.Next().ToString(CultureInfo.InvariantCulture),
             ["string"] = GenerateAlphanumeric,
             ["uuid"] = static () => Guid.NewGuid().ToString("D"),
-            ["color"] = static () => $"#{Random.Shared.Next(0x1000000):X6}"
+            ["color"] = static () => $"#{Random.Shared.Next(0x1000000):X6}",
+            ["bool"] = static () => Random.Shared.Next(2) == 0 ? "true" : "false"
         };
 
     /// <summary>
     /// Returns a random value as plain text for the requested <paramref name="type"/>.
-    /// Supported types: <c>number</c>, <c>string</c>, <c>uuid</c>, <c>color</c>.
+    /// Supported types: <c>number</c>, <c>string</c>, <c>uuid</c>, <c>color</c>, <c>bool</c>.
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
@@ -46,14 +47,14 @@ public class ToolsRandomController : ControllerBase
         if (string.IsNullOrWhiteSpace(type))
         {
             return Problem(
-                detail: "Query parameter 'type' is required. Supported values: number, string, uuid, color.",
+                detail: "Query parameter 'type' is required. Supported values: number, string, uuid, color, bool.",
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
         if (!Generators.TryGetValue(type.Trim(), out var generator))
         {
             return Problem(
-                detail: $"Unknown type '{type}'. Supported values: number, string, uuid, color.",
+                detail: $"Unknown type '{type}'. Supported values: number, string, uuid, color, bool.",
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
