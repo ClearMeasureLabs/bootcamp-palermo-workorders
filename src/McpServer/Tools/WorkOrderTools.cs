@@ -13,12 +13,13 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class WorkOrderTools
 {
-    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, and assignee username. Valid statuses: Draft, Assigned, InProgress, Complete.")]
+    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, and assignee username. Valid statuses: Draft, Assigned, InProgress, Complete. Optional limit caps how many results are returned.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
         [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null,
         [Description("Optional creator username filter")] string? creatorUsername = null,
-        [Description("Optional assignee username filter")] string? assigneeUsername = null)
+        [Description("Optional assignee username filter")] string? assigneeUsername = null,
+        [Description("Optional maximum number of work orders to return (1-100)")] int? limit = null)
     {
         var query = new WorkOrderSpecificationQuery();
         if (!string.IsNullOrWhiteSpace(status))
@@ -49,7 +50,23 @@ public class WorkOrderTools
         }
 
         var workOrders = await bus.Send(query);
-        return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
+        return ApplyListLimit(workOrders, limit);
+    }
+
+    private static string ApplyListLimit(WorkOrder[] workOrders, int? limit)
+    {
+        if (limit is < 1 or > 100)
+        {
+            return "limit must be between 1 and 100.";
+        }
+
+        IEnumerable<WorkOrder> results = workOrders;
+        if (limit.HasValue)
+        {
+            results = results.Take(limit.Value);
+        }
+
+        return JsonSerializer.Serialize(results.Select(FormatWorkOrderSummary).ToArray(),
             new JsonSerializerOptions { WriteIndented = true });
     }
 

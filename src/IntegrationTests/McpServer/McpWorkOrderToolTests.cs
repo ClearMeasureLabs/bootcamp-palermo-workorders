@@ -42,6 +42,42 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldLimitWorkOrderResultsWhenLimitProvidedAndReturnAllWhenOmitted()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var order1 = new WorkOrder { Creator = employee, Number = "WO-001", Title = "One" };
+        var order2 = new WorkOrder { Creator = employee, Number = "WO-002", Title = "Two" };
+        var order3 = new WorkOrder { Creator = employee, Number = "WO-003", Title = "Three" };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(order1);
+        context.Add(order2);
+        context.Add(order3);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var unlimited = ExtractNumbers(await WorkOrderTools.ListWorkOrders(bus));
+        var limited = ExtractNumbers(await WorkOrderTools.ListWorkOrders(bus, limit: 2));
+
+        unlimited.Length.ShouldBe(3);
+        limited.Length.ShouldBe(2);
+        limited.ShouldAllBe(n => unlimited.Contains(n));
+    }
+
+    [Test]
+    public async Task ShouldRejectLimitOutsideOneToOneHundred()
+    {
+        var bus = TestHost.GetRequiredService<IBus>();
+
+        var tooLow = await WorkOrderTools.ListWorkOrders(bus, limit: 0);
+        var tooHigh = await WorkOrderTools.ListWorkOrders(bus, limit: 101);
+
+        tooLow.ShouldBe("limit must be between 1 and 100.");
+        tooHigh.ShouldBe("limit must be between 1 and 100.");
+    }
+
+    [Test]
     public async Task ShouldFilterWorkOrdersByStatus()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
