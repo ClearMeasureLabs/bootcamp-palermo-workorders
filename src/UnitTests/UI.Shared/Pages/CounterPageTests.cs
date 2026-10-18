@@ -60,11 +60,11 @@ public class CounterPageTests
 
         var component = ctx.Render<Counter>();
 
-        component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']").Click();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']").ClickAsync();
         component.Find($"[data-testid='{nameof(Counter.Elements.CounterValue)}']")
             .TextContent.ShouldBe("1");
 
-        component.Find($"[data-testid='{nameof(Counter.Elements.ResetButton)}']").Click();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.ResetButton)}']").ClickAsync();
         component.Find($"[data-testid='{nameof(Counter.Elements.CounterValue)}']")
             .TextContent.ShouldBe("0");
     }
