@@ -96,6 +96,30 @@ public class EmployeeTests
     }
 
     [Test]
+    public void GetInitials_WithNormalName_ShouldReturnUpperCaseInitials()
+    {
+        var employee = new Employee()
+        {
+            FirstName = "John",
+            LastName = "Doe"
+        };
+
+        Assert.That(employee.GetInitials(), Is.EqualTo("JD"));
+    }
+
+    [Test]
+    public void GetInitials_WithBlankLastName_ShouldSkipBlankPart()
+    {
+        var employee = new Employee()
+        {
+            FirstName = "John",
+            LastName = ""
+        };
+
+        Assert.That(employee.GetInitials(), Is.EqualTo("J"));
+    }
+
+    [Test]
     public void ShouldCompareEmployeesByLastName()
     {
         var employee1 = new Employee("", "1", "1", "");

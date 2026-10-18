@@ -56,6 +56,26 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
             : $"{FirstName} {MiddleName} {LastName}";
     }
 
+    /// <summary>
+    /// Returns the upper-case first letters of <see cref="FirstName"/> and <see cref="LastName"/>.
+    /// Blank parts are skipped.
+    /// </summary>
+    public string GetInitials()
+    {
+        var initials = string.Empty;
+        if (!string.IsNullOrWhiteSpace(FirstName))
+        {
+            initials += char.ToUpperInvariant(FirstName[0]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(LastName))
+        {
+            initials += char.ToUpperInvariant(LastName[0]);
+        }
+
+        return initials;
+    }
+
     public override string ToString()
     {
         return GetFullName();
