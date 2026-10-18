@@ -7,6 +7,6 @@ public sealed class EmployeeByUserNameQueryValidator : AbstractValidator<Employe
 {
     public EmployeeByUserNameQueryValidator()
     {
-        RuleFor(x => x.Username).NotEmpty();
+        RuleFor(x => x.Username).NotEmpty().MaximumLength(50);
     }
 }
