@@ -75,4 +75,38 @@ public class WorkOrdersGrpcServiceMappingTests
         mapped.CompletedDateUtc.ShouldBeNull();
         mapped.HasDueDate.ShouldBeFalse();
     }
+
+    [Test]
+    public void MapWorkOrder_MapsInstructions()
+    {
+        var source = new ClearMeasure.Bootcamp.Core.Model.WorkOrder
+        {
+            Number = "WO-3",
+            Title = "T",
+            Description = "D",
+            Status = WorkOrderStatus.Draft,
+            Instructions = "Wear gloves"
+        };
+
+        var mapped = WorkOrdersGrpcService.MapWorkOrder(source);
+
+        mapped.Instructions.ShouldBe("Wear gloves");
+    }
+
+    [Test]
+    public void MapWorkOrder_MapsNullInstructions_ToEmptyString()
+    {
+        var source = new ClearMeasure.Bootcamp.Core.Model.WorkOrder
+        {
+            Number = "WO-4",
+            Title = "T",
+            Description = "D",
+            Status = WorkOrderStatus.Draft,
+            Instructions = null
+        };
+
+        var mapped = WorkOrdersGrpcService.MapWorkOrder(source);
+
+        mapped.Instructions.ShouldBe("");
+    }
 }

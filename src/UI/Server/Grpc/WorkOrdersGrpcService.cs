@@ -47,9 +47,12 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
             AssigneeUsername = source.Assignee?.UserName ?? ""
         };
 
+        message.Instructions = MapInstructions(source.Instructions);
         GrpcWorkOrderDateMapper.ApplyOptionalDates(message, source);
         return message;
     }
+
+    private static string MapInstructions(string? value) => value ?? "";
 }
 
 internal static class GrpcWorkOrderDateMapper

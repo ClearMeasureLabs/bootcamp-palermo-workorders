@@ -51,7 +51,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply.Parser, new[]{ "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest.Parser, new[]{ "Number" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply.Parser, new[]{ "WorkOrder" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate", "Instructions" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate" }, null, null, null)
           }));
     }
     #endregion
@@ -868,6 +868,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       createdDateUtc_ = other.createdDateUtc_ != null ? other.createdDateUtc_.Clone() : null;
       completedDateUtc_ = other.completedDateUtc_ != null ? other.completedDateUtc_.Clone() : null;
       dueDate_ = other.dueDate_;
+      instructions_ = other.instructions_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1023,6 +1024,19 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       dueDate_ = null;
     }
 
+    /// <summary>Field number for the "instructions" field.</summary>
+    /// <summary>Field number for the "instructions" field.</summary>
+    public const int InstructionsFieldNumber = 12;
+    private string instructions_ = ""; /*KEEP*/
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Instructions {
+      get { return instructions_; }
+      set {
+        instructions_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1049,6 +1063,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (!object.Equals(CreatedDateUtc, other.CreatedDateUtc)) return false;
       if (!object.Equals(CompletedDateUtc, other.CompletedDateUtc)) return false;
       if (DueDate != other.DueDate) return false;
+      if (Instructions != other.Instructions) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1067,6 +1082,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (createdDateUtc_ != null) hash ^= CreatedDateUtc.GetHashCode();
       if (completedDateUtc_ != null) hash ^= CompletedDateUtc.GetHashCode();
       if (HasDueDate) hash ^= DueDate.GetHashCode();
+      if (Instructions.Length != 0) hash ^= Instructions.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1129,6 +1145,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(90);
         output.WriteString(DueDate);
       }
+      if (Instructions.Length != 0) {
+        output.WriteRawTag(98);
+        output.WriteString(Instructions);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1183,6 +1203,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(90);
         output.WriteString(DueDate);
       }
+      if (Instructions.Length != 0) {
+        output.WriteRawTag(98);
+        output.WriteString(Instructions);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1225,6 +1249,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
       if (HasDueDate) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(DueDate);
+      }
+      if (Instructions.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Instructions);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1279,6 +1306,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
       if (other.HasDueDate) {
         DueDate = other.DueDate;
+      }
+      if (other.Instructions.Length != 0) {
+        Instructions = other.Instructions;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1348,11 +1378,15 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             input.ReadMessage(CompletedDateUtc);
             break;
           }
-          case 90: {
-            DueDate = input.ReadString();
-            break;
+            case 90: {
+              DueDate = input.ReadString();
+              break;
+            }
+            case 98: {
+              Instructions = input.ReadString();
+              break;
+            }
           }
-        }
       }
     #endif
     }
@@ -1420,11 +1454,15 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             input.ReadMessage(CompletedDateUtc);
             break;
           }
-          case 90: {
-            DueDate = input.ReadString();
-            break;
+            case 90: {
+              DueDate = input.ReadString();
+              break;
+            }
+            case 98: {
+              Instructions = input.ReadString();
+              break;
+            }
           }
-        }
       }
     }
     #endif
