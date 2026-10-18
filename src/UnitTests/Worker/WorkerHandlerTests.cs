@@ -50,4 +50,37 @@ public class WorkerHandlerTests
         var reply = stub.RepliedMessages[0].ShouldBeOfType<TracerBulletReplyMessage>();
         reply.CorrelationId.ShouldBe(correlationId);
     }
+
+    [Test]
+    public async Task EventHandler_Handle_SameWorkOrderNumber_ShouldSendSameSagaId()
+    {
+        var stub = StubMessageHandlerContext.Create();
+        var handler = new global::Worker.Handlers.EventHandler();
+        var workOrderNumber = "WO-42";
+
+        await handler.Handle(new WorkOrderAssignedToBotEvent(workOrderNumber, Guid.NewGuid()), stub.Context);
+        await handler.Handle(new WorkOrderAssignedToBotEvent(workOrderNumber, Guid.NewGuid()), stub.Context);
+
+        stub.SentLocalMessages.Count.ShouldBe(2);
+        var first = stub.SentLocalMessages[0].ShouldBeOfType<StartAiBotWorkOrderSagaCommand>();
+        var second = stub.SentLocalMessages[1].ShouldBeOfType<StartAiBotWorkOrderSagaCommand>();
+        first.SagaId.ShouldBe(second.SagaId);
+        first.WorkOrderNumber.ShouldBe(workOrderNumber);
+        second.WorkOrderNumber.ShouldBe(workOrderNumber);
+    }
+
+    [Test]
+    public async Task EventHandler_Handle_DifferentWorkOrderNumbers_ShouldSendDifferentSagaIds()
+    {
+        var stub = StubMessageHandlerContext.Create();
+        var handler = new global::Worker.Handlers.EventHandler();
+
+        await handler.Handle(new WorkOrderAssignedToBotEvent("WO-1", Guid.NewGuid()), stub.Context);
+        await handler.Handle(new WorkOrderAssignedToBotEvent("WO-2", Guid.NewGuid()), stub.Context);
+
+        stub.SentLocalMessages.Count.ShouldBe(2);
+        var first = stub.SentLocalMessages[0].ShouldBeOfType<StartAiBotWorkOrderSagaCommand>();
+        var second = stub.SentLocalMessages[1].ShouldBeOfType<StartAiBotWorkOrderSagaCommand>();
+        first.SagaId.ShouldNotBe(second.SagaId);
+    }
 }
