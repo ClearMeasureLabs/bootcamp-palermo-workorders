@@ -17,6 +17,6 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
 
     public override string ToString()
     {
-        return Name ?? string.Empty;
+        return Name is null ? string.Empty : Name;
     }
 }
