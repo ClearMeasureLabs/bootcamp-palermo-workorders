@@ -50,6 +50,19 @@ public class ProblemDetailsExceptionHandlerTests
         written[0].ProblemDetails.Detail.ShouldBeNull();
     }
 
+    [Test]
+    public async Task HandleAsync_ShouldIncludeTraceId_EqualToContextTraceIdentifier()
+    {
+        var written = new List<ProblemDetailsContext>();
+        var context = CreateHttpContext(written, exception: null);
+        context.TraceIdentifier = "trace-10608";
+
+        await ProblemDetailsExceptionHandler.HandleAsync(context, new StubHostEnvironment(Environments.Production));
+
+        written.Count.ShouldBe(1);
+        written[0].ProblemDetails.Extensions["traceId"].ShouldBe(context.TraceIdentifier);
+    }
+
     private static DefaultHttpContext CreateHttpContext(List<ProblemDetailsContext> written, Exception? exception)
     {
         var services = new ServiceCollection();

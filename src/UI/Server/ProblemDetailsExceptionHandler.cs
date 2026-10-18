@@ -20,6 +20,7 @@ internal static class ProblemDetailsExceptionHandler
             Status = StatusCodes.Status500InternalServerError,
             Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1"
         };
+        problemDetails.Extensions["traceId"] = context.TraceIdentifier;
 
         if (environment.IsDevelopment() && exception is not null)
         {
