@@ -45,4 +45,15 @@ public class EmployeeByUserNameQueryValidatorTests
 
         result.ShouldHaveValidationErrorFor(x => x.Username);
     }
+
+    [Test]
+    public void ShouldFail_WhenUsernameContainsSpace()
+    {
+        var query = new EmployeeByUserNameQuery("j smith");
+
+        var result = _validator.TestValidate(query);
+
+        result.ShouldHaveValidationErrorFor(x => x.Username)
+            .WithErrorMessage("Username must not contain spaces.");
+    }
 }

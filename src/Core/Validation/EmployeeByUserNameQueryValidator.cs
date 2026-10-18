@@ -8,5 +8,8 @@ public sealed class EmployeeByUserNameQueryValidator : AbstractValidator<Employe
     public EmployeeByUserNameQueryValidator()
     {
         RuleFor(x => x.Username).NotEmpty();
+        RuleFor(x => x.Username)
+            .Must(username => username.All(c => !char.IsWhiteSpace(c)))
+            .WithMessage("Username must not contain spaces.");
     }
 }
