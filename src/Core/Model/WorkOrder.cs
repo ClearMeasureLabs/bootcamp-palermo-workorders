@@ -115,5 +115,19 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public bool IsOverdue() => GetDueDateUrgency() == DueDateUrgency.Overdue;
 
+    /// <summary>
+    /// Returns whole days since <see cref="CreatedDate"/> in UTC, or null when unset. Never negative.
+    /// </summary>
+    public int? GetAgeInDays(TimeProvider timeProvider)
+    {
+        if (CreatedDate is null)
+        {
+            return null;
+        }
+
+        var age = (timeProvider.GetUtcNow().UtcDateTime - CreatedDate.Value).Days;
+        return age < 0 ? 0 : age;
+    }
+
     public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
 }

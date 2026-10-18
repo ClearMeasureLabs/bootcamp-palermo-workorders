@@ -98,4 +98,48 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void GetAgeInDays_WhenCreatedDateIsNull_ShouldReturnNull()
+    {
+        var order = new WorkOrder { CreatedDate = null };
+        var time = new StubTimeProvider(new DateTimeOffset(2024, 6, 15, 12, 0, 0, TimeSpan.Zero));
+
+        Assert.That(order.GetAgeInDays(time), Is.Null);
+    }
+
+    [Test]
+    public void GetAgeInDays_WhenSameDay_ShouldReturnZero()
+    {
+        var created = new DateTime(2024, 6, 15, 8, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = created };
+        var time = new StubTimeProvider(new DateTimeOffset(2024, 6, 15, 20, 0, 0, TimeSpan.Zero));
+
+        Assert.That(order.GetAgeInDays(time), Is.EqualTo(0));
+    }
+
+    [Test]
+    public void GetAgeInDays_WhenThreeDaysOld_ShouldReturnThree()
+    {
+        var created = new DateTime(2024, 6, 12, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = created };
+        var time = new StubTimeProvider(new DateTimeOffset(2024, 6, 15, 12, 0, 0, TimeSpan.Zero));
+
+        Assert.That(order.GetAgeInDays(time), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void GetAgeInDays_WhenCreatedDateIsFuture_ShouldReturnZero()
+    {
+        var created = new DateTime(2024, 6, 20, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = created };
+        var time = new StubTimeProvider(new DateTimeOffset(2024, 6, 15, 12, 0, 0, TimeSpan.Zero));
+
+        Assert.That(order.GetAgeInDays(time), Is.EqualTo(0));
+    }
+
+    private sealed class StubTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
 }
