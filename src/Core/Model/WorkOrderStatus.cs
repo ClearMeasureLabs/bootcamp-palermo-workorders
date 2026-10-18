@@ -95,6 +95,11 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
         return Code == "";
     }
 
+    /// <summary>
+    /// Returns true when this status is <see cref="Draft"/>.
+    /// </summary>
+    public bool IsDraft() => Equals(Draft);
+
     public static WorkOrderStatus FromCode(string code)
     {
         // SQL Server nchar(3) can surface trailing pads; trim before Code match.
