@@ -57,6 +57,27 @@ public class EmployeeMappingTests
     }
 
     [Test]
+    public void ShouldPersistUserNameUpTo150Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var longUserName = new string('U', 150);
+        var emp = new Employee(longUserName, "First", "Last", "email150@example.com");
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            Assert.That(rehydrated.UserName, Is.EqualTo(longUserName));
+        }
+    }
+
+    [Test]
     public void ShouldPersistMiddleName()
     {
         new DatabaseTests().Clean();

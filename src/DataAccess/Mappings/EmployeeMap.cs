@@ -16,7 +16,7 @@ public class EmployeeMap : IEntityFrameworkMapping
                 .HasDefaultValue(Guid.Empty);
 
             // Configure properties
-            entity.Property(e => e.UserName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.UserName).IsRequired().HasMaxLength(150);
             entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.MiddleName).HasMaxLength(100);
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(120);
