@@ -6,6 +6,12 @@
             <h2>🌤️ Springfield Weather Report</h2>
             <p data-testid="@nameof(Elements.ForecastSourceNote)">Forecast data is sample data for demonstration.</p>
             <div class="weather-subtitle">Weather conditions for church events and maintenance planning</div>
+            <button type="button"
+                    class="btn btn-secondary"
+                    data-testid="@nameof(Elements.Refresh)"
+                    @onclick="RefreshAsync">
+                Refresh
+            </button>
         </div>
 
         @if (Model == null)

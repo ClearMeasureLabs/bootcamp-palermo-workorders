@@ -110,12 +110,45 @@ public class FetchDataTests
         });
     }
 
+    [Test]
+    public async Task ShouldReloadForecasts_WhenRefreshClicked()
+    {
+        await using var ctx = new BunitContext();
+
+        var forecasts = new[]
+        {
+            new WeatherForecast
+            {
+                Date = new DateTime(2026, 8, 21),
+                TemperatureC = 28,
+                Summary = "Sunny"
+            }
+        };
+
+        var bus = new StubForecastBus(forecasts);
+        ctx.Services.AddSingleton<IBus>(bus);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+        ctx.Services.AddLogging();
+
+        var component = ctx.Render<FetchData>();
+
+        await component.WaitForAssertionAsync(() => bus.ForecastQueryCount.ShouldBe(1));
+
+        await component.Find($"[data-testid='{nameof(FetchData.Elements.Refresh)}']").ClickAsync(new());
+
+        await component.WaitForAssertionAsync(() => bus.ForecastQueryCount.ShouldBe(2));
+    }
+
     private sealed class StubForecastBus(WeatherForecast[] forecasts) : IBus
     {
+        public int ForecastQueryCount { get; private set; }
+
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
         {
             if (request is ForecastQuery)
             {
+                ForecastQueryCount++;
                 return Task.FromResult((TResponse)(object)forecasts);
             }
 

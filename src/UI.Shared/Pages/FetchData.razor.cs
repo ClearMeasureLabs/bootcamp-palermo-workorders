@@ -16,13 +16,24 @@ public partial class FetchData : AppComponentBase
     public enum Elements
     {
         ForecastSourceNote,
-        ForecastTableTooltip
+        ForecastTableTooltip,
+        Refresh
     }
 
     protected override async Task OnInitializedAsync()
     {
         Logger.LogInformation("FetchDataController");
-        Model = await ApplicationBus!.Send(new ForecastQuery());
+        await LoadForecastsAsync();
         //TODO: Make Azure OpenAI query for current weather in Austin, TX
+    }
+
+    private async Task RefreshAsync()
+    {
+        await LoadForecastsAsync();
+    }
+
+    private async Task LoadForecastsAsync()
+    {
+        Model = await ApplicationBus!.Send(new ForecastQuery());
     }
 }
