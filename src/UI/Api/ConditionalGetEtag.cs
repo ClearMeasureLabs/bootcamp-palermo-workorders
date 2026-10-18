@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
@@ -32,15 +31,6 @@ public static class ConditionalGetEtag
     public static EntityTagHeaderValue CreateWeakEtagForJson<T>(T value)
     {
         var bytes = JsonSerializer.SerializeToUtf8Bytes(value, JsonSerializerOptions);
-        return CreateWeakEtag(bytes);
-    }
-
-    /// <summary>
-    /// UTF-8 encodes <paramref name="text"/> and returns its weak ETag.
-    /// </summary>
-    public static EntityTagHeaderValue CreateWeakEtagForPlainText(string text)
-    {
-        var bytes = Encoding.UTF8.GetBytes(text);
         return CreateWeakEtag(bytes);
     }
 
