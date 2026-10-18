@@ -27,6 +27,14 @@ if ($Issue -and -not $Find) {
       $all = @(Get-Content $fp); $a = 1; $b = $all.Count; if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min($b, $all.Count) }
       "== $fp $a-$b of $($all.Count)"; for ($i = $a; $i -le $b; $i++) { $l = $all[$i - 1]; if ($l -notmatch '^\s*(using |$)') { "{0,3}:{1}" -f $i, $l.TrimEnd() } } }
   }
+  # v27g: db changes -> next DbUp script number (round 12 s07 globbed scripts/Update to find it)
+  if ($keep -match '(?i)\b(DbUp|column)\b') { $last = Get-ChildItem src/Database/scripts/Update -Filter '*.sql' | Sort-Object Name | Select-Object -Last 1
+    if ($last -and $last.Name -match '^(\d+)_') { "NEXT_SCRIPT=src/Database/scripts/Update/{0:D3}_<Name>.sql (last: $($last.Name))" -f ([int]$Matches[1] + 1) } }
+  # v27g: backticked names that occur nowhere in src are new; say so, so the agent doesn't spend its -Find call proving it
+  # (round 12: 6 of 8 second calls were -Find on the not-yet-existing name, 2.5-3.8 KB each).
+  $newNames = @([regex]::Matches($keep, '`(?:[A-Z]\w+\.)?([A-Za-z]\w{3,})(?:\([^`]*\))?`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique |
+    Where-Object { -not (rg -l -w -F -e $_ src -g '*.cs' -g '*.razor' -g '*.sql' 2>$null | Select-Object -First 1) })
+  if ($newNames) { "NEW (not in src yet; don't search for them): " + ($newNames -join ', ') }
   $ids = @([regex]::Matches($keep, '\b[A-Z][a-z]+[A-Z]\w*\b') | ForEach-Object { $_.Value }) +
          @([regex]::Matches($keep, '`([a-z]+(-[a-z]+)+)`') | ForEach-Object { $_.Groups[1].Value }) | Where-Object { $_ -notmatch '^(WorkOrder|Employee|DbUp|SQLite|SqlServer)$' } | Sort-Object -Unique
   $stop = 'with|that|this|from|when|test|tests|unit|integration|have|then|each|only|work|order|orders|true|false|returns|null|empty|value|text|page|change|criteria|outcome|acceptance|works|given|server|sqlite|existing|optional|parameter|description|case|insensitively|unchanged|current|behavior|omitted|called|call|which|default|added|store|number|nothing|uses|yet|new|name|names|gain|gains|field|fields|response|english|example'
@@ -67,11 +75,14 @@ $prod = @($files | Where-Object { $_ -notmatch 'Tests[/\\]' }); $test = @($files
 # v19g: the sibling test of each top production file (<Name>Tests.cs) goes first among tests, so the agent needn't hunt for it.
 $sib = @($prod | Select-Object -First $Max | ForEach-Object { $b = [IO.Path]::GetFileNameWithoutExtension($_) -replace '\.razor$', ''
   $t1 = rg --files src -g "${b}Tests.cs" -g "!**/AcceptanceTests/**" 2>$null | Select-Object -First 1
+  if (-not $t1) { $t1 = rg --files src -g "*$($b -replace 's$', '')*Tests.cs" -g "!**/AcceptanceTests/**" 2>$null | Sort-Object Length | Select-Object -First 1 }  # v27g: EmployeeTools -> McpEmployeeToolTests (round 12 s03 got TestHost.cs)
+  if (-not $t1) { $mir = (Split-Path $_) -replace '^src[/\\]', 'src/UnitTests/'  # v27g: no test yet -> a sibling test in the mirror folder to copy (round 12 s06: 3 greps)
+    if (Test-Path $mir) { $t1 = Get-ChildItem $mir -Filter '*Tests.cs' | Sort-Object Length | Select-Object -First 1 | ForEach-Object { Resolve-Path -Relative $_.FullName } | ForEach-Object { $_ -replace '^\./', '' } } }
   if (-not $t1) { $t1 = rg -l -w $b src/UnitTests src/IntegrationTests 2>$null | Sort-Object Length | Select-Object -First 1 }  # v20g: e.g. EmployeeTools -> McpEmployeeToolTests
   $t1 })
 $test = @(@($sib | Where-Object { $_ -and $_ -notmatch 'AcceptanceTests' }) + @($test) | Select-Object -Unique)
 $decl = '^\s*(@page|@code|@inject|@implements|@inherits|(public|private|protected|internal)\b.*(class|record|interface|enum|struct)\b|(public|private|protected|internal)\b[^=;]*\(|(public|internal|protected)\b[^(]*\{\s*get|CREATE |ALTER )'
-$sb = [Text.StringBuilder]::new()
+$sb = [Text.StringBuilder]::new(); $tail = $null
 [void]$sb.AppendLine("FILES prod=$($prod.Count) test=$($test.Count)$(if ($files.Count -gt 2 * $Max) { ' (use exact type names to narrow)' })")
 # v19g: files of <= 35 lines are printed in full ("FULL", no need to read them); round 5: reads before the first edit were 51%
 # of input and most were whole small files (queries, handlers, sibling tests) right after their outline.
@@ -89,8 +100,16 @@ foreach ($f in @($prod | Select-Object -First $Max) + @($test | Select-Object -F
   $out = foreach ($l in $all) { $n++
     if ($l -match $decl -or $l -match $Find) { $t = $l.Trim(); "{0,4}: {1}" -f $n, $t.Substring(0, [Math]::Min(100, $t.Length)) } }
   [void]$sb.AppendLine("== $f ($n lines)"); $out | Select-Object -First $Lines | ForEach-Object { [void]$sb.AppendLine($_) }
+  # v27g: for the sibling test, print its last test in full (shape to copy + where to append); round 12: 4 of 8 runs re-read it
+  if ($f -eq $test[0]) { $k = $all.Count - 1; while ($k -gt 0 -and $all[$k] -notmatch '^\s*\[(Test|Fact|TestCase)\b') { $k-- }
+    $from = [Math]::Max($k, $all.Count - 30)
+    $tail = [Text.StringBuilder]::new(); [void]$tail.AppendLine("== $f last test (append new tests after it; not capped):")
+    $us = @($all | Where-Object { $_ -match '^\s*using [\w.]+;' } | ForEach-Object { ($_ -replace '^\s*using\s+|;\s*$', '') })
+    if ($us) { [void]$tail.AppendLine("  usings: " + ($us -join '; ')) }
+    for ($i = $from; $i -lt $all.Count; $i++) { if ($all[$i].Trim()) { [void]$tail.AppendLine(("{0,3}:{1}" -f ($i + 1), $all[$i].TrimEnd())) } } }
 }
 $rest = @($prod | Select-Object -Skip $Max) + @($test | Select-Object -Skip $Max) | Select-Object -First 12
 $rest = @(@($rest) + @($weak | Where-Object { $_ -notmatch 'AcceptanceTests' } | Select-Object -First 8))
 if ($rest) { [void]$sb.AppendLine("ALSO (mention only): " + ($rest -join ' ')) }
 $s = $sb.ToString(); if ($s.Length -gt $Cap) { $s = $s.Substring(0, $Cap) + "`n...(capped; narrow -Find)" }; $s
+if ($tail) { $tail.ToString() }

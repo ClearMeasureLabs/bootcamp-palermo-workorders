@@ -212,3 +212,19 @@ Each target was checked against master (rg) and is absent. Same work-type mix.
 | s08 case-insensitive Employee.CompareTo (bug fix) | #10436 | cursor/token-exp-p6-s08-k12 |
 
 Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-sNN-k12. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-sNN-k12`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does (if a wait shows no output, run it again; never read terminal files). If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
+
+## Round 13 (v27g)
+Each target was checked against master (git grep) and is absent. Same work-type mix.
+| Item | Issue | Branch |
+|---|---|---|
+| r01 Employee.HasEmailDomain (domain) | #10445 | cursor/token-exp-p6-r01-k13 |
+| r02 Counter reset disabled at zero (UI/bUnit) | #10446 | cursor/token-exp-p6-r02-k13 |
+| r03 MCP list-employees nameContains (MCP) | #10447 | cursor/token-exp-p6-r03-k13 |
+| r04 WorkOrderCountByCreatorQuery (query) | #10448 | cursor/token-exp-p6-r04-k13 |
+| r05 word-count longestWord (API JSON) | #10449 | cursor/token-exp-p6-r05-k13 |
+| r06 username query max 50 (validation) | #10450 | cursor/token-exp-p6-r06-k13 |
+| r07 Employee PhoneNumber column (DbUp) | #10451 | cursor/token-exp-p6-r07-k13 |
+| r08 GetFullName skips blank parts (bug fix) | #10452 | cursor/token-exp-p6-r08-k13 |
+
+Launch prompt: same as round 12 with k13/rNN (see below).
+

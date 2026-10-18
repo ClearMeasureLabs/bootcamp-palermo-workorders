@@ -22,6 +22,9 @@ function Get-MethodCc([string[]]$src) {
     $i = [Math]::Max($i, $j)
   }
 }
+function Test-ImplicitUsings([string]$f) { $d = Split-Path $f
+  while ($d) { $p = @(Get-ChildItem $d -Filter *.csproj -ErrorAction SilentlyContinue); if ($p) { return (Get-Content $p[0].FullName -Raw) -match 'ImplicitUsings>enable' }; $d = Split-Path $d }
+  $false }
 git add -A -N src 2>$null | Out-Null
 $base = if (git rev-parse -q --verify origin/analysis/token-reduction 2>$null) { 'origin/analysis/token-reduction' } else { 'origin/master' }
 $changed = @{}; $file = $null
@@ -31,6 +34,9 @@ foreach ($l in git diff -U0 $base -- src) {
   if ($l -match '^\+(?!\+\+)(.*)$' -and $file) { $a = $Matches[1]
     if ($file -match 'Tests' -and $a -match '\.(Click|Change|Input|Submit)\(') { "QODANA_RISK $file : use the async bUnit overload (ClickAsync/ChangeAsync/...) and await it: $($a.Trim())" }  # v18g: round 4 u03
     if ($a -match 'new\s*(\w+)?\[\]\s*\{|new List<[^>]+>\s*\{') { "QODANA_RISK $file : use a collection expression [a, b]: $($a.Trim())" }
+    # v27g: round 12 CI REDs: s02 RedundantNameQualifier (new Microsoft.AspNetCore.Components.Web.MouseEventArgs()), s05 RedundantUsingDirective (using System.Linq; with ImplicitUsings)
+    if ($a -notmatch '^\s*(using|namespace)\b' -and $a -match '\b(System|Microsoft)\.[A-Z]\w*\.[\w.]*[A-Z]\w*\s*[(<{]') { "QODANA_RISK $file : add a using and use the short type name (RedundantNameQualifier): $($a.Trim())" }
+    if ($a -match '^\s*using (System|System\.(Linq|IO|Collections\.Generic|Net\.Http|Threading|Threading\.Tasks));' -and (Test-ImplicitUsings $file)) { "QODANA_RISK $file : remove '$($a.Trim())' (implicit usings already cover it)" }
     if ($file -match 'Tests' -and $a -match 'Number\s*=\s*"([^"]{8,})"') { "NUMBER_RISK $file : work order Number '$($Matches[1])' > 7 chars" } }
 }
 foreach ($f in $changed.Keys) {
