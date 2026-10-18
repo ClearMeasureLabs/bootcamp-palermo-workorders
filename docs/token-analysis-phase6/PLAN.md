@@ -242,3 +242,28 @@ Each target was checked against master (git grep) and is absent. Same work-type 
 | q08 Employee.CompareTo(null) (bug fix) | #10468 | cursor/token-exp-p6-q08-k14 |
 
 Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-qNN-k14. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-qNN-k14`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does (if a wait shows no output, run it again; never read terminal files). If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board, journal, todos or handoff files. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`; make no tool calls after it.
+
+## v29g (6e93cd0b): generalization fixes from round 15
+- **Searching and reading go through Get-Context only.** The skill bans the built-in grep/glob/search/read tools. `-File path[:a-b]` is a capped read: files up to 120 lines print in full; bigger files print an outline of up to 60 declaration lines, then the agent reads a range (max 120 lines). The call limit rose from 2 to 6 (issue call + 5 Find/File). `-Find` stays capped at 3000 chars.
+- **New recipes:**
+  - api-new-endpoint: ToolsDueDateCheckController, its tests and `ApiPublicPathRules.PublicLeaves`.
+  - blazor-page: SettingsTests bUnit setup and the CounterTests acceptance test.
+  - new-validator: header comment, a validator and its TestValidate tests.
+  - mcp-tool-param renamed to mcp-tool (it covers any MCP tool change).
+- **Recipe supersede column:** an optional 4th column means "skip this recipe when that one also matched". api-json-field yields to api-new-endpoint; new-validator yields to new-query.
+- **GENERAL.md:** 2,673 -> 2,720 bytes.
+
+## Round 16 (v29g): p01-p08 (-v29), unseen kinds
+Each target was checked against master (git grep) and is absent.
+| Item | Issue | Branch |
+|---|---|---|
+| p01 Creator can shelve (state-command permission) | #10509 | cursor/token-exp-p6-p01-v29 |
+| p02 Ping Cache-Control no-store (HTTP header) | #10510 | cursor/token-exp-p6-p02-v29 |
+| p03 DB health check provider data (health check) | #10511 | cursor/token-exp-p6-p03-v29 |
+| p04 CSV import rejects duplicate columns (parser) | #10512 | cursor/token-exp-p6-p04-v29 |
+| p05 Nav menu weather link (shared component) | #10513 | cursor/token-exp-p6-p05-v29 |
+| p06 Bulk import logs count (logging) | #10514 | cursor/token-exp-p6-p06-v29 |
+| p07 TextTruncation.WithEllipsis (utility) | #10515 | cursor/token-exp-p6-p07-v29 |
+| p08 Search specification room filter (spec/filter) | #10516 | cursor/token-exp-p6-p08-v29 |
+
+Known recipe misfires on this set (left untuned on purpose): p04 matches db-column (the word "column"); p02 matches api-json-field ("endpoint ... response").
