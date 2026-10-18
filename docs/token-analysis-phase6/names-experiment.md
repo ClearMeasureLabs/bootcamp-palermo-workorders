@@ -43,3 +43,34 @@
 - n08 CompareTo(null) #10484
 
 Branches `cursor/token-exp-p6-nNN-names`, starting_ref `analysis/token-names`.
+
+## Results (n01-n08 vs round 14 q01-q08, same work items, same v28g skill)
+Measured exactly as round 14 (`measure_transcript.py` logic, `attribute_transcript_tokens.py`; bytes/4). 8/8 green.
+
+| Item | Names run | Input | Round 14 | Input | Delta | 1st Get-Context output (KB) n / q | Reads n / q | Flow difference |
+|---|---|---|---|---|---|---|---|---|
+| 01 GetDisplayName | bc-0454d37e | 18.6k | bc-577b469b | 18.7k | -0.1k | 5.0 / 5.3 | 0 / 0 | q had an empty wait rerun; n had one more edit |
+| 02 Counter decrement | bc-213e0bcf | 20.3k | bc-a1c6130a | 35.0k | -14.7k | 6.1 / 6.1 | 0 / 0 | q made 3 calls after GREEN (get_mcp_tools x2 + MCP), 15.0k |
+| 03 MCP maxResults | bc-17c8a775 | 24.8k | bc-363df618 | 39.7k | -14.9k | 8.5 / 8.5 | 0 / 1 | q made a 2nd Get-Context (-Find) + 1 read of McpEmployeeToolTests |
+| 04 EmployeeCountQuery | bc-7799e9ae | 37.1k | bc-b300cb29 | 35.7k | +1.4k | 10.4 / 9.2 | 0 / 0 | identical flow; n's Get-Context ranked different look-alikes (EmployeeQueryHandler + its 148-line test tail vs CanConnectToDatabaseHealthCheck) |
+| 05 sentenceCount | bc-91411c14 | 30.8k | bc-c547d2ee | 42.0k | -11.2k | 7.9 / 8.0 | 0 / 0 | both hit CRAP_RISK + 2 Submits; q had an empty wait rerun and one more edit |
+| 06 username whitespace | bc-f7be1786 | 12.5k | bc-ddfefca2 | 12.5k | 0.0k | 2.9 / 2.9 | 0 / 0 | identical |
+| 07 Department column | bc-0d83be28 | 42.3k | bc-d6c16060 | 41.8k | +0.5k | 7.2 / 7.3 | 1 / 1 | identical (both read EmployeeMappingTests mid-edit) |
+| 08 CompareTo(null) | bc-ebcec67f | 13.7k | bc-3b7c092e | 14.3k | -0.6k | 4.6 / 4.9 | 0 / 0 | identical |
+| **Total** | | **200.1k** | | **239.7k** | **-39.6k (-16.5%)** | 52.6 / 52.2 | 1 / 2 | |
+
+Per run: **25.0k** vs 30.0k. Attribution: reads before first edit 78.7k (39.3%), skill 42.1k (21.0%), assistant 35.0k (17.5%), edits 27.9k (14.0%), prompt 12.9k (6.4%).
+
+## Separating the comment effect from noise
+- **Direct effect on what agents read: none measurable.** The first Get-Context output (recipes + FULL files + test tails), the only place source text enters these runs, totals 52.6 KB vs 52.2 KB. Per item it moved by -0.3 to +1.2 KB. The files agents actually see (Employee.cs 75->69 lines, ToolsWordCountController 57->47, validators -2) had few comments to begin with. The comment-heavy code (UI/Api, UI/Server) is mostly not on these items' paths.
+- **The -39.6k comes from three behaviour differences, none caused by comments:**
+  - q02's 15.0k of calls after GREEN (an environment "check the message queue" prompt).
+  - q03's extra `-Find` + read (about 15k).
+  - Empty-wait reruns in q01 and q05.
+- **The 4 items with identical flows (04, 06, 07, 08):** +1.4k, 0.0k, +0.5k, -0.6k, i.e. +1.3k net. Within noise. The +1.4k (04) is a Get-Context ranking side effect, not a saving.
+- **Honest limit:** with 8 runs and run-to-run swings of about 15k from single behaviour events, an effect smaller than about 1-2k per run (5%) can't be detected. The direct byte measure above says the true effect on these items is close to zero.
+
+## Verdict and recommendation
+- **Verdict:** removing "what" comments did not reduce agent tokens on these work items. The 16.5% drop is noise from behaviour (calls after GREEN, an extra search, empty waits), not the refactor.
+- **Recommendation:** drop it as a token lever. Keep v28g on analysis/token-reduction (src == master) as the baseline. A true descriptive-rename pass is unlikely to change tokens either, because the agents' reads are now one Get-Context call over a few small files.
+- **If you still want a fair test:** use items whose files are comment-heavy (UI/Api controllers, UI/Server: about 590 comment lines). Run each item twice per arm to average out behaviour noise. Worth doing for readability, not tokens.
