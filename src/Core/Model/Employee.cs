@@ -56,6 +56,20 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
             : $"{FirstName} {MiddleName} {LastName}";
     }
 
+    /// <summary>
+    /// Returns first name plus last initial (e.g. <c>First L.</c>), or first name alone when last name is blank.
+    /// </summary>
+    public string GetDisplayName()
+    {
+        var first = FirstName.Trim();
+        if (string.IsNullOrWhiteSpace(LastName))
+        {
+            return first;
+        }
+
+        return $"{first} {LastName.Trim()[0]}.";
+    }
+
     public override string ToString()
     {
         return GetFullName();

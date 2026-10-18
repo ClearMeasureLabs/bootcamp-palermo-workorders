@@ -44,6 +44,24 @@ public class EmployeeTests
     }
 
     [Test]
+    public void GetDisplayName_WithLastName_ShouldReturnFirstNameAndLastInitial()
+    {
+        var employee = new Employee("jcamel", " Joe ", " Camel ", "");
+
+        employee.GetDisplayName().ShouldBe("Joe C.");
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void GetDisplayName_WithBlankLastName_ShouldReturnFirstNameOnly(string? lastName)
+    {
+        var employee = new Employee("jcamel", " Joe ", lastName!, "");
+
+        employee.GetDisplayName().ShouldBe("Joe");
+    }
+
+    [Test]
     public void ToString_WithMiddleName_ShouldReturnFullNameWithMiddleName()
     {
         var employee = new Employee("jcamel", "Joe", "Camel", "") { MiddleName = "Big" };
