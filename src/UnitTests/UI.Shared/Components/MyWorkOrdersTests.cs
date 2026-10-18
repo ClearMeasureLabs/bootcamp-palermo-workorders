@@ -55,7 +55,7 @@ public class MyWorkOrdersTests
         var component = ctx.Render<MyWorkOrders>();
 
         var tooltip = component.Find($"[data-testid='{nameof(MyWorkOrders.Elements.MyWorkOrdersTooltip)}']");
-        tooltip.GetAttribute("title")!.ShouldBe("Work orders assigned to you");
+        tooltip.GetAttribute("title")!.ShouldBe("Work orders you created");
     }
 
     [Test]
