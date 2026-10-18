@@ -45,7 +45,57 @@ public class EchoControllerTests
         payload.Host.ShouldBe("localhost:7174");
         payload.Protocol.ShouldBe("HTTP/2");
         payload.RemoteIpAddress.ShouldBe("127.0.0.1");
+        payload.UserAgent.ShouldBeNull();
         payload.Headers["X-Debug"].ShouldBe("trace-1");
+    }
+
+    [Test]
+    public void Get_Should_ReflectUserAgentWhenPresent()
+    {
+        var httpContext = new DefaultHttpContext
+        {
+            Request =
+            {
+                Method = "GET",
+                Path = "/api/echo"
+            }
+        };
+        httpContext.Request.Headers.UserAgent = "TestAgent/1.0";
+
+        var controller = new EchoController
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext }
+        };
+
+        var result = controller.Get();
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<EchoResponse>();
+        payload.UserAgent.ShouldBe("TestAgent/1.0");
+    }
+
+    [Test]
+    public void Get_Should_ReturnNullUserAgentWhenAbsent()
+    {
+        var httpContext = new DefaultHttpContext
+        {
+            Request =
+            {
+                Method = "GET",
+                Path = "/api/echo"
+            }
+        };
+
+        var controller = new EchoController
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext }
+        };
+
+        var result = controller.Get();
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<EchoResponse>();
+        payload.UserAgent.ShouldBeNull();
     }
 
     [Test]

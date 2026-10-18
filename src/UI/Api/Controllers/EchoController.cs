@@ -26,7 +26,7 @@ public class EchoController : ControllerBase
     };
 
     /// <summary>
-    /// Returns a JSON object reflecting method, path, query, host, protocol, remote IP, and headers
+    /// Returns a JSON object reflecting method, path, query, host, protocol, remote IP, user agent, and headers
     /// (sensitive header values redacted).
     /// </summary>
     [HttpGet]
@@ -55,11 +55,15 @@ public class EchoController : ControllerBase
             Host: request.Host.Value ?? string.Empty,
             Protocol: request.Protocol,
             RemoteIpAddress: FormatRemoteIp(httpContext.Connection.RemoteIpAddress),
+            UserAgent: ResolveUserAgent(request.Headers),
             Headers: headers);
     }
 
     private static string? FormatRemoteIp(IPAddress? address) =>
         address is null ? null : address.IsIPv4MappedToIPv6 ? address.MapToIPv4().ToString() : address.ToString();
+
+    private static string? ResolveUserAgent(IHeaderDictionary headers) =>
+        headers.TryGetValue("User-Agent", out var value) ? value.ToString() : null;
 }
 
 /// <summary>
@@ -73,4 +77,5 @@ public record EchoResponse(
     string Host,
     string Protocol,
     string? RemoteIpAddress,
+    string? UserAgent,
     IReadOnlyDictionary<string, string> Headers);
