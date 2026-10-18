@@ -12,6 +12,8 @@ public class IdempotencyMiddlewareTests
     [TestCase("PUT", "/api/items/1", true)]
     [TestCase("POST", "/api/blazor-wasm-single-api", true)]
     [TestCase("POST", "/home", false)]
+    [TestCase("PATCH", "/api/x", true)]
+    [TestCase("GET", "/api/x", false)]
     public void ShouldInspect_ReturnsExpected(string method, string path, bool expected)
     {
         var request = new DefaultHttpContext().Request;
