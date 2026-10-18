@@ -34,6 +34,24 @@ public class EmployeeQueryHandlerTests
     }
 
     [Test]
+    public async Task ShouldFindEmployeeByUsername_CaseInsensitive()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("TestUser", "first", "last", "email");
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+        var found = await handler.Handle(new EmployeeByUserNameQuery("testuser"));
+        found.Id.ShouldBe(employee.Id);
+    }
+
+    [Test]
     public async Task ShouldGetAllEmployees()
     {
         new DatabaseTests().Clean();
