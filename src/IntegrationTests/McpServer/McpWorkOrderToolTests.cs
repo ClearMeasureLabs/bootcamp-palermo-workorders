@@ -62,7 +62,7 @@ public class McpWorkOrderToolTests
 
         unlimited.Length.ShouldBe(3);
         limited.Length.ShouldBe(2);
-        limited.ShouldAllBe(n => unlimited.Contains(n));
+        limited.ShouldAllBe(n => Array.Exists(unlimited, u => u == n));
     }
 
     [Test]
