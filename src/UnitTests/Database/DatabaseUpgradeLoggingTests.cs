@@ -93,6 +93,32 @@ public class SerilogTestingEnvironmentTests
     }
 }
 
+public class DatabaseUpgradeLogSelectorTests
+{
+    [Test]
+    public void ShouldReturnQuietLogAndNotSilent_WhenOptionsAreNull()
+    {
+        DatabaseUpgradeLogSelector.IsSilent(null).ShouldBeFalse();
+        DatabaseUpgradeLogSelector.ForOptions(null).ShouldBeOfType<QuietLog>();
+    }
+
+    [Test]
+    public void ShouldReturnQuietLogAndNotSilent_WhenSuppressUpgradeConsoleOutputIsFalse()
+    {
+        var options = new DatabaseOptions { SuppressUpgradeConsoleOutput = false };
+        DatabaseUpgradeLogSelector.IsSilent(options).ShouldBeFalse();
+        DatabaseUpgradeLogSelector.ForOptions(options).ShouldBeOfType<QuietLog>();
+    }
+
+    [Test]
+    public void ShouldReturnNullUpgradeLogAndSilent_WhenSuppressUpgradeConsoleOutputIsTrue()
+    {
+        var options = new DatabaseOptions { SuppressUpgradeConsoleOutput = true };
+        DatabaseUpgradeLogSelector.IsSilent(options).ShouldBeTrue();
+        DatabaseUpgradeLogSelector.ForOptions(options).ShouldBeOfType<NullUpgradeLog>();
+    }
+}
+
 internal sealed class HostEnvironment : IHostEnvironment
 {
     public string EnvironmentName { get; set; } = Environments.Production;

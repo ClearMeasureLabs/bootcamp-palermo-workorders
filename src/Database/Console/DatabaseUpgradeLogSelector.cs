@@ -7,6 +7,9 @@ namespace ClearMeasure.Bootcamp.Database.Console;
 /// </summary>
 internal static class DatabaseUpgradeLogSelector
 {
+    internal static bool IsSilent(DatabaseOptions? options) =>
+        options?.SuppressUpgradeConsoleOutput == true;
+
     internal static IUpgradeLog ForOptions(DatabaseOptions? options) =>
-        options?.SuppressUpgradeConsoleOutput == true ? new NullUpgradeLog() : new QuietLog();
+        IsSilent(options) ? new NullUpgradeLog() : new QuietLog();
 }
