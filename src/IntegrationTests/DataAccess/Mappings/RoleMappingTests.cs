@@ -37,6 +37,27 @@ public class RoleMappingTests
         rehydratedRole.CanFulfillWorkOrder.ShouldBeTrue();
     }
 
+    [Test, Retry(2)]
+    public void ShouldPersistRoleNameUpTo100Characters()
+    {
+        EmptyDatabase();
+
+        var longName = new string('R', 100);
+        var role = new Role(longName, true, false);
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(role);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Role>().Single(r => r.Id == role.Id);
+            rehydrated.Name.ShouldBe(longName);
+        }
+    }
+
     private void EmptyDatabase()
     {
         new DatabaseEmptier(TestHost.GetRequiredService<DbContext>().Database).DeleteAllData();
