@@ -21,6 +21,7 @@ public class SettingsTests
         var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         module.Setup<string>("getTheme").SetResult("light");
         module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        module.Setup<bool>("getCompactTables").SetResult(false);
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
 
@@ -38,6 +39,7 @@ public class SettingsTests
         var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         module.Setup<string>("getTheme").SetResult("light");
         module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        module.Setup<bool>("getCompactTables").SetResult(false);
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
 
@@ -52,6 +54,7 @@ public class SettingsTests
         var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         module.Setup<string>("getTheme").SetResult("light");
         module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        module.Setup<bool>("getCompactTables").SetResult(false);
         module.SetupVoid("setTheme", _ => true).SetVoidResult();
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
@@ -65,6 +68,44 @@ public class SettingsTests
 
         await component.WaitForAssertionAsync(() => theme.IsDarkMode.ShouldBeTrue());
         module.VerifyInvoke("setTheme");
+    }
+
+    [Test]
+    public async Task Settings_AuthenticatedUser_ShouldRenderCompactTablesSwitch()
+    {
+        await using var ctx = CreateContext();
+        var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
+        module.Setup<string>("getTheme").SetResult("light");
+        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        module.Setup<bool>("getCompactTables").SetResult(false);
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
+
+        var sw = component.Find($"[data-testid='{nameof(Settings.Elements.CompactTablesSwitch)}']");
+        sw.GetAttribute("role").ShouldBe("switch");
+        sw.HasAttribute("checked").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Settings_ToggleCompactTables_ShouldPersistViaInteropAndUpdateServiceState()
+    {
+        await using var ctx = CreateContext();
+        var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
+        module.Setup<string>("getTheme").SetResult("light");
+        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        module.Setup<bool>("getCompactTables").SetResult(false);
+        module.SetupVoid("setCompactTables", _ => true).SetVoidResult();
+        var theme = ctx.Services.GetRequiredService<ThemePreferenceService>();
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
+        await component.InvokeAsync(() => Task.CompletedTask);
+        theme.IsCompactTables.ShouldBeFalse();
+
+        var sw = component.Find($"[data-testid='{nameof(Settings.Elements.CompactTablesSwitch)}']");
+        await sw.ChangeAsync(new() { Value = true });
+
+        await component.WaitForAssertionAsync(() => theme.IsCompactTables.ShouldBeTrue());
+        module.VerifyInvoke("setCompactTables");
     }
 
     private static BunitContext CreateContext()

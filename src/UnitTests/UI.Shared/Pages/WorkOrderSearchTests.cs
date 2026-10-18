@@ -18,13 +18,23 @@ public class WorkOrderSearchTests
     private const string CurrentUsername = "jpalermo";
 
     private static BunitContext CreateContext(IBus? bus = null, string loggedInAs = CurrentUsername,
-        WorkOrderSearchState? searchState = null)
+        WorkOrderSearchState? searchState = null, bool compactTables = false)
     {
         var ctx = new BunitContext();
         ctx.Services.AddSingleton(bus ?? new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
         ctx.Services.AddSingleton(searchState ?? new WorkOrderSearchState());
+
+        ctx.JSInterop.Mode = JSRuntimeMode.Strict;
+        var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
+        module.Setup<string>("getTheme").SetResult("light");
+        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        module.Setup<bool>("getCompactTables").SetResult(compactTables);
+        module.SetupVoid("setCompactTables", _ => true).SetVoidResult();
+        module.SetupVoid("setTheme", _ => true).SetVoidResult();
+        ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
+        ctx.Services.AddSingleton<ThemePreferenceService>();
 
         var store = new StubUserSessionStore { Username = loggedInAs };
         var authProvider = new CustomAuthenticationStateProvider(store);
@@ -680,5 +690,27 @@ public class WorkOrderSearchTests
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task WhenCompactTablesEnabled_ResultsTable_ShouldHaveCompactClass()
+    {
+        await using var ctx = CreateContext(compactTables: true);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var workOrderTable = component.Find(".grid-data");
+        workOrderTable.ClassList.ShouldContain("table-compact");
+    }
+
+    [Test]
+    public async Task WhenCompactTablesDisabled_ResultsTable_ShouldNotHaveCompactClass()
+    {
+        await using var ctx = CreateContext(compactTables: false);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var workOrderTable = component.Find(".grid-data");
+        workOrderTable.ClassList.ShouldNotContain("table-compact");
     }
 }

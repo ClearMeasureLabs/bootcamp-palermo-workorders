@@ -27,6 +27,22 @@
                         </p>
                     </div>
                 </div>
+                <div class="form-check form-switch settings-dark-switch-row">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           role="switch"
+                           id="compact-tables-switch"
+                           data-testid="@nameof(Elements.CompactTablesSwitch)"
+                           checked="@Theme.IsCompactTables"
+                           aria-checked="@Theme.IsCompactTables.ToString().ToLowerInvariant()"
+                           @onchange="OnCompactTablesChanged" />
+                    <div class="settings-switch-labels">
+                        <label class="form-check-label" for="compact-tables-switch">Compact tables</label>
+                        <p class="settings-helper" id="compact-tables-help">
+                            Uses denser row padding on work order search results. Saved in this browser until changed again.
+                        </p>
+                    </div>
+                </div>
             </div>
         </section>
     </div>

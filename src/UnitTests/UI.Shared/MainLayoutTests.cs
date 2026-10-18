@@ -152,6 +152,7 @@ public class MainLayoutTests
         var themeModule = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         themeModule.Setup<string>("getTheme").SetResult("light");
         themeModule.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        themeModule.Setup<bool>("getCompactTables").SetResult(false);
 
         ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
 
@@ -463,6 +464,7 @@ public class MainLayoutTests
         var themeModule = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         themeModule.Setup<string>("getTheme").SetResult("dark");
         themeModule.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        themeModule.Setup<bool>("getCompactTables").SetResult(false);
         themeModule.SetupVoid("setTheme", _ => true).SetVoidResult();
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());
@@ -480,6 +482,7 @@ public class MainLayoutTests
         var themeModule = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
         themeModule.Setup<string>("getTheme").SetResult("light");
         themeModule.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        themeModule.Setup<bool>("getCompactTables").SetResult(false);
         themeModule.SetupVoid("setTheme", _ => true).SetVoidResult();
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<MainLayout>());

@@ -21,6 +21,7 @@ public partial class WorkOrderSearch : AppComponentBase
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
     [Inject] private WorkOrderSearchState SearchState { get; set; } = null!;
+    [Inject] private ThemePreferenceService Theme { get; set; } = null!;
 
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
@@ -41,6 +42,7 @@ public partial class WorkOrderSearch : AppComponentBase
         StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
         Model = new WorkOrderSearchModel();
 
+        await Theme.InitializeAsync();
         await RestoreAssignedToMeStateAsync();
         ApplyQueryParameterOverrides();
 

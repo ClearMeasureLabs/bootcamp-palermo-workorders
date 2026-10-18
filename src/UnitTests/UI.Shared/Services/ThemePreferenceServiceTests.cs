@@ -34,6 +34,32 @@ public class ThemePreferenceServiceTests
     }
 
     [Test]
+    public async Task InitializeAsync_ShouldReadCompactTablesPreferenceFromInterop()
+    {
+        var js = new StubThemeJsRuntime { InitialTheme = "light", InitialCompactTables = true };
+        var sut = new ThemePreferenceService(js);
+
+        await sut.InitializeAsync();
+
+        sut.IsCompactTables.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task SetCompactTablesAsync_ShouldUpdateStateAndCallSetCompactTables()
+    {
+        var js = new StubThemeJsRuntime { InitialTheme = "light" };
+        var sut = new ThemePreferenceService(js);
+        await sut.InitializeAsync();
+
+        await sut.SetCompactTablesAsync(true);
+
+        sut.IsCompactTables.ShouldBeTrue();
+        js.SetCompactTablesCalls.ShouldBe(1);
+        js.LastSetCompactTablesArg.ShouldNotBeNull();
+        js.LastSetCompactTablesArg!.Value.ShouldBeTrue();
+    }
+
+    [Test]
     public async Task WhenJsInteropThrowsDisconnected_ShouldNotCrashOnInitialize()
     {
         var js = new StubDisconnectedJsRuntime();
@@ -57,14 +83,17 @@ public class ThemePreferenceServiceTests
     private sealed class StubThemeJsRuntime : IJSRuntime
     {
         public string InitialTheme { get; init; } = "light";
+        public bool InitialCompactTables { get; init; }
         public int SetThemeCalls { get; private set; }
         public bool? LastSetThemeArg { get; private set; }
+        public int SetCompactTablesCalls { get; private set; }
+        public bool? LastSetCompactTablesArg { get; private set; }
 
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
         {
             if (identifier == "import" && typeof(TValue) == typeof(IJSObjectReference))
             {
-                var module = new StubThemeModule(InitialTheme, this);
+                var module = new StubThemeModule(InitialTheme, InitialCompactTables, this);
                 return ValueTask.FromResult((TValue)(object)module);
             }
 
@@ -79,11 +108,13 @@ public class ThemePreferenceServiceTests
         {
             private readonly StubThemeJsRuntime _parent;
             private string _theme;
+            private bool _compactTables;
 
             // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
-            public StubThemeModule(string theme, StubThemeJsRuntime parent)
+            public StubThemeModule(string theme, bool compactTables, StubThemeJsRuntime parent)
             {
                 _theme = theme;
+                _compactTables = compactTables;
                 _parent = parent;
             }
 
@@ -91,6 +122,9 @@ public class ThemePreferenceServiceTests
             {
                 if (identifier == "getTheme" && typeof(TValue) == typeof(string))
                     return ValueTask.FromResult((TValue)(object)_theme);
+
+                if (identifier == "getCompactTables" && typeof(TValue) == typeof(bool))
+                    return ValueTask.FromResult((TValue)(object)_compactTables);
 
                 if (identifier == "syncDomFromTheme")
                 {
@@ -103,6 +137,14 @@ public class ThemePreferenceServiceTests
                     _parent.LastSetThemeArg = (bool)args![0]!;
                     _parent.SetThemeCalls++;
                     _theme = _parent.LastSetThemeArg.Value ? "dark" : "light";
+                    return ValueTask.FromResult(default(TValue)!);
+                }
+
+                if (identifier == "setCompactTables")
+                {
+                    _parent.LastSetCompactTablesArg = (bool)args![0]!;
+                    _parent.SetCompactTablesCalls++;
+                    _compactTables = _parent.LastSetCompactTablesArg.Value;
                     return ValueTask.FromResult(default(TValue)!);
                 }
 

@@ -14,6 +14,7 @@ public partial class Settings : AppComponentBase
     public enum Elements
     {
         DarkModeSwitch,
+        CompactTablesSwitch,
         SettingsSubtitle
     }
 
@@ -26,6 +27,13 @@ public partial class Settings : AppComponentBase
     {
         var enabled = e.Value is true;
         await Theme.SetDarkModeAsync(enabled);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnCompactTablesChanged(ChangeEventArgs e)
+    {
+        var enabled = e.Value is true;
+        await Theme.SetCompactTablesAsync(enabled);
         await InvokeAsync(StateHasChanged);
     }
 }

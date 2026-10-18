@@ -1,4 +1,5 @@
 const THEME_STORAGE_KEY = 'churchbulletin-theme';
+const COMPACT_TABLES_STORAGE_KEY = 'churchbulletin-compact-tables';
 
 /**
  * @param {string} theme 'dark' | 'light'
@@ -34,4 +35,26 @@ export function setTheme(isDark) {
         // ignore
     }
     syncDomFromTheme(theme);
+}
+
+/**
+ * @returns {boolean} Whether compact table density is enabled.
+ */
+export function getCompactTables() {
+    try {
+        return localStorage.getItem(COMPACT_TABLES_STORAGE_KEY) === 'true';
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * @param {boolean} enabled
+ */
+export function setCompactTables(enabled) {
+    try {
+        localStorage.setItem(COMPACT_TABLES_STORAGE_KEY, enabled ? 'true' : 'false');
+    } catch {
+        // ignore
+    }
 }

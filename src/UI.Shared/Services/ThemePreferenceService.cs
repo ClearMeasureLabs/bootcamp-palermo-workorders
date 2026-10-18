@@ -12,6 +12,7 @@ public sealed class ThemePreferenceService : IAsyncDisposable
     private readonly IJSRuntime _js;
     private IJSObjectReference? _module;
     private bool _isDarkMode;
+    private bool _isCompactTables;
     private bool _initialized;
 
     // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion
@@ -21,6 +22,8 @@ public sealed class ThemePreferenceService : IAsyncDisposable
     public event Action? OnChange;
 
     public bool IsDarkMode => _isDarkMode;
+
+    public bool IsCompactTables => _isCompactTables;
 
     /// <summary>
     /// Loads stored or system-default theme and applies it to the document (without persisting system default).
@@ -36,6 +39,7 @@ public sealed class ThemePreferenceService : IAsyncDisposable
             var theme = await _module.InvokeAsync<string>("getTheme");
             _isDarkMode = string.Equals(theme, "dark", StringComparison.OrdinalIgnoreCase);
             await _module.InvokeVoidAsync("syncDomFromTheme", theme);
+            _isCompactTables = await _module.InvokeAsync<bool>("getCompactTables");
         }
         catch (JSDisconnectedException)
         {
@@ -59,6 +63,29 @@ public sealed class ThemePreferenceService : IAsyncDisposable
         {
             _module ??= await _js.InvokeAsync<IJSObjectReference>("import", ThemeJsModulePath);
             await _module.InvokeVoidAsync("setTheme", enabled);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+
+        _initialized = true;
+        OnChange?.Invoke();
+    }
+
+    /// <summary>
+    /// Sets compact table density on or off and persists the choice to local storage.
+    /// </summary>
+    public async Task SetCompactTablesAsync(bool enabled)
+    {
+        if (_isCompactTables == enabled && _initialized)
+            return;
+
+        _isCompactTables = enabled;
+
+        try
+        {
+            _module ??= await _js.InvokeAsync<IJSObjectReference>("import", ThemeJsModulePath);
+            await _module.InvokeVoidAsync("setCompactTables", enabled);
         }
         catch (JSDisconnectedException)
         {

@@ -127,6 +127,15 @@
     font-size: 0.95rem;
 }
 
+.grid-data.table-compact thead th,
+.grid-data.table-compact td {
+    padding: 0.4rem 0.75rem;
+}
+
+.grid-data.table-compact td a {
+    padding: 0.2rem 0.5rem;
+}
+
 .grid-data thead th {
     background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
     color: #4a5568;
