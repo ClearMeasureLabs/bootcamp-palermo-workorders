@@ -8,7 +8,7 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
     {
     }
 
-    public string Name { get; set; } = name;
+    public string? Name { get; set; } = name;
 
     public bool CanCreateWorkOrder { get; set; } = canCreate;
 
@@ -17,6 +17,6 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
 
     public override string ToString()
     {
-        return Name is null ? string.Empty : Name;
+        return Name ?? string.Empty;
     }
 }
