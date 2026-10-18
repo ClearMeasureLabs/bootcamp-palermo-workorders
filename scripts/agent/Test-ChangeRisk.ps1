@@ -12,6 +12,8 @@ function Get-MethodCc([string[]]$src) {
     $depth = 0; $started = $false; $cc = 1; $j = $i
     for (; $j -lt $src.Count; $j++) { $t = $src[$j] -replace '"(\\.|[^"\\])*"', '""' -replace '//.*$', ''
       $cc += ([regex]::Matches($t, '\bif\b|\bcase\b|\bfor\b|\bforeach\b|\bwhile\b|\bcatch\b|&&|\|\||\?\?|\s\?\s|=>(?!\s*$)')).Count
+      # v25g: lambdas (e => e.X, () => ..., (a, b) => ...) are separate methods for CRAP; only switch arms count (round 11 t07 EF map false CRAP_RISK)
+      $cc -= ([regex]::Matches($t, '(\b[a-z_]\w*|\))\s*=>(?!\s*$)')).Count
       $depth += ([regex]::Matches($t, '\{')).Count - ([regex]::Matches($t, '\}')).Count
       if ($t -match '\{') { $started = $true }
       if (($started -and $depth -le 0) -or (-not $started -and $t -match ';\s*$')) { break } }
