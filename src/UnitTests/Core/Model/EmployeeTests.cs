@@ -134,6 +134,41 @@ public class EmployeeTests
     }
 
     [Test]
+    public void IsSameAs_SameUserName_ShouldReturnTrue()
+    {
+        var employee1 = new Employee("bobjoe", "Bob", "Joe", "a@b.c");
+        var employee2 = new Employee("bobjoe", "Other", "Name", "x@y.z");
+
+        employee1.IsSameAs(employee2).ShouldBeTrue();
+    }
+
+    [Test]
+    public void IsSameAs_DifferentCaseUserName_ShouldReturnTrue()
+    {
+        var employee1 = new Employee("BobJoe", "Bob", "Joe", "a@b.c");
+        var employee2 = new Employee("bobjoe", "Other", "Name", "x@y.z");
+
+        employee1.IsSameAs(employee2).ShouldBeTrue();
+    }
+
+    [Test]
+    public void IsSameAs_DifferentUserName_ShouldReturnFalse()
+    {
+        var employee1 = new Employee("bobjoe", "Bob", "Joe", "a@b.c");
+        var employee2 = new Employee("alice", "Alice", "Smith", "x@y.z");
+
+        employee1.IsSameAs(employee2).ShouldBeFalse();
+    }
+
+    [Test]
+    public void IsSameAs_Null_ShouldReturnFalse()
+    {
+        var employee = new Employee("bobjoe", "Bob", "Joe", "a@b.c");
+
+        employee.IsSameAs(null).ShouldBeFalse();
+    }
+
+    [Test]
     public void ShouldBeAbleToCreateWorkOrder()
     {
         var employee1 = new Employee("", "1", "1", "");

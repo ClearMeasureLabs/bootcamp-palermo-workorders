@@ -68,6 +68,13 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// </summary>
     public bool CanFulfillWorkOrder() => Roles.Any(role => role.CanFulfillWorkOrder);
 
+    /// <summary>
+    /// Returns true when <paramref name="other"/> has the same <see cref="UserName"/> (case-insensitive).
+    /// </summary>
+    public bool IsSameAs(Employee? other) =>
+        other is not null &&
+        string.Equals(UserName, other.UserName, StringComparison.OrdinalIgnoreCase);
+
     public void AddRole(Role role)
     {
         Roles.Add(role);
