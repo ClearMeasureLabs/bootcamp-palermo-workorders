@@ -27,8 +27,14 @@ internal static class McpEndpointResolver
         }
 
         var address = ToClientReachableAddress(SelectPreferredAddress(addresses));
-        return address.TrimEnd('/') + "/mcp";
+        return BuildMcpUrl(address);
     }
+
+    /// <summary>
+    /// Composes the MCP loopback URL from a server address.
+    /// </summary>
+    internal static string BuildMcpUrl(string address) =>
+        address.TrimEnd('/') + "/mcp";
 
     private static string SelectPreferredAddress(IReadOnlyList<string> addresses) =>
         addresses.FirstOrDefault(a => IsHttp(a) && IsLoopback(a))
