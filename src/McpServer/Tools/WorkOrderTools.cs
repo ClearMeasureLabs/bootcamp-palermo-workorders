@@ -13,12 +13,13 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class WorkOrderTools
 {
-    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, and assignee username. Valid statuses: Draft, Assigned, InProgress, Complete.")]
+    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, assignee username, and title text. Valid statuses: Draft, Assigned, InProgress, Complete.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
         [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null,
         [Description("Optional creator username filter")] string? creatorUsername = null,
-        [Description("Optional assignee username filter")] string? assigneeUsername = null)
+        [Description("Optional assignee username filter")] string? assigneeUsername = null,
+        [Description("Optional title substring filter (case-insensitive)")] string? titleContains = null)
     {
         var query = new WorkOrderSpecificationQuery();
         if (!string.IsNullOrWhiteSpace(status))
@@ -49,8 +50,23 @@ public class WorkOrderTools
         }
 
         var workOrders = await bus.Send(query);
+        workOrders = ApplyTitleContainsFilter(workOrders, titleContains);
+
         return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
             new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static WorkOrder[] ApplyTitleContainsFilter(WorkOrder[] workOrders, string? titleContains)
+    {
+        if (string.IsNullOrWhiteSpace(titleContains))
+        {
+            return workOrders;
+        }
+
+        return workOrders
+            .Where(wo => wo.Title != null &&
+                         wo.Title.Contains(titleContains, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
     }
 
     [McpServerTool(Name = "get-work-order"), Description("Retrieves a single work order by its number, including full details.")]

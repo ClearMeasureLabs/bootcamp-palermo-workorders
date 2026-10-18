@@ -42,6 +42,27 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldFilterWorkOrdersByTitleContainsCaseInsensitive()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var order1 = new WorkOrder { Creator = employee, Number = "WO-001", Title = "Fix Kitchen Sink" };
+        var order2 = new WorkOrder { Creator = employee, Number = "WO-002", Title = "Paint wall" };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(order1);
+        context.Add(order2);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var unfiltered = await WorkOrderTools.ListWorkOrders(bus);
+        var filtered = await WorkOrderTools.ListWorkOrders(bus, titleContains: "kitchen");
+
+        ExtractNumbers(unfiltered).ShouldBeSet("WO-001", "WO-002");
+        ExtractNumbers(filtered).ShouldBeSet("WO-001");
+    }
+
+    [Test]
     public async Task ShouldFilterWorkOrdersByStatus()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");
