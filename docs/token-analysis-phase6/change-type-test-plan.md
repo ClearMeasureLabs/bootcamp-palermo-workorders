@@ -29,7 +29,7 @@ Categories, matching the catalog's recommended sets:
 | c04 | CI | secret-scan and render-diagrams workflows: timeout-minutes plus a concurrency group that cancels superseded runs | workflow-only change; Submit fast path with no .NET diff |
 | c05 | Qual | Culture-safe strings/dates: ToLower/ToUpper → invariant or ordinal compare; DateTime.Now → UtcNow (about 10 sites, 6 files) | multi-file batch under the read LIMIT |
 | c06 | Test | Acceptance test for GET /_version (only integration-tested today) | TEST SETUP path with no production change |
-| c07 | Trap | Search: colour-coded status badge per status (6 statuses plus unknown); the natural switch has CC 7, over CRAP gate 6 | RED→fix loop stays bounded; the risk check should warn before push |
+| c07 | Trap | Search: colour-coded status badge per status (5 statuses + None + unknown); the natural switch has CC 7, over CRAP gate 6 | RED→fix loop stays bounded; the risk check should warn before push |
 | c08 | Vague | "New volunteers say the home page doesn't tell them what to do first. Make it more helpful." | cost on under-specified work |
 | c09 | UI | Settings: theme toggle (light/dark) persisted in localStorage and applied on load (bUnit + Playwright) | JS interop plus acceptance |
 | c10 | ML | WorkOrder optional EstimatedHours (decimal(5,2)): DbUp, EF, entity validation 0-999, manage form input, MCP save-work-order arg | multi-layer with a validator |
