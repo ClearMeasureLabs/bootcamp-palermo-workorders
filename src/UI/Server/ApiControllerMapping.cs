@@ -7,7 +7,7 @@ internal static class ApiControllerMapping
     internal static void ApplyRequestTimeout(WebApplication app, ControllerActionEndpointConventionBuilder apiControllers)
     {
         var apiRequestTimeoutOpts = app.Services.GetRequiredService<IOptions<ApiRequestTimeoutOptions>>().Value;
-        if (!apiRequestTimeoutOpts.Enabled || apiRequestTimeoutOpts.TimeoutSeconds <= 0)
+        if (!apiRequestTimeoutOpts.Enabled || apiRequestTimeoutOpts.EffectiveTimeoutSeconds <= 0)
         {
             return;
         }

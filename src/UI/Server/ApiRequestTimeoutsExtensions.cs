@@ -37,12 +37,12 @@ public static class ApiRequestTimeoutsExtensions
         public void Configure(RequestTimeoutOptions options)
         {
             var api = _apiOptions.Value;
-            if (!api.Enabled || api.TimeoutSeconds <= 0)
+            if (!api.Enabled || api.EffectiveTimeoutSeconds <= 0)
             {
                 return;
             }
 
-            var timeout = TimeSpan.FromSeconds(api.TimeoutSeconds);
+            var timeout = TimeSpan.FromSeconds(api.EffectiveTimeoutSeconds);
             options.AddPolicy(
                 ApiControllersPolicyName,
                 new RequestTimeoutPolicy
