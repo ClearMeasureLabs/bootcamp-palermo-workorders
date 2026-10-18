@@ -69,7 +69,7 @@
 
         <div class="results-card">
             <div class="results-header">
-                <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
+                <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length @(Model.Results.Length == 1 ? "work order" : "work orders"))
             </div>
 
             @if (Model.Results.Length == 0)

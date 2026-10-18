@@ -232,6 +232,36 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ShouldShowSingularWorkOrderInResultsHeaderForOneResult()
+    {
+        var rows = new[] { new WorkOrder { Number = "WO-001", Title = "One", Status = WorkOrderStatus.Draft } };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var header = component.Find(".results-header").TextContent;
+        header.ShouldContain("Search Results (1 work order)");
+        header.ShouldNotContain("work orders");
+    }
+
+    [Test]
+    public async Task ShouldShowPluralWorkOrdersInResultsHeaderForZeroAndMultipleResults()
+    {
+        await using var emptyCtx = CreateContext(new StubBus([]));
+        var emptyComponent = emptyCtx.Render<WorkOrderSearch>();
+        emptyComponent.Find(".results-header").TextContent.ShouldContain("Search Results (0 work orders)");
+
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Assigned },
+        };
+        await using var multiCtx = CreateContext(new StubBus(rows));
+        var multiComponent = multiCtx.Render<WorkOrderSearch>();
+        multiComponent.Find(".results-header").TextContent.ShouldContain("Search Results (2 work orders)");
+    }
+
+    [Test]
     public async Task SortByStatus_Ascending_SortsResultsByStatusFriendlyName()
     {
         var rows = new[]
