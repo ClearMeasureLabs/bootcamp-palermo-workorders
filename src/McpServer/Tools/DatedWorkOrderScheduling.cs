@@ -47,7 +47,7 @@ internal static class DatedWorkOrderScheduling
 
         var reply = new StringBuilder();
         reply.AppendLine($"Created {result.WorkOrders.Count} work orders:");
-        foreach (var item in result.WorkOrders)
+        foreach (var item in result.WorkOrders.OrderBy(wo => wo.DueDate))
         {
             reply.AppendLine(
                 $"{item.Number} due {item.DueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}");
