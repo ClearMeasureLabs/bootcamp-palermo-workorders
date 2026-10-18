@@ -5,7 +5,7 @@ Measured as in earlier rounds: `measure_transcript.py` totals, `attribute_transc
 | Item | Kind | Issue | PR | Transcript(s) | Input | Output | Calls | Get-Context calls (KB) | Edits | Submits | Waits | ACCESS | Rework / notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | s01 | URL builder (internal, NOT visible) | #10557 | 10566 | bc-794e5799 | 46.0k | 0.67k | 9 | 2 (16.3) +1 LIMIT | 3 | 1 | 1 | NOT visible -> csproj line added; first Submit passed | delete_file after GREEN (7.5k) |
-| s02 | list dedupe (internal, NOT visible) | #10558 | 10572 | bc-5dd14408 + bc-d35a0db5 | 140.1k (15.3k + 124.8k) | 3.40k | 21 | 4 (14.7) failed run; 3 (13.6) +1 LIMIT rerun | 4 | 3 | 3 | NOT visible -> csproj line added; no visibility build error | Run 1 SCRIPT_FAIL (counter race). Rerun: CI RED (a new test's assertion failed in the 4 Integration Build jobs), fixed; get_mcp_tools + todo after GREEN |
+| s02 | list dedupe (internal, NOT visible) | #10558 | 10572 | bc-5dd14408 + bc-d35a0db5 | 140.1k (15.3k + 124.8k) | 3.40k | 21 | 4 (14.7) failed run; 3 (13.6) +1 LIMIT rerun | 4 | 3 | 3 | NOT visible -> csproj line added; no visibility build error | Run 1 SCRIPT_FAIL (counter race). Rerun: CI RED: the existing integration test `ShouldRejectExplicitDateListAboveTransactionalBatchLimit` broke under dedupe (4 Integration Build jobs); fixed by editing McpCreateDatedWorkOrdersToolTests; get_mcp_tools + todo after GREEN |
 | s03 | CSS class mapping | #10559 | 10565 | bc-6f7e1b4c | 25.7k | 0.39k | 9 | 1 (4.1) | 2 | 1 | 2 (1 empty) | visible | get_mcp_tools + mcp after GREEN (8.4k) |
 | s04 | voice selection | #10560 | 10567 | bc-7065d43a | 52.5k | 0.65k | 13 | 1 (4.2) | 5 | 2 | 3 (1 empty) | visible | CI RED: Qodana PossibleMultipleEnumeration x2; mcp after GREEN |
 | s05 | rate-limit key normalization | #10561 | 10568 | bc-2e8d8efa | 24.4k | 0.40k | 8 | 1 (6.6) | 2 | 1 | 1 | visible | todo_write x2 |
@@ -37,7 +37,7 @@ Locally, Grpc.Tools 2.70.0 protoc output for the unchanged proto is byte-identic
 s01 and s02 both got `NOT visible to UnitTests: add <InternalsVisibleTo …/>`. Both added the csproj line, and neither run had a visibility build error; round 18 r08 lost 47.9k to exactly that. The six visible-internal items printed "visible" and needed no rework for access.
 
 ## CI failures
-- s02 rerun: a new test's assertion failed in the Integration Build jobs (it passed locally).
+- s02 rerun: the existing integration test `ShouldRejectExplicitDateListAboveTransactionalBatchLimit` failed. Submit only runs *changed* integration test classes locally, and Get-Context's TESTS ALREADY MENTIONING didn't surface it.
 - s04: Qodana PossibleMultipleEnumeration (an `IEnumerable` voices parameter enumerated twice). No local check existed; one is added in v33g.
 - s08: a Qodana object initializer in its hand-written code.
 
