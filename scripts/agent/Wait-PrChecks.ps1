@@ -52,7 +52,7 @@ while ($true) {
   }
   Start-Sleep -Seconds $PollSec
 }
-if (-not $bad) { "CHECKS=GREEN"; "RESULT=GREEN PR=https://github.com/$Repo/pull/$Pr  (reply with exactly this line)"; Remove-Item $state -ErrorAction SilentlyContinue; exit 0 }
+if (-not $bad) { "CHECKS=GREEN"; "NEXT: print RESULT=GREEN PR=https://github.com/$Repo/pull/$Pr  (your final reply is exactly that line; no more tool calls)"; Remove-Item $state -ErrorAction SilentlyContinue; exit 0 }
 "HEAD=$sha FAILED=$($bad.Count)"
 foreach ($b in $bad) {
   "--- FAILED: $($b.Name) ($($b.Conclusion))"

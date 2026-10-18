@@ -49,6 +49,6 @@ if ($want) { foreach ($i in 1..12) { if ((gh api "repos/$Repo/pulls/$pr" --jq .h
 # v18g: wait inline for what is left of an 8-minute budget (Submit itself takes ~1 min), so Submit + first wait is one turn
 # instead of two (round 4: wait turns replayed 13.5% of input). v14g's inline wait broke because it used the full 9 min on top.
 $left = [int][Math]::Floor(8 - ((Get-Date) - $t0).TotalMinutes)
-if ($left -ge 2) { & "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left }
+if ($left -ge 2) { $w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $w; if ($w -contains 'CHECKS=GREEN') { exit 0 } }  # v31g: no WAIT_CMD after GREEN
 "WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9  (only if no CHECKS=GREEN/RED above)"
 exit 0

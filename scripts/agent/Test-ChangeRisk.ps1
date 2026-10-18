@@ -27,9 +27,9 @@ function Test-ImplicitUsings([string]$f) { $d = Split-Path $f
   $false }
 git add -A -N src 2>$null | Out-Null
 $base = if (git rev-parse -q --verify origin/analysis/token-reduction 2>$null) { 'origin/analysis/token-reduction' } else { 'origin/master' }
-$changed = @{}; $file = $null
+$changed = @{}; $file = $null; $prevA = ''
 foreach ($l in git diff -U0 $base -- src) {
-  if ($l -match '^\+\+\+ b/(.+)$') { $file = $Matches[1]; $changed[$file] = @(); continue }
+  if ($l -match '^\+\+\+ b/(.+)$') { $file = $Matches[1]; $changed[$file] = @(); $prevA = ''; continue }
   if ($l -match '^@@ .*\+(\d+)(?:,(\d+))? @@') { $s = [int]$Matches[1]; $c = if ($Matches[2]) { [int]$Matches[2] } else { 1 }; if ($c) { $changed[$file] += $s..($s + $c - 1) }; continue }
   if ($l -match '^\+(?!\+\+)(.*)$' -and $file) { $a = $Matches[1]
     if ($file -match 'Tests' -and $a -match '\.(Click|Change|Input|Submit)\(') { "QODANA_RISK $file : use the async bUnit overload (ClickAsync/ChangeAsync/...) and await it: $($a.Trim())" }  # v18g: round 4 u03
@@ -43,15 +43,20 @@ foreach ($l in git diff -U0 $base -- src) {
       if ($decl) { $types = @($decl | ForEach-Object { [regex]::Matches((Get-Content $_ -Raw), '\b(?:class|record|interface|enum|struct)\s+(\w+)') | ForEach-Object { $_.Groups[1].Value } } | Sort-Object -Unique)
         $body = (Get-Content $file | Where-Object { $_ -notmatch '^\s*(using|namespace)\b' }) -join "`n"
         if ($types -and -not ($types | Where-Object { $body -match "\b$_\b" } | Select-Object -First 1)) { "QODANA_RISK $file : '$($a.Trim())' looks unused (no type from $ns appears); remove it (RedundantUsingDirective)" } } }
+    # v31g: round 17 CI REDs (q02, q05, q07) from Qodana rules not checked before
+    if ($prevA -match '^\s*var (\w+) = new [\w<>.,\s]+\(\);' -and $a -match "^\s*$($Matches[1])\.\w+\s*=[^=]") { "QODANA_RISK $file : use an object initializer (new T { Prop = ... }) instead of assigning after construction (UseObjectOrCollectionInitializer): $($a.Trim())" }
+    if ($a -match '"[^"]*\\x[0-9A-Fa-f]') { "QODANA_RISK $file : use a fixed-length \uXXXX escape, not \x (VariableLengthStringHexEscapeSequence): $($a.Trim())" }
+    if ($a -match 'Encoding\.UTF8\.GetBytes\(\s*"') { "QODANA_RISK $file : use a UTF-8 literal (`"...`"u8) (UseUtf8StringLiteral): $($a.Trim())" }
+    if ($a -match '^\s*(Func|Action)(<[^=]+>)?\s+\w+\s*=\s*(async\s+)?(\([^)]*\)|\w+)\s*=>') { "QODANA_RISK $file : use a local function instead of a lambda in a Func/Action local (ConvertToLocalFunction): $($a.Trim())" }
     # v28g: whole-word Number, not PhoneNumber (round 13 r07 false NUMBER_RISK)
-    if ($file -match 'Tests' -and $a -match '(?<!\w)Number\s*=\s*"([^"]{8,})"') { "NUMBER_RISK $file : work order Number '$($Matches[1])' > 7 chars" } }
+    if ($file -match 'Tests' -and $a -match '(?<!\w)Number\s*=\s*"([^"]{8,})"') { "NUMBER_RISK $file : work order Number '$($Matches[1])' > 7 chars" }; $prevA = $a }
 }
 foreach ($f in $changed.Keys) {
   if ($f -notmatch '\.cs$' -or $f -match 'Tests' -or -not (Test-Path $f)) { continue }
   $src = @(Get-Content $f); $set = [Collections.Generic.HashSet[int]]::new([int[]]$changed[$f])
   if ($f -match 'Options\.cs$') { for ($i = 0; $i -lt $src.Count; $i++) {
-    if ($set.Contains($i + 1) -and $src[$i] -match 'public .*\{ get; set; \}' -and ($i -eq 0 -or $src[$i - 1] -notmatch 'ReSharper disable')) {
-      "QODANA_RISK ${f}:$($i + 1) : add // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global above it" } } }
+    if ($set.Contains($i + 1) -and $src[$i] -match 'public .*\{ get; set; \}' -and ($i -eq 0 -or $src[$i - 1] -notmatch 'PropertyCanBeMadeInitOnly')) {
+      "QODANA_RISK ${f}:$($i + 1) : put // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global, PropertyCanBeMadeInitOnly.Global -- required for IOptions<T> configuration binding on the line above (v31g: round 17 q02 CI RED PropertyCanBeMadeInitOnly.Global)" } } }
   # v23g: new settable entity property only set in initializers -> Qodana PropertyCanBeMadeInitOnly.Global (round 9 w07 CI RED)
   if ($f -match 'Core[/\\]Model[/\\]' -and -not ($src -match 'ReSharper disable PropertyCanBeMadeInitOnly')) { for ($i = 0; $i -lt $src.Count; $i++) {
     if ($set.Contains($i + 1) -and $src[$i] -match 'public .*\{ get; set; \}' -and ($i -eq 0 -or $src[$i - 1] -notmatch 'ReSharper disable')) {
@@ -61,6 +66,6 @@ foreach ($f in $changed.Keys) {
   foreach ($m in Get-MethodCc $src) {
     $hit = $false; for ($k = $m.Start; $k -le $m.End; $k++) { if ($set.Contains($k + 1)) { $hit = $true; break } }
     $was = if ($baseCc.ContainsKey($m.Name)) { $baseCc[$m.Name] } else { 0 }
-    if ($hit -and $m.Cc -gt 5 -and $m.Cc -gt $was) { "CRAP_RISK ${f}:$($m.Start + 1) $($m.Name) est. CC $was -> $($m.Cc) (CI fails > 6): move the new branches into a private helper" }
+    if ($hit -and $m.Cc -gt 5 -and $m.Cc -gt $was) { "CRAP_RISK ${f}:$($m.Start + 1) $($m.Name) est. CC $was -> $($m.Cc) (CI fails > 6): keep the method's branch count: put the new condition in a private static helper and return early, e.g. 'if (ShouldBypass(x)) { return await next(ctx); }' with 'private static bool ShouldBypass(T x) => x.A && !x.B;' (no new if/else/?:/&&/|| in $($m.Name) beyond that one if)" }
   }
 }
