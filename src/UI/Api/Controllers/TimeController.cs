@@ -17,12 +17,26 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 public class TimeController(TimeProvider timeProvider) : ControllerBase
 {
     /// <summary>
-    /// Returns the current UTC time as ISO 8601 plain text.
+    /// Returns the current UTC time as ISO 8601 plain text, or Unix seconds when format=unix.
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult Get()
+    public IActionResult Get([FromQuery] string? format = null)
     {
+        if (!string.IsNullOrEmpty(format))
+        {
+            if (!string.Equals(format, "unix", StringComparison.OrdinalIgnoreCase))
+                return Problem(detail: "Unknown format. Supported values: unix.", statusCode: StatusCodes.Status400BadRequest);
+
+            var unixText = timeProvider.GetUtcNow().ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
+            return new ContentResult
+            {
+                Content = unixText,
+                ContentType = "text/plain; charset=utf-8",
+                StatusCode = StatusCodes.Status200OK
+            };
+        }
+
         var text = timeProvider.GetUtcNow().ToString("O", CultureInfo.InvariantCulture);
         var etag = ConditionalGetEtag.CreateWeakEtagForPlainText(text);
         Response.Headers.ETag = etag.ToString();
