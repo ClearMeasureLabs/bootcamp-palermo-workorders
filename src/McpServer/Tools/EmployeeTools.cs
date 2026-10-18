@@ -10,10 +10,20 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class EmployeeTools
 {
-    [McpServerTool(Name = "list-employees"), Description("Lists all employees in the system with their username, name, email, and roles.")]
-    public static async Task<string> ListEmployees(IBus bus)
+    [McpServerTool(Name = "list-employees"), Description("Lists all employees in the system with their username, name, email, and roles. Optionally filter by role name.")]
+    public static async Task<string> ListEmployees(
+        IBus bus,
+        [Description("Optional role name filter (case-insensitive)")] string? role = null)
     {
         var employees = await bus.Send(new EmployeeGetAllQuery());
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            employees = employees
+                .Where(emp => emp.Roles.Any(r =>
+                    string.Equals(r.Name, role, StringComparison.OrdinalIgnoreCase)))
+                .ToArray();
+        }
+
         return JsonSerializer.Serialize(employees.Select(FormatEmployee).ToArray(),
             new JsonSerializerOptions { WriteIndented = true });
     }

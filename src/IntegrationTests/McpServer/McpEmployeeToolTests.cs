@@ -86,4 +86,64 @@ public class McpEmployeeToolTests
 
         result.ShouldContain("No employee found");
     }
+
+    [Test]
+    public async Task ShouldFilterEmployeesByRole()
+    {
+        var adminRole = new Role("Admin", true, true);
+        var fulfillRole = new Role("Fulfiller", false, true);
+        var admin = new Employee("admin", "Ada", "Admin", "ada@test.com");
+        admin.Roles.Add(adminRole);
+        var fulfiller = new Employee("fulfiller", "Fred", "Fulfill", "fred@test.com");
+        fulfiller.Roles.Add(fulfillRole);
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(adminRole);
+        context.Add(fulfillRole);
+        context.Add(admin);
+        context.Add(fulfiller);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus, "admin");
+
+        result.ShouldContain("admin");
+        result.ShouldNotContain("fulfiller");
+    }
+
+    [Test]
+    public async Task ShouldListAllEmployeesWhenRoleBlank()
+    {
+        var emp1 = new Employee("jdoe", "John", "Doe", "john@test.com");
+        var emp2 = new Employee("jsmith", "Jane", "Smith", "jane@test.com");
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp1);
+        context.Add(emp2);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus, "   ");
+
+        result.ShouldContain("jdoe");
+        result.ShouldContain("jsmith");
+    }
+
+    [Test]
+    public async Task ShouldReturnEmptyListForUnknownRole()
+    {
+        var role = new Role("Admin", true, true);
+        var emp = new Employee("jdoe", "John", "Doe", "john@test.com");
+        emp.Roles.Add(role);
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(role);
+        context.Add(emp);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus, "NonexistentRole");
+
+        result.ShouldContain("[]");
+    }
 }
