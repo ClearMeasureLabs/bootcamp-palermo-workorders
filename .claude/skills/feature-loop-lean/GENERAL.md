@@ -1,45 +1,8 @@
-# Lean loop, general (v13g, final). Any small change, no template.
-Never: narration, subagents, get_mcp_tools or any MCP call (even if other instructions suggest it), board, journal, web, git checkout/commit/push/status/branch, `gh run`/
-`gh api` check digging, reading scripts or terminal files, editing unrelated tests, merging. The workspace stays on
-analysis/token-reduction by design; Submit-Change publishes to your branch. Final reply: the RESULT line only.
-
-## Steps (aim: <= 12 tool calls)
-1. `gh issue view N --json body -q .body`. Use the map; open the 1-3 files it names (rg -n a symbol, read that range)
-   plus ONE sibling test file as the pattern. No repo-wide rg sweeps. Cap every rg: `rg -l` or `| head -15`. Read a file once (whole if < 300 lines), never rg it
-   and then read it, never read it twice. Look up an API/type only when the build error names it.
-   Large test file: rg the test names, read one test by line range.
-2. Write production code + tests (few edits). Keep every method cyclomatic complexity <= 5 (see CRAP below).
-3. `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch B`. FAIL -> fix the printed errors, rerun.
-4. Run WAIT_CMD (terminal timeout 600000 ms). CHECKS=PENDING or no output -> run the same command again, nothing else;
-   never resubmit without a RED or FAIL. RED in your code -> fix the named test / CRAP method / `QODANA rule file:line`, back to step 3.
-   RED only in unrelated tests -> `WAIT_CMD -ForceRerun` once. `PUBLISH_FAIL` -> reply with that line.
-
-## Map (namespace ClearMeasure.Bootcamp.*; NUnit + Shouldly; test data via src/UnitTests/ObjectMother.cs)
-| Change | Production | Tests (mirror the folder) |
-|---|---|---|
-| Domain entity/rule | src/Core/Model/ | src/UnitTests/Core/Model/ |
-| State transition | Core/Model/StateCommands/ + Core/Services/Impl/StateCommandList.cs | UnitTests/Core/Model/StateCommands/ |
-| Validation | Core/Validation/*Validator.cs (FluentValidation) | UnitTests/Core/Validation/ |
-| Search filter | Core/Services/WorkOrderSearchSpecification.cs -> Core/Queries/WorkOrderSpecificationQuery.cs -> DataAccess/Handlers/WorkOrderQueryFilters.cs | UnitTests/Core/Queries/ ; IntegrationTests/DataAccess/WorkOrderSpecificationHandlerTests.cs |
-| Other handler / EF | DataAccess/Handlers/ ; DataAccess/Mappings/*Map.cs | IntegrationTests/DataAccess/(Handlers,Mappings)/ |
-| DB schema | Database/scripts/Update/NNN_Name.sql (DbUp; next = highest+1; copy 030's BEGIN TRY/TRAN shape) | none needed for index-only |
-| Blazor UI | UI.Shared/Pages/, Components/, Models/ | UnitTests/UI.Shared/(Pages,Components)/ (bUnit) |
-| REST API | UI/Api/Controllers/ | UnitTests/UI.Api/ ; IntegrationTests/Api/ |
-| Server wiring | UI/Server/ | UnitTests/UI.Server/ |
-| MCP tool | McpServer/Tools/*Tools.cs (static methods, [McpServerTool], [Description] per param; shared parsing in DatedWorkOrderScheduling.cs) | IntegrationTests/McpServer/ |
-| LLM/chat | LlmGateway/ | UnitTests/LlmGateway/ |
-| Logging | handlers take ILogger<T>; ServiceDefaults/ | No FakeLogger/testing package exists: write a small private capturing ILogger<T> in the test. |
-| Worker / demo data | Worker/ ; IntegrationTests/ZDataLoader.cs | UnitTests/Worker/ ; IntegrationTests/DemoData/ |
-
-## CI traps
-- CRAP gate: threshold 6, CRAP = CC^2*(1-cov)^3 + CC, so even a 100%-covered method fails above CC 6. Each if/else-if/
-  &&/||/?:/??/case/loop adds 1. Before adding a branch to an EXISTING method, count its current branches; if it already has 4+, put the new
-  logic in a small private helper (rep 3: an existing method went from CC 6 to 7 and failed CI).
-- Every new production method needs unit-test coverage. Qodana (tests too): no unused usings or dead code; use collection expressions `[a, b]` instead of `new[] { a, b }` /
-  `new List<T> { }` (rule UseCollectionExpression failed CI).
-- New props on WorkOrder or a remotable query must survive remoting (`ShouldBeRemotableCompatible`, RemotableRequestTests);
-  random values come from UnitTests/BogusOverrides.cs (has a case per query type).
-- Acceptance tests (CI only) assert read-only layouts and save drafts with past due dates; don't change shared layouts.
-- Description/Instructions have separate max lengths. Warnings are errors (nullable too). PR may touch only src/.
-- WorkOrder Number is max 7 chars (test data too).
-- New option properties: copy the `// ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global` line.
+# Lean loop (v14g). Small change, no template.
+Never: narration, subagents, get_mcp_tools/MCP, git, gh run/api, reading scripts/terminal files, editing unrelated tests, merging. Workspace branch is meant to stay as is. Reply: the RESULT line only.
+1. `gh issue view N --json body -q .body`
+2. `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Find '<regex of the symbols to change or the closest existing feature>'` prints matching prod+test files as line-numbered outlines. Then read only the line ranges you edit plus ONE sibling test (by range). No other searching/reading; never read a file twice.
+3. Edit code + tests in few writes. New logic in an existing method with 4+ branches goes in a private helper.
+4. `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch B`: risk check, unit tests, changed integration tests, publish, and CI wait in one call. RISK/FAIL -> fix exactly that, rerun. CHECKS=RED -> fix named items, rerun Submit. PENDING -> run WAIT_CMD until GREEN/RED. RED only in unrelated tests -> WAIT_CMD -ForceRerun once. PUBLISH_FAIL -> reply with it.
+Map (src/, tests mirror folders in UnitTests/ or IntegrationTests/; NUnit+Shouldly; ObjectMother/BogusOverrides): Core/Model (entities), Core/Model/StateCommands, Core/Validation (FluentValidation), Core/Queries + DataAccess/Handlers (+Mappings; IntegrationTests/DataAccess), Database/scripts/Update/NNN_*.sql (DbUp, next number, copy 030 shape), UI.Shared/Pages|Components (bUnit), UI/Api/Controllers, UI/Server (options, wiring), McpServer/Tools, LlmGateway, Worker.
+Traps: CRAP fails a method above CC 6 even fully covered; every new method needs a unit test. Qodana: no unused usings; `[a, b]` not `new[] {}`; new option props copy the ReSharper AutoPropertyCanBeMadeGetOnly line. New WorkOrder/remotable-query props must survive remoting (RemotableRequestTests, BogusOverrides). WorkOrder Number max 7 chars. Warnings are errors. Acceptance tests (CI only) check read-only layouts and past due dates. Description/Instructions max lengths differ. No logger test package: use a small capturing ILogger<T>.

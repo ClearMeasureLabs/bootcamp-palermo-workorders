@@ -1,16 +1,30 @@
-# v11g: WAIT_CMD back to 9-min calls (rep 2: "empty" returns were PENDING exits the transcript hides; 5-min calls added wait turns). v10g: v9g (phase 4): general submit for ANY change, no template. Verify (full unit suite + IntegrationTests build, quiet,
-# warnings as errors) -> publish the workspace src/ diff from a temp worktree on origin/master (workspace branch never
-# changes; rerun pushes a follow-up commit) -> prints WAIT_CMD (wait script auto-reruns flaky acceptance/integration jobs
-# once, v9 records a rerun only when GitHub accepted it). -VerifyOnly = the single local verify command, no publish.
-param([int]$Issue, [string]$Branch, [switch]$VerifyOnly, [string]$Filter = '',
+# v14g: one call does it all. Risk check (Test-ChangeRisk: CRAP/Qodana/Number traps that caused past CI REDs) ->
+# full unit suite + IntegrationTests build -> changed integration test classes on SQLite -> publish the workspace src diff
+# (temp worktree on master; rerun pushes a follow-up commit) -> waits for CI inside the same call (~9 min budget) and
+# prints the verdict. If CI is still running it prints WAIT_CMD. -IgnoreRisk skips a RISK you judge false.
+# -VerifyOnly = local checks only. (v9g-v11g history: WAIT_CMD 9-min calls, PENDING exits 0.)
+param([int]$Issue, [string]$Branch, [switch]$VerifyOnly, [switch]$IgnoreRisk, [string]$Filter = '',
       [string]$Repo = 'ClearMeasureLabs/bootcamp-palermo-workorders')
 $ErrorActionPreference = 'Stop'
+$t0 = Get-Date
 $tools = Join-Path ([IO.Path]::GetTempPath()) 'agent-scripts'
 New-Item -ItemType Directory -Force $tools | Out-Null; Copy-Item "$PSScriptRoot/*.ps1" $tools -Force
+$risk = @(& "$tools/Test-ChangeRisk.ps1")
+if ($risk -and -not $IgnoreRisk) { $risk; 'RISK=FIX (fix these, rerun; -IgnoreRisk only if clearly false)'; exit 1 }
 $f = if ($Filter) { $Filter } else { 'FullyQualifiedName!~__none__' }
 & "$tools/Invoke-AgentBuildTest.ps1" -Filter $f | Where-Object { $_ -match 'FAIL|error|Failed ' }; if ($LASTEXITCODE) { exit 1 }
 $b = dotnet build src/IntegrationTests/IntegrationTests.csproj -c Release -warnaserror -p:NuGetAudit=false -v q -nologo -clp:NoSummary 2>&1
 if ($LASTEXITCODE) { $b | Select-String 'error' | Select-Object -First 10; 'IT_BUILD=FAIL'; exit 1 }
+$it = @(git status --porcelain -uall -- src/IntegrationTests | ForEach-Object { $_.Substring(3) } | Where-Object { $_ -like '*.cs' } |
+  ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) })
+if ($it) {
+  $db = Join-Path ([IO.Path]::GetTempPath()) 'agent-it.db'; Remove-Item $db -ErrorAction SilentlyContinue
+  $env:DATABASE_ENGINE = 'SQLite'; $env:ConnectionStrings__SqlConnectionString = "Data Source=$db"
+  $r = dotnet test src/IntegrationTests/IntegrationTests.csproj -c Release --no-build --nologo -v q --filter (($it | ForEach-Object { "FullyQualifiedName~$_" }) -join '|') 2>&1
+  $code = $LASTEXITCODE; Remove-Item env:DATABASE_ENGINE, env:ConnectionStrings__SqlConnectionString
+  if ($code) { $r | Select-String 'Failed |Assert|Exception|error' | Select-Object -First 12; 'IT_TEST=FAIL (SQLite)'; exit 1 }
+  'IT_TEST=OK'
+}
 if ($VerifyOnly) { 'VERIFY=OK'; exit 0 }
 if (-not $Issue -or -not $Branch) { 'need -Issue and -Branch to publish'; exit 1 }
 $title = gh api "repos/$Repo/issues/$Issue" --jq .title
@@ -18,4 +32,9 @@ $out = & "$tools/Publish-AgentPr.ps1" -Issue $Issue -Branch $Branch -Title $titl
 if ($out -match 'PUBLISH_FAIL') { $out; exit 2 }
 $out | Where-Object { $_ -match 'NO_CHANGE' }
 $pr = [int](($out | Select-String 'pull/(\d+)').Matches[0].Groups[1].Value)
-"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9"
+$wait = "pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9"
+$left = [int][Math]::Floor(9 - ((Get-Date) - $t0).TotalMinutes)
+if ($left -lt 2) { "PR=$pr CHECKS=PENDING"; "WAIT_CMD=$wait"; exit 0 }
+$w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $code = $LASTEXITCODE; $w
+if ($w -match 'CHECKS=PENDING') { "WAIT_CMD=$wait" } elseif ($code -eq 1) { "WAIT_CMD=$wait" }
+exit $code
