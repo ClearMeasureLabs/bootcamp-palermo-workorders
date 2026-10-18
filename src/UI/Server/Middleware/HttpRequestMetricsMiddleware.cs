@@ -12,7 +12,11 @@ public sealed class HttpRequestMetricsMiddleware(RequestDelegate next, IHttpRequ
     /// </summary>
     public async Task InvokeAsync(HttpContext context)
     {
-        counter.Increment();
+        if (!context.Request.Path.StartsWithSegments("/_framework"))
+        {
+            counter.Increment();
+        }
+
         await next(context);
     }
 }
