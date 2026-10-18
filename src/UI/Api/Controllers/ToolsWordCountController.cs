@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.RateLimiting;
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
 /// <summary>
-/// Counts words, characters, and lines in submitted text for operators and integrations.
+/// Counts words, characters, lines, and paragraphs in submitted text for operators and integrations.
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
@@ -17,7 +17,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 public class ToolsWordCountController : ControllerBase
 {
     /// <summary>
-    /// Returns word, character, and line counts for the submitted <paramref name="request"/>.Text.
+    /// Returns word, character, line, and paragraph counts for the submitted <paramref name="request"/>.Text.
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
@@ -40,9 +40,34 @@ public class ToolsWordCountController : ControllerBase
             : text.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries).Length;
         var characterCount = text.Length;
         // Normalize CRLF to LF, then split on LF to count lines (handles CR, LF, and CRLF).
-        var lineCount = text.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n').Length;
+        var normalized = text.Replace("\r\n", "\n").Replace("\r", "\n");
+        var lineCount = normalized.Split('\n').Length;
+        var paragraphCount = CountParagraphs(normalized);
 
-        return Ok(new WordCountResponse(wordCount, characterCount, lineCount));
+        return Ok(new WordCountResponse(wordCount, characterCount, lineCount, paragraphCount));
+    }
+
+    private static int CountParagraphs(string normalized)
+    {
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return 0;
+        }
+
+        var count = 0;
+        var inParagraph = false;
+        foreach (var line in normalized.Split('\n'))
+        {
+            var isBlank = string.IsNullOrWhiteSpace(line);
+            if (!isBlank && !inParagraph)
+            {
+                count++;
+            }
+
+            inParagraph = !isBlank;
+        }
+
+        return count;
     }
 }
 
@@ -54,4 +79,4 @@ public record WordCountRequest(string? Text);
 /// <summary>
 /// JSON payload for <c>POST /api/tools/word-count</c>.
 /// </summary>
-public record WordCountResponse(int WordCount, int CharacterCount, int LineCount);
+public record WordCountResponse(int WordCount, int CharacterCount, int LineCount, int ParagraphCount);

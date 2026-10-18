@@ -69,6 +69,26 @@ public class ToolsWordCountControllerTests
         payload.LineCount.ShouldBe(3);
     }
 
+    [Test]
+    public void Post_Should_CountParagraphs_When_MultiParagraphText()
+    {
+        var result = CreateController().Post(new WordCountRequest("first para\n\nsecond para\n\n\nthird"));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WordCountResponse>();
+        payload.ParagraphCount.ShouldBe(3);
+    }
+
+    [Test]
+    public void Post_Should_ReturnZeroParagraphCount_When_BlankText()
+    {
+        var emptyOk = CreateController().Post(new WordCountRequest("")).ShouldBeOfType<OkObjectResult>();
+        emptyOk.Value.ShouldBeOfType<WordCountResponse>().ParagraphCount.ShouldBe(0);
+
+        var whitespaceOk = CreateController().Post(new WordCountRequest("  \n\t\n  ")).ShouldBeOfType<OkObjectResult>();
+        whitespaceOk.Value.ShouldBeOfType<WordCountResponse>().ParagraphCount.ShouldBe(0);
+    }
+
     private static ToolsWordCountController CreateController() =>
         new()
         {
