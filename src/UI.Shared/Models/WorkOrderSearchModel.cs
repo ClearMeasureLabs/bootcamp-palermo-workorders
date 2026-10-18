@@ -13,6 +13,17 @@ public class WorkOrderSearchModel
         public string? Assignee { get; set; }
         public string? Status { get; set; }
         public bool OverdueOnly { get; set; }
+
+        /// <summary>
+        /// Resets all filter fields to their default (cleared) values.
+        /// </summary>
+        public void Clear()
+        {
+            Creator = null;
+            Assignee = null;
+            Status = null;
+            OverdueOnly = false;
+        }
     }
 }
 
