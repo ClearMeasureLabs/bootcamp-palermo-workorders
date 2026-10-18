@@ -134,7 +134,10 @@
                                 <td>@order.Creator?.GetFullName()</td>
                                 <td>@order.Assignee?.GetFullName()</td>
                                 <td>
-                                    <span class="status-badge">@order.Status</span>
+                                    <button type="button"
+                                            class="status-badge"
+                                            data-testid="@(Elements.StatusBadge + order.Number)"
+                                            @onclick="() => FilterByStatus(order.Status)">@order.Status</button>
                                 </td>
                                 <td>@order.Title</td>
                                 <td>
@@ -177,6 +180,7 @@
         UrgencyBadge,
         SortByStatusButton,
         SortByDueDateButton,
+        StatusBadge,
         SortByTitleButton,
         SortByRoomButton,
         AssignedToMeCheckbox,

@@ -11,6 +11,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 
+using ClearMeasure.Bootcamp.Core.Queries;
+using MediatR;
+
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
 public class WorkOrderSearchTests
@@ -635,6 +638,33 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ClickingStatusBadge_SetsStatusFilterAndShowsOnlyThatStatus()
+    {
+        var workOrders = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Assigned },
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Assigned },
+        };
+        await using var ctx = CreateContext(new StubBusThatFiltersByStatus(workOrders));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var badge = component.Find($"[data-testid='{WorkOrderSearch.Elements.StatusBadge}WO-002']");
+        await badge.ClickAsync(new());
+
+        var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
+        statusSelect.GetAttribute("value").ShouldBe(WorkOrderStatus.Assigned.Key);
+
+        var statusCells = component.FindAll("tbody tr td:nth-child(4)");
+        statusCells.Count.ShouldBe(2);
+        foreach (var cell in statusCells)
+        {
+            cell.TextContent.Trim().ShouldBe(WorkOrderStatus.Assigned.FriendlyName);
+        }
+    }
+
+    [Test]
     public async Task ShouldReport_HasActiveFilters_True_WhenOverdueOnlyIsSet()
     {
         await using var ctx = CreateContext();
@@ -680,5 +710,28 @@ public class WorkOrderSearchTests
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+
+    private sealed class StubBusThatFiltersByStatus : StubBus
+    {
+        private readonly WorkOrder[] _rows;
+
+        public StubBusThatFiltersByStatus(WorkOrder[] rows) : base(rows)
+        {
+            _rows = rows;
+        }
+
+        public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
+        {
+            if (request is WorkOrderSpecificationQuery spec)
+            {
+                var filtered = spec.StatusKey is null
+                    ? _rows
+                    : _rows.Where(wo => wo.Status.Key == spec.StatusKey).ToArray();
+                return Task.FromResult((TResponse)(object)filtered);
+            }
+
+            return base.Send(request);
+        }
     }
 }

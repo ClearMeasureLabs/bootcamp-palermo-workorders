@@ -215,4 +215,10 @@ public partial class WorkOrderSearch : AppComponentBase
         Model.Filters.OverdueOnly = false;
         await SearchWorkOrders();
     }
+
+    private async Task FilterByStatus(WorkOrderStatus status)
+    {
+        Model.Filters.Status = status.Key;
+        await SearchWorkOrders();
+    }
 }
