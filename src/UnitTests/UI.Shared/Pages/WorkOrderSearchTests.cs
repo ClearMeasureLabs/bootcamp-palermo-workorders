@@ -681,4 +681,43 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task ShouldRenderSingularWorkOrder_WhenExactlyOneResult()
+    {
+        var order = new WorkOrder
+        {
+            Number = "WO-ONE",
+            Title = "Single",
+            Status = WorkOrderStatus.Draft
+        };
+
+        await using var ctx = CreateContext(new StubBus([order]));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var header = component.Find(".results-header");
+        header.TextContent.ShouldContain("1 work order");
+        header.TextContent.ShouldNotContain("1 work orders");
+    }
+
+    [Test]
+    public async Task ShouldRenderPluralWorkOrders_WhenZeroOrMultipleResults()
+    {
+        await using var emptyCtx = CreateContext(new StubBus([]));
+        var emptyComponent = emptyCtx.Render<WorkOrderSearch>();
+        emptyComponent.Find(".results-header").TextContent.ShouldContain("0 work orders");
+
+        var orders = new[]
+        {
+            new WorkOrder { Number = "WO-A", Title = "A", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-B", Title = "B", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-C", Title = "C", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-D", Title = "D", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-E", Title = "E", Status = WorkOrderStatus.Draft }
+        };
+        await using var multiCtx = CreateContext(new StubBus(orders));
+        var multiComponent = multiCtx.Render<WorkOrderSearch>();
+        multiComponent.Find(".results-header").TextContent.ShouldContain("5 work orders");
+    }
 }
