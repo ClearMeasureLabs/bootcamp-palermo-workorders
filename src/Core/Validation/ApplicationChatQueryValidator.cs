@@ -5,7 +5,5 @@ using FluentValidation;
 // assembly-scan/DI reflection, not by direct reference; qodana.yaml exclude is documentation-only.
 namespace ClearMeasure.Bootcamp.Core.Validation;
 
-/// <summary>
-/// Remoting envelope requires a registered FluentValidation validator for every payload type.
-/// </summary>
+// Remoting envelope requires a registered FluentValidation validator for every payload type.
 public sealed class ApplicationChatQueryValidator : AbstractValidator<ApplicationChatQuery>;

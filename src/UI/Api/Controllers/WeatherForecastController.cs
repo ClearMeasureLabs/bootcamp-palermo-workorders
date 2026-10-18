@@ -18,19 +18,13 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
     ];
 
-    /// <summary>
-    /// Returns a JSON array of five sample weather-forecast entries (output-cached).
-    /// </summary>
     [HttpGet]
     [OutputCache(PolicyName = OutputCachePolicyNames.WeatherSample)]
     public IActionResult Get()
     {
-        // _logger.LogError("LogError Get Weather");
-        // _logger.LogCritical("LogCritical Get Weather");
         logger.LogDebug("LogDebug Get Weather");
         logger.LogInformation("LogInformation Get Weather");
         logger.LogTrace("LogTrace Get Weather");
-        // _logger.LogWarning("LogWarning Get Weather");
         var forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),

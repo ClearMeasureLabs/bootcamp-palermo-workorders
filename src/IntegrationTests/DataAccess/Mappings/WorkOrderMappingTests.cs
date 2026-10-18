@@ -218,7 +218,6 @@ public class WorkOrderMappingTests
         {
             Creator = creator,
             Status = WorkOrderStatus.Draft
-            // Intentionally omitting Number and Title which are required
         };
 
         using var context = TestHost.GetRequiredService<DbContext>();
@@ -347,12 +346,10 @@ public class WorkOrderMappingTests
         WorkOrder rehydratedWorkOrder;
         using (var context = TestHost.GetRequiredService<DbContext>())
         {
-            // No explicit Include calls - testing AutoInclude
             rehydratedWorkOrder = context.Set<WorkOrder>()
                 .Single(wo => wo.Id == workOrder.Id);
         }
 
-        // Creator and Assignee should be loaded automatically
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
         rehydratedWorkOrder.Assignee.ShouldNotBeNull();
         rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);

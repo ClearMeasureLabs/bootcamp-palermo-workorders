@@ -227,4 +227,11 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void CompareTo_WithNull_ShouldReturnOne()
+    {
+        var employee = new Employee("jsmith", "John", "Smith", "j@example.com");
+        employee.CompareTo(null).ShouldBe(1);
+    }
 }
