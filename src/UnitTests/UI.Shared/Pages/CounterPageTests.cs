@@ -1,6 +1,8 @@
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using ClearMeasure.Bootcamp.UnitTests.UI.Shared.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
@@ -49,5 +51,34 @@ public class CounterPageTests
 
         var button = component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']");
         button.GetAttribute("title").ShouldBe("Increase the count by one");
+    }
+
+    [Test]
+    public async Task Should_DisplayEven_WhenCountIsZero()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+
+        component.Find($"[data-testid='{nameof(Counter.Elements.CounterParity)}']")
+            .TextContent
+            .ShouldBe("Even");
+    }
+
+    [Test]
+    public async Task Should_DisplayOdd_AfterOneClick()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']").ClickAsync();
+
+        component.Find($"[data-testid='{nameof(Counter.Elements.CounterParity)}']")
+            .TextContent
+            .ShouldBe("Odd");
     }
 }
