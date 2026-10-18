@@ -14,4 +14,6 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
 
     public bool CanFulfillWorkOrder { get; set; } = canFulfill;
     public override Guid Id { get; set; }
+
+    public static Role CreateReadOnly(string name) => new(name, false, false);
 }
