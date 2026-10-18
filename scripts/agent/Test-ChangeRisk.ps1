@@ -37,6 +37,12 @@ foreach ($l in git diff -U0 $base -- src) {
     # v27g: round 12 CI REDs: s02 RedundantNameQualifier (new Microsoft.AspNetCore.Components.Web.MouseEventArgs()), s05 RedundantUsingDirective (using System.Linq; with ImplicitUsings)
     if ($a -notmatch '^\s*(using|namespace)\b' -and $a -match '\b(System|Microsoft)\.[A-Z]\w*\.[\w.]*[A-Z]\w*\s*[(<{]') { "QODANA_RISK $file : add a using and use the short type name (RedundantNameQualifier): $($a.Trim())" }
     if ($a -match '^\s*using (System|System\.(Linq|IO|Collections\.Generic|Net\.Http|Threading|Threading\.Tasks));' -and (Test-ImplicitUsings $file)) { "QODANA_RISK $file : remove '$($a.Trim())' (implicit usings already cover it)" }
+    # v30g: round 16 CI RED (RedundantUsingDirective): added using of a repo namespace with none of its types used in the file
+    if ($a -match '^\s*using ([A-Z][\w.]+);' -and (Test-Path $file)) { $ns = $Matches[1]
+      $decl = @(rg -l --glob '*.cs' -e "^namespace $([regex]::Escape($ns))\s*[;{]" src 2>$null)
+      if ($decl) { $types = @($decl | ForEach-Object { [regex]::Matches((Get-Content $_ -Raw), '\b(?:class|record|interface|enum|struct)\s+(\w+)') | ForEach-Object { $_.Groups[1].Value } } | Sort-Object -Unique)
+        $body = (Get-Content $file | Where-Object { $_ -notmatch '^\s*(using|namespace)\b' }) -join "`n"
+        if ($types -and -not ($types | Where-Object { $body -match "\b$_\b" } | Select-Object -First 1)) { "QODANA_RISK $file : '$($a.Trim())' looks unused (no type from $ns appears); remove it (RedundantUsingDirective)" } } }
     # v28g: whole-word Number, not PhoneNumber (round 13 r07 false NUMBER_RISK)
     if ($file -match 'Tests' -and $a -match '(?<!\w)Number\s*=\s*"([^"]{8,})"') { "NUMBER_RISK $file : work order Number '$($Matches[1])' > 7 chars" } }
 }

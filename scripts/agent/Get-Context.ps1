@@ -7,9 +7,22 @@ Set-Location (git rev-parse --show-toplevel)
 # v21g: hard limit of 2 calls per workspace (round 7 y05 made 13 calls despite the skill rule).
 $cnt = Join-Path ([IO.Path]::GetTempPath()) 'agent-getcontext-count'
 $used = if (Test-Path $cnt) { [int](Get-Content $cnt) } else { 0 }
-# v29g: all searches/reads go through Get-Context (capped), so the limit is 6 calls (round 15 u08: one built-in grep = 87 KB)
-if ($used -ge 6) { 'LIMIT: Get-Context used 6 times. Edit with what you have; Submit names what is missing.'; exit 0 }
+# v30g: limit 3 (issue + 2). v29g's 6 became a target (round 16: 49 calls, 6.1/run, 4 runs hit LIMIT then shell-read).
+if ($File -and $Find) { 'REJECTED: use -File or -Find, not both (this call was not counted)'; exit 0 }
+if ($used -ge 3) { 'LIMIT: Get-Context used 3 times. Edit now with what you have (never read files via shell); Submit names what is missing.'; exit 0 }
 Set-Content $cnt ($used + 1)
+# v30g: an explicit -Find is a capped grep: matching lines with 2 lines of context, max 25 hits / ~1500 chars (v29g returned
+# 3-5 KB outlines per -Find and often missed what the agent was hunting for).
+if ($PSBoundParameters.ContainsKey('Find')) {
+  $out = [Text.StringBuilder]::new(); $hits = 0
+  $raw = @(rg -n -C2 --max-count 5 --glob '*.cs' --glob '*.razor' --glob '*.sql' --glob '!**/Generated/**' -e $Find src 2>$null)
+  foreach ($l in $raw) {
+    if ($l -match '^[^:]+:\d+:') { $hits++ }
+    if ($hits -gt 25 -or $out.Length -gt 1500) { [void]$out.AppendLine('...(capped: narrow the regex)'); break }
+    $t = $l.TrimEnd(); [void]$out.AppendLine($t.Substring(0, [Math]::Min(160, $t.Length))) }
+  if (-not $raw) { "NO_MATCH for '$Find'" } else { "FIND $Find ($hits hits; 'path:line:' = match, 'path-line-' = context)"; $out.ToString() }
+  exit 0
+}
 # v29g: -File path[:a-b] = capped read. Small files print whole; big files print an outline first, then ask for a range.
 if ($File) {
   $fp, $rg = $File -split ':'; if (-not (Test-Path $fp)) { "NO_FILE $fp (use -Find to locate it)"; exit 0 }
@@ -133,3 +146,19 @@ $rest = @(@($rest) + @($weak | Where-Object { $_ -notmatch 'AcceptanceTests' } |
 if ($rest) { [void]$sb.AppendLine("ALSO (mention only): " + ($rest -join ' ')) }
 $s = $sb.ToString(); if ($s.Length -gt $Cap) { $s = $s.Substring(0, $Cap) + "`n...(capped; narrow -Find)" }; $s
 if ($tail) { $tail.ToString() }
+if ($Issue) {
+  # v30g: TEST SETUP = test-project helper types the sibling test uses (round 16: p03/p06/p05/p08 spent 3-5 calls hunting a
+  # capturing logger, DbContext setup, bUnit rendering). The sibling test above is the same-kind example to copy.
+  if ($test) { $st = Get-Content $test[0] -Raw
+    $own = [IO.Path]::GetFileNameWithoutExtension($test[0])
+    $helpers = @([regex]::Matches($st, '\b([A-Z]\w{3,})\b') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique | Where-Object { $_ -ne $own } | ForEach-Object {
+      $d = rg -l -e "(class|record|interface) $_\b" --glob '*.cs' src/UnitTests src/IntegrationTests src/AcceptanceTests 2>$null | Select-Object -First 1
+      if ($d) { "$_ ($d)" } } | Select-Object -First 8)
+    "TEST SETUP (example: $($test[0])): " + $(if ($helpers) { $helpers -join ', ' } else { 'no test-project helpers; copy the example' }) }
+  # v30g: existing tests that already mention the issue's existing symbols / backticked names (round 16 p05: an acceptance test
+  # contradicted the change and was only found after a CI RED)
+  $syms = @(@($terms) + @([regex]::Matches($keep, '`([\w-]{4,})(?:\([^`]*\))?`') | ForEach-Object { $_.Groups[1].Value }) | Where-Object { $_ -cmatch '^[A-Z][a-z0-9]+[A-Z]\w+$' -and $_ -notin $newNames } | Sort-Object -Unique | Select-Object -First 8)
+  if ($syms) { $refs = @(rg -n -w -F @($syms | ForEach-Object { '-e'; $_ }) src/UnitTests src/IntegrationTests src/AcceptanceTests 2>$null |
+      Where-Object { $test.Count -eq 0 -or $_ -notlike "$($test[0])*" } | Select-Object -First 8 | ForEach-Object { $t = $_.Trim(); $t.Substring(0, [Math]::Min(140, $t.Length)) })
+    if ($refs) { "TESTS ALREADY MENTIONING $($syms -join '/'):"; $refs } }
+}
