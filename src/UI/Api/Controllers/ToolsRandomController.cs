@@ -8,9 +8,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Generates configurable random values for operators and integrations.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/tools/random")]
@@ -32,10 +29,6 @@ public class ToolsRandomController : ControllerBase
             ["color"] = static () => $"#{Random.Shared.Next(0x1000000):X6}"
         };
 
-    /// <summary>
-    /// Returns a random value as plain text for the requested <paramref name="type"/>.
-    /// Supported types: <c>number</c>, <c>string</c>, <c>uuid</c>, <c>color</c>.
-    /// </summary>
     [HttpGet]
     [AllowAnonymous]
     [Produces(MediaTypeNames.Text.Plain)]

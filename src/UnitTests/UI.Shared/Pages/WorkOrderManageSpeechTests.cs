@@ -114,7 +114,6 @@ public class WorkOrderManageSpeechTests
             titleInput.ShouldNotBeNull();
         });
 
-        // Set the title value
         var titleElement = component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']");
         await titleElement.ChangeAsync(new() { Value = "Test title" });
 

@@ -22,7 +22,7 @@ public class StateCommandHandlerForSaveTests : IntegratedTestBase
 
         var workOrder = Faker<WorkOrder>();
         workOrder.Id = Guid.Empty;
-        workOrder.CreatedDate = null; // Ensure CreatedDate is null to test setting it;
+        workOrder.CreatedDate = null;
         workOrder.Creator = currentUser;
         workOrder.Instructions = "Turn off water main first";
 

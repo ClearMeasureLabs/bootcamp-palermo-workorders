@@ -9,9 +9,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Stateless date-check utility endpoint — returns the due-date urgency for a given date.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/tools/due-date-check")]
@@ -19,11 +16,6 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class ToolsDueDateCheckController(TimeProvider timeProvider) : ControllerBase
 {
-    /// <summary>
-    /// Returns the <see cref="DueDateUrgency"/> for the supplied <paramref name="date"/> relative
-    /// to today in America/Chicago. Assumes an open work order (Draft status) to produce
-    /// meaningful urgency results.
-    /// </summary>
     [HttpGet]
     [AllowAnonymous]
     [Produces(MediaTypeNames.Application.Json)]
@@ -54,7 +46,4 @@ public class ToolsDueDateCheckController(TimeProvider timeProvider) : Controller
     }
 }
 
-/// <summary>
-/// JSON payload for <c>GET /api/tools/due-date-check</c>.
-/// </summary>
 public record DueDateCheckResponse(string Urgency);

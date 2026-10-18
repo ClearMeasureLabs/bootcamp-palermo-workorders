@@ -6,12 +6,10 @@ public class StubUiBus : IUiBus
 {
     public void Register(IListener listener)
     {
-        // Mock implementation - do nothing
     }
 
     public void UnRegister(IListener listener)
     {
-        // Mock implementation - do nothing
     }
 
     public IListener<T>[] GetListeners<T>() where T : IUiBusEvent
@@ -21,11 +19,9 @@ public class StubUiBus : IUiBus
 
     public void Notify<T>(T eventObject) where T : IUiBusEvent
     {
-        // Mock implementation - do nothing
     }
 
     public void UnRegisterAll()
     {
-        // Mock implementation - do nothing
     }
 }

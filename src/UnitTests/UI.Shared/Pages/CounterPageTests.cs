@@ -50,4 +50,35 @@ public class CounterPageTests
         var button = component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']");
         button.GetAttribute("title").ShouldBe("Increase the count by one");
     }
+
+    [Test]
+    public async Task Should_ReturnToZero_WhenIncrementThenDecrement()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']").ClickAsync();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.DecrementButton)}']").ClickAsync();
+
+        component.Find($"[data-testid='{nameof(Counter.Elements.CounterValue)}']")
+            .TextContent
+            .ShouldBe("0");
+    }
+
+    [Test]
+    public async Task Should_StayAtZero_WhenDecrementAtZero()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.DecrementButton)}']").ClickAsync();
+
+        component.Find($"[data-testid='{nameof(Counter.Elements.CounterValue)}']")
+            .TextContent
+            .ShouldBe("0");
+    }
 }
