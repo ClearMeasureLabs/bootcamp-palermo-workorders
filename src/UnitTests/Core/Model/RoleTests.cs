@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -20,5 +21,16 @@ public class RoleTests
         Assert.That(role2.Name, Is.EqualTo("roleName"));
         Assert.That(role2.CanCreateWorkOrder, Is.True);
         Assert.That(role2.CanFulfillWorkOrder, Is.True);
+    }
+
+    [TestCase(false, false, true)]
+    [TestCase(true, false, false)]
+    [TestCase(false, true, false)]
+    [TestCase(true, true, false)]
+    public void IsReadOnly_ReturnsTrueOnlyWhenNeitherCreateNorFulfill(bool canCreate, bool canFulfill, bool expected)
+    {
+        var role = new Role("r", canCreate, canFulfill);
+
+        role.IsReadOnly().ShouldBe(expected);
     }
 }
