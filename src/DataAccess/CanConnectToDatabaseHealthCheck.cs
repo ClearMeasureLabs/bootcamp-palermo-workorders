@@ -13,24 +13,28 @@ public class CanConnectToDatabaseHealthCheck(DbContext dbContext, ILogger<CanCon
         try
         {
             var providerName = dbContext.Database.ProviderName ?? "Unknown";
+            var data = new Dictionary<string, object> { ["provider"] = providerName };
             var canConnect = await dbContext.Database.CanConnectAsync(cancellationToken);
             if (canConnect)
             {
                 logger.LogDebug("Health check success via DbContext");
                 return new HealthCheckResult(HealthStatus.Healthy,
-                    description: $"Database connection successful (Provider: {providerName})");
+                    description: $"Database connection successful (Provider: {providerName})",
+                    data: data);
             }
 
             var description = $"Cannot connect to database (Provider: {providerName})";
             logger.LogWarning(description);
-            return new HealthCheckResult(HealthStatus.Unhealthy, description: description);
+            return new HealthCheckResult(HealthStatus.Unhealthy, description: description, data: data);
         }
         catch (Exception ex)
         {
             var providerName = dbContext.Database.ProviderName ?? "Unknown";
+            var data = new Dictionary<string, object> { ["provider"] = providerName };
             var description = $"Database connection failed (Provider: {providerName}): {ex.Message}";
             logger.LogWarning(ex, "Database connection failed");
-            return new HealthCheckResult(HealthStatus.Unhealthy, description: description, exception: ex);
+            return new HealthCheckResult(HealthStatus.Unhealthy, description: description, exception: ex,
+                data: data);
         }
     }
 }
