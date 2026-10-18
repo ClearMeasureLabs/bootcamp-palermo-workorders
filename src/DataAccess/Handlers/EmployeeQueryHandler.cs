@@ -25,6 +25,14 @@ public class EmployeeQueryHandler(DataContext context)
             .Include("Roles");
         var employees = await query.ToListAsync(cancellationToken);
 
+        if (!string.IsNullOrEmpty(request.RoleName))
+        {
+            employees = employees
+                .Where(e => e.Roles.Any(r =>
+                    string.Equals(r.Name, request.RoleName, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+        }
+
         return employees.OrderBy(e => e.LastName).ThenBy(e => e.FirstName).ToArray();
     }
 }

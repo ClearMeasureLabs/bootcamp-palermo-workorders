@@ -61,6 +61,43 @@ public class EmployeeQueryHandlerTests
     }
 
     [Test]
+    public async Task ShouldGetAllEmployees_WhenRoleNameSet_ReturnsOnlyMatchingRole_CaseInsensitive()
+    {
+        new DatabaseTests().Clean();
+
+        var fulfillRole = new Role("Fulfiller", false, true);
+        var createRole = new Role("Creator", true, false);
+        var alice = new Employee("alice", "Alice", "Anderson", "a@test.com");
+        alice.Roles.Add(fulfillRole);
+        var bob = new Employee("bob", "Bob", "Brown", "b@test.com");
+        bob.Roles.Add(createRole);
+        var carol = new Employee("carol", "Carol", "Clark", "c@test.com");
+        carol.Roles.Add(fulfillRole);
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(fulfillRole);
+            context.Add(createRole);
+            context.Add(bob);
+            context.Add(carol);
+            context.Add(alice);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+
+        var all = await handler.Handle(new EmployeeGetAllQuery());
+        all.Length.ShouldBe(3);
+
+        var emptyFilter = await handler.Handle(new EmployeeGetAllQuery { RoleName = "" });
+        emptyFilter.Length.ShouldBe(3);
+
+        var filtered = await handler.Handle(new EmployeeGetAllQuery { RoleName = "fulfiller" });
+        filtered.Select(e => e.UserName).ShouldBe(["alice", "carol"]);
+    }
+
+    [Test]
     public async Task ShouldPersistPreferredLanguage()
     {
         new DatabaseTests().Clean();
