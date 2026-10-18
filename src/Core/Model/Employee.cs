@@ -56,6 +56,25 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
             : $"{FirstName} {MiddleName} {LastName}";
     }
 
+    /// <summary>
+    /// Returns the employee name as surname-first (<c>LastName, FirstName</c>).
+    /// When either part is blank, returns only the non-blank part.
+    /// </summary>
+    public string GetDisplayName()
+    {
+        if (string.IsNullOrWhiteSpace(FirstName))
+        {
+            return LastName;
+        }
+
+        if (string.IsNullOrWhiteSpace(LastName))
+        {
+            return FirstName;
+        }
+
+        return $"{LastName}, {FirstName}";
+    }
+
     public override string ToString()
     {
         return GetFullName();

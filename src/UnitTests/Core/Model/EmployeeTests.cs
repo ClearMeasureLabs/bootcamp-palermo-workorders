@@ -227,4 +227,18 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void GetDisplayName_WithFullName_ShouldReturnLastNameCommaFirstName()
+    {
+        var employee = new Employee("jdoe", "Jane", "Doe", "jdoe@example.com");
+        employee.GetDisplayName().ShouldBe("Doe, Jane");
+    }
+
+    [Test]
+    public void GetDisplayName_WithBlankFirstName_ShouldReturnLastNameOnly()
+    {
+        var employee = new Employee("jdoe", "", "Doe", "jdoe@example.com");
+        employee.GetDisplayName().ShouldBe("Doe");
+    }
 }
