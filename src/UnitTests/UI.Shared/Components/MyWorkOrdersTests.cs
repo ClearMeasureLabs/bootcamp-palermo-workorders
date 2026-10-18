@@ -178,6 +178,25 @@ public class MyWorkOrdersTests
         component.Instance.Count.ShouldBe(0);
     }
 
+    [Test]
+    public async Task ShouldRenderAriaLivePoliteOnWorkOrdersSpan()
+    {
+        await using var ctx = new BunitContext();
+
+        var stubBus = new StubBusWithNoWorkOrders();
+        var stubUserSession = new StubUserSession();
+        var stubUiBus = new StubUiBus();
+
+        ctx.Services.AddSingleton<IBus>(stubBus);
+        ctx.Services.AddSingleton<IUserSession>(stubUserSession);
+        ctx.Services.AddSingleton<IUiBus>(stubUiBus);
+
+        var component = ctx.Render<MyWorkOrders>();
+
+        var span = component.Find($"[data-testid='{nameof(MyWorkOrders.Elements.MyWorkOrdersTooltip)}']");
+        span.GetAttribute("aria-live").ShouldBe("polite");
+    }
+
     private class StubUserSession(Employee? currentUser = null) : IUserSession
     {
         private readonly Employee? _currentUser =
