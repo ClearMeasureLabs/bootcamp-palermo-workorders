@@ -133,7 +133,8 @@ public class McpCreateDatedWorkOrdersToolTests
     [Test]
     public void ShouldRejectExplicitDateListAboveTransactionalBatchLimit()
     {
-        var dueDates = string.Join(',', Enumerable.Repeat("2026-09-01", 11));
+        var dueDates = string.Join(',', Enumerable.Range(0, 11)
+            .Select(i => new DateOnly(2026, 9, 1).AddDays(i).ToString("yyyy-MM-dd")));
 
         var (dates, error) = DatedWorkOrderScheduling.ResolveDueDates(
             TimeProvider.System,
