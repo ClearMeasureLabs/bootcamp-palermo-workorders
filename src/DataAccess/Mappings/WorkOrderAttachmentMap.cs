@@ -14,7 +14,7 @@ public class WorkOrderAttachmentMap : IEntityFrameworkMapping
             entity.Property(e => e.Id).IsRequired().ValueGeneratedNever();
             entity.Property(e => e.WorkOrderId).IsRequired();
             entity.Property(e => e.FileName).IsRequired().HasMaxLength(500);
-            entity.Property(e => e.ContentType).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.ContentType).IsRequired().HasMaxLength(255);
             entity.Property(e => e.FileSize).IsRequired();
             entity.Property(e => e.UploadedById).IsRequired();
             entity.Property(e => e.UploadedDate).IsRequired();

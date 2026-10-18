@@ -1,0 +1,13 @@
+BEGIN TRY
+	BEGIN TRANSACTION
+	PRINT N'Altering [dbo].[WorkOrderAttachment] ContentType column from NVARCHAR(200) to NVARCHAR(255)'
+	ALTER TABLE [dbo].[WorkOrderAttachment] ALTER COLUMN [ContentType] NVARCHAR(255) NOT NULL
+	PRINT 'The database update succeeded'
+	COMMIT TRANSACTION
+END TRY
+BEGIN CATCH
+	IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION
+	THROW
+END CATCH
+GO
