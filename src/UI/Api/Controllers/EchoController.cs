@@ -6,9 +6,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Reflects key properties of the incoming HTTP request for debugging and client diagnostics.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/echo")]
@@ -25,17 +22,10 @@ public class EchoController : ControllerBase
         "Cookie"
     };
 
-    /// <summary>
-    /// Returns a JSON object reflecting method, path, query, host, protocol, remote IP, and headers
-    /// (sensitive header values redacted).
-    /// </summary>
     [HttpGet]
     [AllowAnonymous]
     public IActionResult Get() => Ok(BuildEchoResponse(HttpContext));
 
-    /// <summary>
-    /// Builds an <see cref="EchoResponse"/> from the current HTTP context.
-    /// </summary>
     private static EchoResponse BuildEchoResponse(HttpContext httpContext)
     {
         var request = httpContext.Request;
@@ -62,9 +52,6 @@ public class EchoController : ControllerBase
         address is null ? null : address.IsIPv4MappedToIPv6 ? address.MapToIPv4().ToString() : address.ToString();
 }
 
-/// <summary>
-/// JSON payload for <c>GET /api/echo</c> and <c>GET /api/v1.0/echo</c>.
-/// </summary>
 public record EchoResponse(
     string Method,
     string Path,

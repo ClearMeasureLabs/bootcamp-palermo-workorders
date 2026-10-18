@@ -27,9 +27,6 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string LastName { get; set; }
 
-    /// <summary>
-    /// Optional middle name. When null or blank it is omitted from <see cref="GetFullName"/>.
-    /// </summary>
     public string? MiddleName { get; set; }
 
     public string EmailAddress { get; set; }
@@ -56,6 +53,16 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
             : $"{FirstName} {MiddleName} {LastName}";
     }
 
+    public string GetDisplayName()
+    {
+        if (string.IsNullOrWhiteSpace(LastName))
+        {
+            return string.IsNullOrWhiteSpace(FirstName) ? string.Empty : FirstName;
+        }
+
+        return string.IsNullOrWhiteSpace(FirstName) ? LastName : $"{LastName}, {FirstName}";
+    }
+
     public override string ToString()
     {
         return GetFullName();
@@ -63,9 +70,6 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public bool CanCreateWorkOrder() => Roles.Any(role => role.CanCreateWorkOrder);
 
-    /// <summary>
-    /// Returns whether this employee has at least one role with permission to fulfill work orders.
-    /// </summary>
     public bool CanFulfillWorkOrder() => Roles.Any(role => role.CanFulfillWorkOrder);
 
     public void AddRole(Role role)

@@ -44,13 +44,11 @@ public partial class WorkOrderSearch : AppComponentBase
         await RestoreAssignedToMeStateAsync();
         ApplyQueryParameterOverrides();
 
-        // Perform initial search
         await SearchWorkOrders();
     }
 
     private async Task RestoreAssignedToMeStateAsync()
     {
-        // Restore session-persistent "Assigned to me" state
         _assignedToMe = SearchState.AssignedToMe;
         if (_assignedToMe)
         {
@@ -61,7 +59,6 @@ public partial class WorkOrderSearch : AppComponentBase
 
     private void ApplyQueryParameterOverrides()
     {
-        // Apply any query parameters (query params take precedence over session state)
         if (!string.IsNullOrEmpty(Creator))
         {
             Model.Filters.Creator = Creator;
