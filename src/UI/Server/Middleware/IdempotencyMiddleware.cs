@@ -221,7 +221,7 @@ internal static class IdempotencyInspectionRules
         && IdempotencyInspectionRules.IsIdempotentPath(request.Path);
 
     private static bool IsMutatingMethod(string method) =>
-        HttpMethods.IsPost(method) || HttpMethods.IsPut(method);
+        HttpMethods.IsPost(method) || HttpMethods.IsPut(method) || HttpMethods.IsPatch(method);
 
     private static bool IsIdempotentPath(PathString path) =>
         path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
