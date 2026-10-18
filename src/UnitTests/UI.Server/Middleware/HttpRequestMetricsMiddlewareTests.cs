@@ -28,8 +28,7 @@ public class HttpRequestMetricsMiddlewareTests
             nextCalled = true;
             return Task.CompletedTask;
         }, counter);
-        var context = new DefaultHttpContext();
-        context.Request.Path = "/_framework/blazor.web.js";
+        var context = new DefaultHttpContext { Request = { Path = "/_framework/blazor.web.js" } };
 
         await middleware.InvokeAsync(context);
 
@@ -47,8 +46,7 @@ public class HttpRequestMetricsMiddlewareTests
             nextCalled = true;
             return Task.CompletedTask;
         }, counter);
-        var context = new DefaultHttpContext();
-        context.Request.Path = "/api/version";
+        var context = new DefaultHttpContext { Request = { Path = "/api/version" } };
 
         await middleware.InvokeAsync(context);
 
