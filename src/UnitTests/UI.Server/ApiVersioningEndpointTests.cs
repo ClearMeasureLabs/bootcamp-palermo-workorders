@@ -67,7 +67,7 @@ public class ApiVersioningEndpointTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         mediaType.ShouldNotBeNull();
-        mediaType.ShouldContain("text/plain");
+        mediaType.ShouldContain("application/json");
     }
 
     [Test]

@@ -17,22 +17,27 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 public class TimeController(TimeProvider timeProvider) : ControllerBase
 {
     /// <summary>
-    /// Returns the current UTC time as ISO 8601 plain text.
+    /// Returns the current UTC time and day of week.
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
     public IActionResult Get()
     {
-        var text = timeProvider.GetUtcNow().ToString("O", CultureInfo.InvariantCulture);
-        var etag = ConditionalGetEtag.CreateWeakEtagForPlainText(text);
+        var utcNow = timeProvider.GetUtcNow();
+        var payload = new TimeResponse(
+            Utc: utcNow.ToString("O", CultureInfo.InvariantCulture),
+            DayOfWeek: utcNow.ToString("dddd", CultureInfo.InvariantCulture));
+        var etag = ConditionalGetEtag.CreateWeakEtagForJson(payload);
         Response.Headers.ETag = etag.ToString();
         if (ConditionalGetEtag.IfNoneMatchIncludesEtag(Request, etag))
             return StatusCode(StatusCodes.Status304NotModified);
-        return new ContentResult
-        {
-            Content = text,
-            ContentType = "text/plain; charset=utf-8",
-            StatusCode = StatusCodes.Status200OK
-        };
+        return ConditionalGetEtag.JsonContent(payload);
     }
 }
+
+/// <summary>
+/// JSON payload for <c>GET /api/time</c> and <c>GET /api/v1.0/time</c>.
+/// </summary>
+/// <param name="Utc">Current UTC instant as ISO 8601.</param>
+/// <param name="DayOfWeek">English name of the UTC calendar day (e.g. <c>Monday</c>).</param>
+public record TimeResponse(string Utc, string DayOfWeek);
