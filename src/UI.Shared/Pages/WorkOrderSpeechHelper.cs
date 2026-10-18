@@ -28,7 +28,8 @@ internal static class WorkOrderSpeechHelper
         IEnumerable<SpeechSynthesisVoice> voices,
         string preferredLanguage)
     {
-        var exactMatch = voices.FirstOrDefault(v =>
+        SpeechSynthesisVoice[] voiceArray = [.. voices];
+        var exactMatch = voiceArray.FirstOrDefault(v =>
             v.Lang.Equals(preferredLanguage, StringComparison.OrdinalIgnoreCase));
         if (exactMatch != null)
         {
@@ -36,7 +37,7 @@ internal static class WorkOrderSpeechHelper
         }
 
         var langPrefix = preferredLanguage.Split('-')[0];
-        return voices.FirstOrDefault(v =>
+        return voiceArray.FirstOrDefault(v =>
             v.Lang.StartsWith(langPrefix, StringComparison.OrdinalIgnoreCase));
     }
 }
