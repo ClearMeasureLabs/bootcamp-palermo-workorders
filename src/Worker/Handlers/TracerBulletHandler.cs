@@ -19,6 +19,12 @@ public class TracerBulletHandler : IHandleMessages<TracerBulletCommand>
 
     public async Task Handle(TracerBulletCommand message, IMessageHandlerContext context)
     {
+        if (message.CorrelationId == Guid.Empty)
+        {
+            _logger.LogWarning("TracerBullet received with empty CorrelationId. Skipping reply.");
+            return;
+        }
+
         _logger.LogInformation("TracerBullet received: {CorrelationId}. Sending reply.", message.CorrelationId);
         await context.Reply(new TracerBulletReplyMessage(message.CorrelationId));
     }

@@ -24,6 +24,31 @@ public class WorkerHandlerTests
     }
 
     [Test]
+    public async Task TracerBulletHandler_Handle_ShouldNotReply_WhenCorrelationIdIsEmpty()
+    {
+        var stub = StubMessageHandlerContext.Create();
+        var handler = new TracerBulletHandler(NullLogger<TracerBulletHandler>.Instance);
+
+        await handler.Handle(new TracerBulletCommand(Guid.Empty), stub.Context);
+
+        stub.RepliedMessages.ShouldBeEmpty();
+    }
+
+    [Test]
+    public async Task TracerBulletHandler_Handle_ShouldReply_WhenCorrelationIdIsPresent()
+    {
+        var stub = StubMessageHandlerContext.Create();
+        var handler = new TracerBulletHandler(NullLogger<TracerBulletHandler>.Instance);
+        var correlationId = Guid.NewGuid();
+
+        await handler.Handle(new TracerBulletCommand(correlationId), stub.Context);
+
+        stub.RepliedMessages.Count.ShouldBe(1);
+        var reply = stub.RepliedMessages[0].ShouldBeOfType<TracerBulletReplyMessage>();
+        reply.CorrelationId.ShouldBe(correlationId);
+    }
+
+    [Test]
     public async Task EventHandler_Handle_ShouldSendLocalStartSagaCommand()
     {
         var stub = StubMessageHandlerContext.Create();
