@@ -14,4 +14,9 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
 
     public bool CanFulfillWorkOrder { get; set; } = canFulfill;
     public override Guid Id { get; set; }
+
+    /// <summary>
+    /// Returns true when this role can create work orders but cannot fulfill them.
+    /// </summary>
+    public bool IsCreatorOnly() => CanCreateWorkOrder && !CanFulfillWorkOrder;
 }
