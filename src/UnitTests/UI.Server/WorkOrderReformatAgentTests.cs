@@ -119,4 +119,40 @@ public class WorkOrderReformatAgentTests
         result.Title.ShouldBe("New Title With Spaces");
         result.Description.ShouldBe("Cleaned up description.");
     }
+
+    [Test]
+    public void ShouldParsePlainTitlePrefix()
+    {
+        var workOrder = new WorkOrder { Title = "old", Description = "old" };
+        var responseText = "TITLE: Fix door";
+
+        var result = WorkOrderReformatAgent.ParseResponse(responseText, workOrder);
+
+        result.ShouldNotBeNull();
+        result.Title.ShouldBe("Fix door");
+    }
+
+    [Test]
+    public void ShouldIgnoreMarkdownBoldAroundTitlePrefix()
+    {
+        var workOrder = new WorkOrder { Title = "old", Description = "old" };
+        var responseText = "**TITLE:** Fix door";
+
+        var result = WorkOrderReformatAgent.ParseResponse(responseText, workOrder);
+
+        result.ShouldNotBeNull();
+        result.Title.ShouldBe("Fix door");
+    }
+
+    [Test]
+    public void ShouldIgnoreMarkdownBoldAroundTitleValue()
+    {
+        var workOrder = new WorkOrder { Title = "old", Description = "old" };
+        var responseText = "TITLE: **Fix door**";
+
+        var result = WorkOrderReformatAgent.ParseResponse(responseText, workOrder);
+
+        result.ShouldNotBeNull();
+        result.Title.ShouldBe("Fix door");
+    }
 }

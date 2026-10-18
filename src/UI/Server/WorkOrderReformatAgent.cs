@@ -125,13 +125,28 @@ internal static class ReformatResponseLineParser
     private static bool TryParsePrefixedLine(string line, string prefix, out string value)
     {
         value = string.Empty;
-        if (!line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        var candidate = StripLeadingMarkdownBold(line);
+        if (!candidate.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        value = line[prefix.Length..].Trim();
+        value = StripMarkdownBoldMarkers(candidate[prefix.Length..].Trim());
         return true;
+    }
+
+    private static string StripLeadingMarkdownBold(string text) =>
+        text.StartsWith("**", StringComparison.Ordinal) ? text[2..] : text;
+
+    private static string StripMarkdownBoldMarkers(string text)
+    {
+        text = StripLeadingMarkdownBold(text);
+        if (text.EndsWith("**", StringComparison.Ordinal))
+        {
+            text = text[..^2];
+        }
+
+        return text.Trim();
     }
 }
 
