@@ -43,7 +43,8 @@ if (-not $pr) { $out; 'PUBLISH_FAIL: no PR number found (rerun Submit once; if a
 "PR=https://github.com/$Repo/pull/$pr"
 # v19g: wait until the PR head is the commit just pushed; round 5 w02's inline wait read the previous head's RED (stale) and the
 # agent then fought a NO_CHANGE publish.
-$want = ($out | Select-String 'HEAD=(\w+)').Matches | ForEach-Object { $_.Groups[1].Value } | Select-Object -First 1
+# v26g: NO_CHANGE has no HEAD= line; ($null).Matches piped a $null into ForEach -> "Cannot index into a null array." (round 12 s03)
+$want = $out | Select-String 'HEAD=(\w+)' | ForEach-Object { $_.Matches[0].Groups[1].Value } | Select-Object -First 1
 if ($want) { foreach ($i in 1..12) { if ((gh api "repos/$Repo/pulls/$pr" --jq .head.sha) -eq $want) { break }; Start-Sleep 5 } }
 # v18g: wait inline for what is left of an 8-minute budget (Submit itself takes ~1 min), so Submit + first wait is one turn
 # instead of two (round 4: wait turns replayed 13.5% of input). v14g's inline wait broke because it used the full 9 min on top.
