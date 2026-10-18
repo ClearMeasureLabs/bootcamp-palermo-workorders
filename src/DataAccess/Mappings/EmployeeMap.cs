@@ -1,5 +1,6 @@
 using ClearMeasure.Bootcamp.Core.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Mappings;
 
@@ -19,6 +20,7 @@ public class EmployeeMap : IEntityFrameworkMapping
             entity.Property(e => e.UserName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.MiddleName).HasMaxLength(100);
+            MapDepartment(entity);
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(120);
             entity.Property(e => e.EmailAddress).IsRequired().HasMaxLength(255);
             entity.Property(e => e.PreferredLanguage).IsRequired().HasMaxLength(10).HasDefaultValue("en-US");
@@ -36,5 +38,10 @@ public class EmployeeMap : IEntityFrameworkMapping
                         j.ToTable("EmployeeRoles", "dbo");
                     });
         });
+    }
+
+    private static void MapDepartment(EntityTypeBuilder<Employee> entity)
+    {
+        entity.Property(e => e.Department).HasMaxLength(100);
     }
 }
