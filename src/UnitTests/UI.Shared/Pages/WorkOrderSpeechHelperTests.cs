@@ -49,6 +49,33 @@ public class WorkOrderSpeechHelperTests
         utterance.Voice.ShouldBeNull();
     }
 
+    [Test]
+    public void CreateUtterance_ShouldPreferExactLangMatch_OverPrefix()
+    {
+        var esEs = CreateVoice("es-ES");
+        var esMx = CreateVoice("es-MX");
+
+        var utterance = WorkOrderSpeechHelper.CreateUtterance(
+            "Hola",
+            "es-MX",
+            [esEs, esMx]);
+
+        utterance.Voice.ShouldBe(esMx);
+    }
+
+    [Test]
+    public void CreateUtterance_ShouldFallBackToPrefix_WhenExactLangMissing()
+    {
+        var esEs = CreateVoice("es-ES");
+
+        var utterance = WorkOrderSpeechHelper.CreateUtterance(
+            "Hola",
+            "es-MX",
+            [esEs]);
+
+        utterance.Voice.ShouldBe(esEs);
+    }
+
     private static SpeechSynthesisVoice CreateVoice(string lang)
     {
         var voice = (SpeechSynthesisVoice)RuntimeHelpers.GetUninitializedObject(typeof(SpeechSynthesisVoice));
