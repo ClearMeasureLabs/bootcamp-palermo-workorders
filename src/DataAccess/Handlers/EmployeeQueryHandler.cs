@@ -8,6 +8,7 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
 public class EmployeeQueryHandler(DataContext context)
     : IRequestHandler<EmployeeByUserNameQuery, Employee>,
+        IRequestHandler<EmployeeByEmailQuery, Employee?>,
         IRequestHandler<EmployeeGetAllQuery, Employee[]>
 {
     public async Task<Employee> Handle(EmployeeByUserNameQuery request,
@@ -17,6 +18,15 @@ public class EmployeeQueryHandler(DataContext context)
             .Include("Roles")
             .SingleAsync(emp => emp.UserName == request.Username, cancellationToken);
         return employee;
+    }
+
+    public async Task<Employee?> Handle(EmployeeByEmailQuery request,
+        CancellationToken cancellationToken = default)
+    {
+        var email = request.Email.ToLower();
+        return await context.Set<Employee>()
+            .Include("Roles")
+            .SingleOrDefaultAsync(emp => emp.EmailAddress.ToLower() == email, cancellationToken);
     }
 
     public async Task<Employee[]> Handle(EmployeeGetAllQuery request, CancellationToken cancellationToken = default)

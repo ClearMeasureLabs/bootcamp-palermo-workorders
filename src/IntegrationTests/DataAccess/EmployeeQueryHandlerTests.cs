@@ -34,6 +34,45 @@ public class EmployeeQueryHandlerTests
     }
 
     [Test]
+    public async Task ShouldFindEmployeeByEmail_CaseInsensitive()
+    {
+        new DatabaseTests().Clean();
+
+        var one = new Employee("1", "first1", "last1", "User@Example.COM");
+        var two = new Employee("2", "first2", "last2", "other@example.com");
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(one);
+            context.Add(two);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+        var employee = await handler.Handle(new EmployeeByEmailQuery("user@example.com"));
+        employee.ShouldNotBeNull();
+        employee.Id.ShouldBe(one.Id);
+    }
+
+    [Test]
+    public async Task ShouldReturnNull_WhenEmployeeEmailNotFound()
+    {
+        new DatabaseTests().Clean();
+
+        var one = new Employee("1", "first1", "last1", "email1@example.com");
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(one);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new EmployeeQueryHandler(dataContext);
+        var employee = await handler.Handle(new EmployeeByEmailQuery("missing@example.com"));
+        employee.ShouldBeNull();
+    }
+
+    [Test]
     public async Task ShouldGetAllEmployees()
     {
         new DatabaseTests().Clean();
