@@ -37,6 +37,26 @@ public class McpEmployeeToolTests
     }
 
     [Test]
+    public async Task ShouldListEmployees_FilteredByNameContains()
+    {
+        var emp1 = new Employee("jdoe", "John", "Doe", "john@test.com");
+        var emp2 = new Employee("jsmith", "Jane", "Smith", "jane@test.com");
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp1);
+        context.Add(emp2);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus, "doe");
+
+        result.ShouldContain("jdoe");
+        result.ShouldContain("John");
+        result.ShouldNotContain("jsmith");
+        result.ShouldNotContain("Jane");
+    }
+
+    [Test]
     public async Task ShouldReturnEmptyListWhenNoEmployees()
     {
         var bus = TestHost.GetRequiredService<IBus>();
