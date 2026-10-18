@@ -18,6 +18,9 @@
     public void Handle(WorkOrderChangedEvent theEvent)
     {
         var order = theEvent.Result.WorkOrder;
+        if (string.IsNullOrEmpty(order.Number))
+            return;
+
         WorkOrderLastChanged = order;
         InvokeAsync(StateHasChanged);
     }
