@@ -33,6 +33,16 @@ public static class ChurchTimeZone
         return today.AddDays(daysUntilSaturday);
     }
 
+    /// <summary>
+    /// Returns the coming Sunday in America/Chicago (today when today is Sunday).
+    /// </summary>
+    public static DateOnly ComingSunday(TimeProvider timeProvider)
+    {
+        var today = Today(timeProvider);
+        var daysUntilSunday = ((int)DayOfWeek.Sunday - (int)today.DayOfWeek + 7) % 7;
+        return today.AddDays(daysUntilSunday);
+    }
+
     private static TimeZoneInfo ResolveChicago() =>
         FindTimeZone(IanaId)
         ?? FindTimeZone(WindowsId)
