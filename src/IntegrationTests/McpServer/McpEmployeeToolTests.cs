@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
@@ -85,5 +86,24 @@ public class McpEmployeeToolTests
         var result = await EmployeeTools.GetEmployee(bus, "nonexistent");
 
         result.ShouldContain("No employee found");
+    }
+
+    [Test]
+    public async Task ShouldCapEmployeesWhenMaxResultsProvided()
+    {
+        var emp1 = new Employee("user1", "John", "Doe", "john@test.com");
+        var emp2 = new Employee("user2", "Jane", "Smith", "jane@test.com");
+        var emp3 = new Employee("user3", "Bob", "Jones", "bob@test.com");
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp1);
+        context.Add(emp2);
+        context.Add(emp3);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus, maxResults: 2);
+
+        JsonSerializer.Deserialize<JsonElement[]>(result)!.Length.ShouldBe(2);
     }
 }

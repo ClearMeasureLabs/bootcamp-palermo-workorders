@@ -11,10 +11,13 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 public class EmployeeTools
 {
     [McpServerTool(Name = "list-employees"), Description("Lists all employees in the system with their username, name, email, and roles.")]
-    public static async Task<string> ListEmployees(IBus bus)
+    public static async Task<string> ListEmployees(
+        IBus bus,
+        [Description("Optional maximum number of employees to return")] int? maxResults = null)
     {
         var employees = await bus.Send(new EmployeeGetAllQuery());
-        return JsonSerializer.Serialize(employees.Select(FormatEmployee).ToArray(),
+        var limited = maxResults is > 0 ? employees.Take(maxResults.Value) : employees;
+        return JsonSerializer.Serialize(limited.Select(FormatEmployee).ToArray(),
             new JsonSerializerOptions { WriteIndented = true });
     }
 

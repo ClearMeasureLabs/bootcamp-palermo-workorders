@@ -6,19 +6,10 @@ namespace ClearMeasure.Bootcamp.Core.Model;
 
 public class WorkOrder : EntityBase<WorkOrder>
 {
-    /// <summary>
-    /// Maximum length of <see cref="RoomNumber"/> accepted by persistence and the work-order form.
-    /// </summary>
     public const int RoomNumberMaxLength = 900;
 
-    /// <summary>
-    /// Maximum length of <see cref="Description"/> accepted by persistence and the work-order form.
-    /// </summary>
     public const int DescriptionMaxLength = 4000;
 
-    /// <summary>
-    /// Maximum length of <see cref="Instructions"/> accepted by persistence and the work-order form.
-    /// </summary>
     public const int InstructionsMaxLength = 4000;
 
     public string? Title { get; set; } = "";
@@ -54,9 +45,6 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public DateTime? CompletedDate { get; set; }
 
-    /// <summary>
-    /// Optional calendar due date (date-only, no time). Null when unset.
-    /// </summary>
     public DateOnly? DueDate { get; set; }
 
     private string GetTruncatedString(string? value)
@@ -102,17 +90,9 @@ public class WorkOrder : EntityBase<WorkOrder>
         return Status == WorkOrderStatus.Draft;
     }
 
-    /// <summary>
-    /// Returns the urgency classification for this work order's due date relative to today
-    /// in America/Chicago.
-    /// </summary>
     public DueDateUrgency GetDueDateUrgency() =>
         DueDateUrgencyCalculator.Calculate(this, TimeProvider.System);
 
-    /// <summary>
-    /// Returns <c>true</c> when this work order's due date has passed and the work order
-    /// is still open.
-    /// </summary>
     public bool IsOverdue() => GetDueDateUrgency() == DueDateUrgency.Overdue;
 
     public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();

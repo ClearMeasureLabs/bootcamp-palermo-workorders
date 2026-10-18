@@ -11,10 +11,8 @@ using System.Text.Json;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.DataAccess.Handlers;
 
-/// <summary>
-/// #9118 contracts: Cancel on an existing Assigned row must clear assignee (the live defect);
-/// Save→Assign Update path already wrote ASD correctly and must not regress under load-and-apply.
-/// </summary>
+// #9118 contracts: Cancel on an existing Assigned row must clear assignee (the live defect);
+// Save→Assign Update path already wrote ASD correctly and must not regress under load-and-apply.
 public class StateCommandHandlerSaveThenAssignPersistenceTests : IntegratedTestBase
 {
     [Test]

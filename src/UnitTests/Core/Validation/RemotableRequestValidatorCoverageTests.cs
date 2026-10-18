@@ -6,11 +6,6 @@ using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Validation;
 
-/// <summary>
-/// Every <see cref="IRemotableRequest"/> in Core travels through the Blazor WASM single API, whose
-/// validation middleware rejects any payload type without a registered <see cref="IValidator{T}"/>
-/// with 400 Bad Request. This guard fails the build when a new remotable request ships without one.
-/// </summary>
 [TestFixture]
 public class RemotableRequestValidatorCoverageTests
 {
