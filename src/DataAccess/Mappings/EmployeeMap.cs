@@ -15,15 +15,14 @@ public class EmployeeMap : IEntityFrameworkMapping
                 .ValueGeneratedOnAdd()
                 .HasDefaultValue(Guid.Empty);
 
-            // Configure properties
             entity.Property(e => e.UserName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.MiddleName).HasMaxLength(100);
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(120);
             entity.Property(e => e.EmailAddress).IsRequired().HasMaxLength(255);
             entity.Property(e => e.PreferredLanguage).IsRequired().HasMaxLength(10).HasDefaultValue("en-US");
+            entity.Property(e => e.Department).HasMaxLength(50);
 
-            // Configure Roles collection
             entity.HasMany(e => e.Roles)
                 .WithMany()
                 .UsingEntity<Dictionary<string, object>>(

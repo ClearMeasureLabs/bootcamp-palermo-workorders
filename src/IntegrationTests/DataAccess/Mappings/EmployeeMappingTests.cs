@@ -116,4 +116,24 @@ public class EmployeeMappingTests
             rehydrated.MiddleName.ShouldBe(longMiddleName);
         }
     }
+
+    [Test]
+    public void ShouldPersistDepartment()
+    {
+        new DatabaseTests().Clean();
+
+        var emp = new Employee("userdept", "First", "Last", "emaildept@example.com") { Department = "Facilities" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            rehydrated.Department.ShouldBe("Facilities");
+        }
+    }
 }

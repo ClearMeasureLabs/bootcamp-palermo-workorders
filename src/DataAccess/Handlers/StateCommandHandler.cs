@@ -8,11 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-/// <summary>
-/// Persists work-order state commands. Existing rows are loaded and updated in place so
-/// EF compares against database originals. Clear+Attach+Update left shadow FKs such as
-/// AssigneeId unmodified when Cancel nulled the navigation on a detached graph (#9118).
-/// </summary>
 public class StateCommandHandler(
     DbContext dbContext,
     TimeProvider time,

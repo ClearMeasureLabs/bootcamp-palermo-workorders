@@ -27,14 +27,14 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string LastName { get; set; }
 
-    /// <summary>
-    /// Optional middle name. When null or blank it is omitted from <see cref="GetFullName"/>.
-    /// </summary>
     public string? MiddleName { get; set; }
 
     public string EmailAddress { get; set; }
 
     public string PreferredLanguage { get; set; } = "en-US";
+
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global
+    public string? Department { get; set; }
 
     public ISet<Role> Roles { get; init; } = new HashSet<Role>();
 
@@ -63,9 +63,6 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public bool CanCreateWorkOrder() => Roles.Any(role => role.CanCreateWorkOrder);
 
-    /// <summary>
-    /// Returns whether this employee has at least one role with permission to fulfill work orders.
-    /// </summary>
     public bool CanFulfillWorkOrder() => Roles.Any(role => role.CanFulfillWorkOrder);
 
     public void AddRole(Role role)

@@ -87,9 +87,6 @@ public class ToolsDueDateCheckControllerTests
         };
 }
 
-/// <summary>
-/// Stub <see cref="TimeProvider"/> that returns a fixed UTC instant for deterministic tests.
-/// </summary>
 file sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
 {
     public override DateTimeOffset GetUtcNow() => utcNow;
