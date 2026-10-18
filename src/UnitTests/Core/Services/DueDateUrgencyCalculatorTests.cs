@@ -93,7 +93,7 @@ public class DueDateUrgencyCalculatorTests
         var today = ChurchTimeZone.Today(clock);
 
         var futureUrgency = DueDateUrgencyCalculator.Calculate(
-            today.AddDays(1),
+            today.AddDays(2),
             WorkOrderStatus.Draft,
             clock);
         var todayUrgency = DueDateUrgencyCalculator.Calculate(
@@ -147,6 +147,41 @@ public class DueDateUrgencyCalculatorTests
         // 2026-08-28 is a Friday
         var clock = ChicagoNoonOn(2026, 8, 28);
         ChurchTimeZone.ComingSaturday(clock).ShouldBe(new DateOnly(2026, 8, 29));
+    }
+
+    [Test]
+    public void Calculate_WhenOpenAndDueTomorrow_ReturnsDueTomorrow()
+    {
+        var clock = ChicagoNoonOn(2026, 8, 29);
+        var workOrder = new WorkOrder
+        {
+            Status = WorkOrderStatus.Assigned,
+            DueDate = ChurchTimeZone.Today(clock).AddDays(1)
+        };
+
+        var urgency = DueDateUrgencyCalculator.Calculate(workOrder, clock);
+
+        urgency.ShouldBe(DueDateUrgency.DueTomorrow);
+        DueDateUrgencyCalculator.CssClass(urgency).ShouldBe("due-date-tomorrow");
+        DueDateUrgencyCalculator.ScreenReaderText(urgency).ShouldBe("Due tomorrow");
+    }
+
+    [TestCase("Complete")]
+    [TestCase("Cancelled")]
+    public void Calculate_WhenClosedAndDueTomorrow_ReturnsNone(string statusKey)
+    {
+        var clock = ChicagoNoonOn(2026, 8, 29);
+        var workOrder = new WorkOrder
+        {
+            Status = WorkOrderStatus.FromKey(statusKey),
+            DueDate = ChurchTimeZone.Today(clock).AddDays(1)
+        };
+
+        var urgency = DueDateUrgencyCalculator.Calculate(workOrder, clock);
+
+        urgency.ShouldBe(DueDateUrgency.None);
+        DueDateUrgencyCalculator.CssClass(urgency).ShouldBe(string.Empty);
+        DueDateUrgencyCalculator.ScreenReaderText(urgency).ShouldBeNull();
     }
 
     private static FixedTimeProvider ChicagoNoonOn(int year, int month, int day)
