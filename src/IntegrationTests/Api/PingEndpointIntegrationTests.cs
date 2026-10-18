@@ -43,8 +43,9 @@ public class PingEndpointIntegrationTests
         var response = await _client!.GetAsync("/api/ping");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        response.Headers.TryGetValues(ContentTypeOptionsMiddleware.HeaderName, out var values).ShouldBeTrue();
-        values!.Single().ShouldBe(ContentTypeOptionsMiddleware.HeaderValue);
+        response.Headers.GetValues(ContentTypeOptionsMiddleware.HeaderName)
+            .Single()
+            .ShouldBe(ContentTypeOptionsMiddleware.HeaderValue);
     }
 
     [Test]

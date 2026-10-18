@@ -8,6 +8,6 @@ public static class ContentTypeOptionsMiddlewareExtensions
     /// <summary>
     /// Adds middleware that sets <c>X-Content-Type-Options: nosniff</c> when absent.
     /// </summary>
-    public static IApplicationBuilder UseContentTypeOptions(this IApplicationBuilder app) =>
+    public static void UseContentTypeOptions(this IApplicationBuilder app) =>
         app.UseMiddleware<ContentTypeOptionsMiddleware>();
 }
