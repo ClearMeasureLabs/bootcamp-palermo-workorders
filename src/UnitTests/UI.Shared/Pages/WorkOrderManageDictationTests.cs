@@ -19,6 +19,42 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageDictationTests
 {
     [Test]
+    public async Task ShouldShowInstructionsHelpTextLinkedByAriaDescribedBy()
+    {
+        await using var ctx = CreateTestContext();
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            var help = component.Find($"[data-testid='{WorkOrderManage.Elements.InstructionsHelp}']");
+            help.TextContent.ShouldContain("Steps or access notes for whoever does the work");
+            help.GetAttribute("id").ShouldBe("instructions-help");
+
+            var field = component.Find($"[data-testid='{WorkOrderManage.Elements.Instructions}']");
+            field.GetAttribute("aria-describedby").ShouldBe("instructions-help");
+        });
+    }
+
+    [Test]
+    public async Task ShouldShowRoomHelpTextLinkedByAriaDescribedBy()
+    {
+        await using var ctx = CreateTestContext();
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            var help = component.Find($"[data-testid='{WorkOrderManage.Elements.RoomHelp}']");
+            help.TextContent.ShouldContain("Building and room, e.g. Fellowship Hall 2");
+            help.GetAttribute("id").ShouldBe("room-help");
+
+            var field = component.Find($"[data-testid='{WorkOrderManage.Elements.RoomNumber}']");
+            field.GetAttribute("aria-describedby").ShouldBe("room-help");
+        });
+    }
+
+    [Test]
     public async Task ShouldRenderDictateTitleButton()
     {
         await using var ctx = CreateTestContext();

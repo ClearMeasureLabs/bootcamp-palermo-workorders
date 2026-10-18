@@ -74,14 +74,16 @@
                 <div class="form-group">
                     <label for="Instructions" class="form-label">Instructions:</label>
                     <div>
-                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" maxlength="@WorkOrder.InstructionsMaxLength" disabled="@Model.IsReadOnly"/>
+                        <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" maxlength="@WorkOrder.InstructionsMaxLength" disabled="@Model.IsReadOnly" aria-describedby="instructions-help"/>
+                        <small id="instructions-help" data-testid="@Elements.InstructionsHelp" class="form-text text-muted">Steps or access notes for whoever does the work</small>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="RoomNumber" class="form-label">Room:</label>
                     <div>
-                        <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
+                        <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly" aria-describedby="room-help"/>
+                        <small id="room-help" data-testid="@Elements.RoomHelp" class="form-text text-muted">Building and room, e.g. Fellowship Hall 2</small>
                     </div>
                 </div>
             </div>
@@ -210,6 +212,8 @@
         DictateDescription,
         DescriptionCharCount,
         RequiredFieldsNote,
-        ManageHeadingTooltip
+        ManageHeadingTooltip,
+        InstructionsHelp,
+        RoomHelp
     }
 }
