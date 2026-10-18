@@ -50,4 +50,41 @@ public class CounterPageTests
         var button = component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']");
         button.GetAttribute("title").ShouldBe("Increase the count by one");
     }
+
+    [Test]
+    public async Task Should_HideGoalReached_WhenCountIsBelowTen()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+        var increment = component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']");
+        for (var i = 0; i < 9; i++)
+        {
+            await increment.ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+        }
+
+        Should.Throw<Bunit.ElementNotFoundException>(() =>
+            component.Find($"[data-testid='{nameof(Counter.Elements.GoalReached)}']"));
+    }
+
+    [Test]
+    public async Task Should_ShowGoalReached_WhenCountIsTen()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+        var increment = component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']");
+        for (var i = 0; i < 10; i++)
+        {
+            await increment.ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+        }
+
+        component.Find($"[data-testid='{nameof(Counter.Elements.GoalReached)}']")
+            .TextContent
+            .ShouldBe("Goal reached!");
+    }
 }

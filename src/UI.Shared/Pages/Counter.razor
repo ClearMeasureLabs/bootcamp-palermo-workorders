@@ -25,6 +25,11 @@
                     🔄 Reset Counter
                 </button>
             </div>
+
+            @if (_currentCount >= 10)
+            {
+                <div data-testid="@Elements.GoalReached" class="counter-goal-reached">Goal reached!</div>
+            }
         </div>
 
         <div class="counter-info">
@@ -49,7 +54,8 @@
         IncrementButton,
         ResetButton,
         CounterSubtitle,
-        CounterHint
+        CounterHint,
+        GoalReached
     }
 
     private int _currentCount;
