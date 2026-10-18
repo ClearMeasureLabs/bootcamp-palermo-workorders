@@ -37,6 +37,10 @@ foreach ($f in $changed.Keys) {
   if ($f -match 'Options\.cs$') { for ($i = 0; $i -lt $src.Count; $i++) {
     if ($set.Contains($i + 1) -and $src[$i] -match 'public .*\{ get; set; \}' -and ($i -eq 0 -or $src[$i - 1] -notmatch 'ReSharper disable')) {
       "QODANA_RISK ${f}:$($i + 1) : add // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global above it" } } }
+  # v23g: new settable entity property only set in initializers -> Qodana PropertyCanBeMadeInitOnly.Global (round 9 w07 CI RED)
+  if ($f -match 'Core[/\\]Model[/\\]' -and -not ($src -match 'ReSharper disable PropertyCanBeMadeInitOnly')) { for ($i = 0; $i -lt $src.Count; $i++) {
+    if ($set.Contains($i + 1) -and $src[$i] -match 'public .*\{ get; set; \}' -and ($i -eq 0 -or $src[$i - 1] -notmatch 'ReSharper disable')) {
+      "QODANA_RISK ${f}:$($i + 1) : add // ReSharper disable once PropertyCanBeMadeInitOnly.Global above it (EF needs the setter)" } } }
   $baseCc = @{}; $baseSrc = @(git show "${base}:$f" 2>$null)
   foreach ($m in Get-MethodCc $baseSrc) { if (-not $baseCc.ContainsKey($m.Name) -or $m.Cc -gt $baseCc[$m.Name]) { $baseCc[$m.Name] = $m.Cc } }
   foreach ($m in Get-MethodCc $src) {

@@ -29,7 +29,7 @@ if ($Issue -and -not $Find) {
   }
   $ids = @([regex]::Matches($keep, '\b[A-Z][a-z]+[A-Z]\w*\b') | ForEach-Object { $_.Value }) +
          @([regex]::Matches($keep, '`([a-z]+(-[a-z]+)+)`') | ForEach-Object { $_.Groups[1].Value }) | Where-Object { $_ -notmatch '^(WorkOrder|Employee|DbUp|SQLite|SqlServer)$' } | Sort-Object -Unique
-  $stop = 'with|that|this|from|when|test|tests|unit|integration|have|then|each|only|work|order|orders|true|false|returns|null|empty|value|text|page|change|criteria|outcome|acceptance|works|given|server|sqlite|existing|optional|parameter|description|case|insensitively|unchanged|current|behavior|omitted|called|call|which|default|added'
+  $stop = 'with|that|this|from|when|test|tests|unit|integration|have|then|each|only|work|order|orders|true|false|returns|null|empty|value|text|page|change|criteria|outcome|acceptance|works|given|server|sqlite|existing|optional|parameter|description|case|insensitively|unchanged|current|behavior|omitted|called|call|which|default|added|store|number|nothing|uses|yet|new|name|names|gain|gains|field|fields|response|english|example'
   $kw = @([regex]::Matches($keep.ToLower(), '[a-z]{4,}') | ForEach-Object { $_.Value.TrimEnd('s') } | Where-Object { $_ -notmatch "^($stop)$" } | Sort-Object -Unique)
   $cand = @(rg --files src -g '*.cs' -g '*.razor' 2>$null | Where-Object { $_ -notmatch '[/\\](bin|obj)[/\\]' } | ForEach-Object {
     $n = [IO.Path]::GetFileNameWithoutExtension($_).ToLower(); $hit = @($kw | Where-Object { $n.Contains($_) }).Count
@@ -39,6 +39,8 @@ if ($Issue -and -not $Find) {
   # v20g: 'the Counter page' -> the Razor page file name
   $ids = @([regex]::Matches($keep, '\b([A-Z]\w+) page\b') | ForEach-Object { $_.Groups[1].Value } | Where-Object { Test-Path "src/UI.Shared/Pages/$_.razor" }) + @($ids)
   if (@($ids).Count -eq 0 -and $cand) { $ids = @($ids) + @($cand | Where-Object { $_ -notmatch 'Tests' } | Select-Object -First 3) | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) } }
+  # v23g: a backticked bare type (`Employee`) -> that class (round 9 w07 got junk look-alikes instead)
+  $ids = @([regex]::Matches($keep, '`([A-Z][a-z]\w*)`') | ForEach-Object { 'class ' + $_.Groups[1].Value + '\b' }) + @($ids)
   $ids = @([regex]::Matches($keep, '`([A-Z]\w+)\.[A-Z]\w*') | ForEach-Object { 'class ' + $_.Groups[1].Value + '\b' }) + @($ids)  # Type.NewMember -> the type
   $Find = (@($ids) | Select-Object -Unique -First 6) -join '|'
   if (-not $Find) { 'NO_TYPES: one more call with -Find ExactTypeName'; exit 0 }
