@@ -21,4 +21,20 @@ public class RoleTests
         Assert.That(role2.CanCreateWorkOrder, Is.True);
         Assert.That(role2.CanFulfillWorkOrder, Is.True);
     }
+
+    [Test]
+    public void ToString_named_role_returns_Name()
+    {
+        var role = new Role("Admin", true, false);
+
+        Assert.That(role.ToString(), Is.EqualTo("Admin"));
+    }
+
+    [Test]
+    public void ToString_default_role_returns_empty()
+    {
+        var role = new Role();
+
+        Assert.That(role.ToString(), Is.EqualTo(string.Empty));
+    }
 }
