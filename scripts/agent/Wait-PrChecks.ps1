@@ -20,6 +20,7 @@ function Get-Runs {
 }
 while ($true) {
   $runs = @(Get-Runs)
+  $runs = @($runs | Where-Object { $_.Name -notmatch '(?i)copilot' })  # v35g: never wait on or fail for the Copilot reviewer
   $pending = @($runs | Where-Object Status -ne 'completed')
   # v10: a check that never leaves 'queued' (phase 4 rep 1 g04: QDNETC queued >1 h after every other check finished) is
   # reported as IGNORED_QUEUED once nothing else is running and it has been queued >= 15 min, instead of PENDING forever.
@@ -27,7 +28,7 @@ while ($true) {
     $stuck = @($pending | Where-Object { $_.Start -and ((Get-Date).ToUniversalTime() - ([datetime]$_.Start).ToUniversalTime()).TotalMinutes -ge 15 })
     if ($stuck.Count -eq $pending.Count) { $stuck | ForEach-Object { "IGNORED_QUEUED: $($_.Name)" }; $pending = @() }
   }
-  $bad = @($runs | Where-Object { $_.Status -eq 'completed' -and $_.Conclusion -notin 'success', 'skipped', 'neutral' -and $_.Name -ne 'Build result' })
+  $bad = @($runs | Where-Object { $_.Status -eq 'completed' -and $_.Conclusion -notin 'success', 'skipped', 'neutral' -and $_.Name -ne 'Build result' -and $_.Name -notmatch '(?i)copilot' })  # v35g: Copilot review bot (quota failure) is not CI (round 21: 8/8 false RED)
   # Flake triage: rerun once per run id.
   foreach ($b in $bad) {
     if ($b.Url -notmatch '/runs/(\d+)') { continue }; $runId = $Matches[1]

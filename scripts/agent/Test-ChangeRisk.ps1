@@ -68,6 +68,13 @@ foreach ($f in $changed.Keys) {
   foreach ($pm in [regex]::Matches(($src -join "`n"), 'IEnumerable<[\w<>, ?]+>\s+(\w+)\s*[,)]')) { $pn = $pm.Groups[1].Value
     $uses = @(for ($i = 0; $i -lt $src.Count; $i++) { if ($src[$i] -match "\b$pn\.(First|FirstOrDefault|Any|All|Where|Count|Select|Single|Last|ToList|ToArray|OrderBy)\w*\(") { $i + 1 } })
     if ($uses.Count -ge 2 -and ($uses | Where-Object { $set.Contains($_) })) { "QODANA_RISK ${f}:$($uses[0]) : '$pn' (IEnumerable) is enumerated $($uses.Count) times; materialize once (var list = $pn.ToList();) or take IReadOnlyList (PossibleMultipleEnumeration)" } }
+  # v35g: round 21 u04 CI RED UseObjectOrCollectionInitializer: `x.Prop = ...` / `x.Dict["k"] = ...` right after `var x = new T...;`
+  for ($i = 1; $i -lt $src.Count; $i++) {
+    if (-not $set.Contains($i + 1) -or $src[$i] -notmatch '^\s*(\w+)\.\w+(\[[^\]]+\])?\s*=[^=]') { continue }; $vn = $Matches[1]
+    $k = $i - 1; while ($k -gt 0 -and -not $src[$k].Trim()) { $k-- }
+    if ($src[$k] -notmatch ';\s*$') { continue }
+    $j = $k; while ($j -gt 0 -and ($k - $j) -lt 40 -and $src[$j] -notmatch "^\s*var\s+$vn\s*=\s*new\b" -and ($j -eq $k -or $src[$j] -notmatch ';\s*$')) { $j-- }
+    if ($src[$j] -match "^\s*var\s+$vn\s*=\s*new\b" -and ($j -eq $k -or $src[$k] -match "^\s*\}\s*;")) { "QODANA_RISK ${f}:$($i + 1) : move into $vn's object initializer (Prop = v / Dict = { [`"k`"] = v }) instead of assigning after construction (UseObjectOrCollectionInitializer): $($src[$i].Trim())" } }
   if ($f -match 'Options\.cs$') { for ($i = 0; $i -lt $src.Count; $i++) {
     if ($set.Contains($i + 1) -and $src[$i] -match 'public .*\{ get; set; \}' -and ($i -eq 0 -or $src[$i - 1] -notmatch 'PropertyCanBeMadeInitOnly')) {
       "QODANA_RISK ${f}:$($i + 1) : put // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global, PropertyCanBeMadeInitOnly.Global -- required for IOptions<T> configuration binding on the line above (v31g: round 17 q02 CI RED PropertyCanBeMadeInitOnly.Global)" } } }

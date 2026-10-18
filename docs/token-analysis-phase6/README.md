@@ -25,3 +25,4 @@ See PLAN.md and round-N.md. Estimates: bytes/4 via scripts/agent/measure_transcr
 | 18 | v31g | r01-r08 (-v31), unseen kinds | 8/8 | 315k | 39.4k (median 32.8k) | 5.56k |
 | 19 | v32g | s01-s08 (-v32), unseen kinds | 8/8 | 2,081k | 260.1k (median 49.2k; 53.3k avg w/o s08 gRPC hand-edit) | 12.33k |
 | 20 (session size) | v33g | t01-t08 x 3 arms (A 1/session, B 4/session, C 8/session) | 24/24 | A 276k / B 708k / C 1,326k | A 34.5k, B 88.5k, C 165.7k per item | A 3.88k / B 2.34k / C 1.60k |
+| 21 | v34g | u01-u08 (-v34), unseen kinds, 1 item/session | 8/8 real GREEN (8/8 reported false RED) | 416k | 52.0k (median 42.1k; 43.6k avg w/o the 67.5k false-RED retries) | 1.02k |
