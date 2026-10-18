@@ -22,7 +22,7 @@ internal static class DatedWorkOrderScheduling
         {
             var parsed = TryParseDueDateList(dueDates);
             return parsed.Dates.Count > CreateDatedWorkOrdersCommand.MaximumBatchSize
-                ? ([], $"A dated work-order batch cannot exceed {CreateDatedWorkOrdersCommand.MaximumBatchSize} dates.")
+                ? ([], $"A dated work-order batch cannot exceed {CreateDatedWorkOrdersCommand.MaximumBatchSize} dates (got {parsed.Dates.Count}).")
                 : parsed;
         }
 
