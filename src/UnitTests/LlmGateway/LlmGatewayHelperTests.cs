@@ -137,4 +137,16 @@ public class TranslationGuardTests
     {
         TranslationGuard.ShouldReturnOriginal("hello", "bad code").ShouldBeTrue();
     }
+
+    [Test]
+    public void ShouldReturnOriginal_WhenTextHasNoLetters()
+    {
+        TranslationGuard.ShouldReturnOriginal("12:30 - 4", "fr").ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldReturnOriginal_WhenTextHasLettersAndDigits_WithNonEnglish()
+    {
+        TranslationGuard.ShouldReturnOriginal("Hello 1", "fr").ShouldBeFalse();
+    }
 }

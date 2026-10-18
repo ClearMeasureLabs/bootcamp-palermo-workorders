@@ -10,5 +10,6 @@ internal static partial class TranslationGuard
     public static bool ShouldReturnOriginal(string? text, string targetLanguageCode) =>
         string.IsNullOrEmpty(text)
         || targetLanguageCode == "en-US"
-        || !Bcp47Regex().IsMatch(targetLanguageCode);
+        || !Bcp47Regex().IsMatch(targetLanguageCode)
+        || text.All(c => !char.IsLetter(c));
 }
