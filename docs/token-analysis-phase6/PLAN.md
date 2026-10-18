@@ -92,3 +92,18 @@ Round 2 launch prompt (v15g; Submit no longer waits): replace the round-1 prompt
 | u08 Health Check tooltip | #10309 | cursor/token-exp-p6-u08-k4 |
 
 Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-uNN-k4. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Use `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-uNN-k4`, then run the printed WAIT_CMD until CHECKS=GREEN or CHECKS=RED. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED PR=<url>`.
+
+## Round 5 (v18g, e5fb4d33)
+All targets were checked against master and do not exist yet.
+| Item | Issue | Branch |
+|---|---|---|
+| w01 WorkOrder.HasRoomNumber | #10317 | cursor/token-exp-p6-w01-k5 |
+| w02 Employee.GetLastFirstName | #10318 | cursor/token-exp-p6-w02-k5 |
+| w03 forecast count caption | #10319 | cursor/token-exp-p6-w03-k5 |
+| w04 list-work-orders titleContains (MCP, retests u07 path) | #10320 | cursor/token-exp-p6-w04-k5 |
+| w05 EmployeeCountQuery | #10321 | cursor/token-exp-p6-w05-k5 |
+| w06 hash uppercase flag | #10322 | cursor/token-exp-p6-w06-k5 |
+| w07 Ping HEAD | #10323 | cursor/token-exp-p6-w07-k5 |
+| w08 Role.HasFullAccess | #10324 | cursor/token-exp-p6-w08-k5 |
+
+Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-wNN-k5. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-wNN-k5`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
