@@ -78,3 +78,17 @@ Round 2 launch prompt (v15g; Submit no longer waits): replace the round-1 prompt
 | t08 | #10293 | UI bug from symptom (tooltip wording) |
 
 > Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-tNN-k3. Do only what it says. Use `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-tNN-k3`, then run the printed WAIT_CMD until CHECKS=GREEN or CHECKS=RED. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED PR=<url>`.
+
+## Round 4 (v17g, 9e1be46f)
+| Item | Issue | Branch |
+|---|---|---|
+| u01 HasInstructions | #10302 | cursor/token-exp-p6-u01-k4 |
+| u02 HasEmailAddress | #10303 | cursor/token-exp-p6-u02-k4 |
+| u03 Counter Reset | #10304 | cursor/token-exp-p6-u03-k4 |
+| u04 longest word | #10305 | cursor/token-exp-p6-u04-k4 |
+| u05 count by status | #10306 | cursor/token-exp-p6-u05-k4 |
+| u06 Role name 100 | #10307 | cursor/token-exp-p6-u06-k4 |
+| u07 list-work-orders status | #10308 | cursor/token-exp-p6-u07-k4 |
+| u08 Health Check tooltip | #10309 | cursor/token-exp-p6-u08-k4 |
+
+Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-uNN-k4. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Use `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-uNN-k4`, then run the printed WAIT_CMD until CHECKS=GREEN or CHECKS=RED. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED PR=<url>`.
