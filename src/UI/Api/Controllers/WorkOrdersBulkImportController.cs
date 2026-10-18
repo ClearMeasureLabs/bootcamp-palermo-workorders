@@ -6,6 +6,7 @@ using ClearMeasure.Bootcamp.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
@@ -19,7 +20,8 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public sealed class WorkOrdersBulkImportController(
     IBus bus,
-    IWorkOrderNumberGenerator numberGenerator) : ControllerBase
+    IWorkOrderNumberGenerator numberGenerator,
+    ILogger<WorkOrdersBulkImportController> logger) : ControllerBase
 {
     /// <summary>
     /// Imports work orders from a CSV file. Form field name: <c>file</c>.
@@ -54,6 +56,7 @@ public sealed class WorkOrdersBulkImportController(
 
         var processor = new WorkOrderBulkImportProcessor(bus, numberGenerator);
         var response = await processor.ImportAsync(parseResult.Rows, cancellationToken);
+        logger.LogInformation("Imported {Count} work orders", response.CreatedCount);
         return Ok(response);
     }
 }

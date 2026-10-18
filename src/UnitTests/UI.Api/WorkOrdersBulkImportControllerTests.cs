@@ -8,6 +8,8 @@ using ClearMeasure.Bootcamp.UI.Api.Controllers;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
@@ -174,10 +176,46 @@ public class WorkOrdersBulkImportControllerTests
         WorkOrderBulkImportProcessor.IsCsvFile(CreateFormFile("x", "a.txt", "text/plain")).ShouldBeFalse();
     }
 
+    [Test]
+    public async Task ShouldLogImportedCount_WhenRowsImported()
+    {
+        var creator = new Employee("u1", "A", "B", "a@b.c");
+        var bus = new StubBus { Employee = creator };
+        var logger = new CapturingLogger<WorkOrdersBulkImportController>();
+        var controller = CreateController(bus, new StubNumberGenerator { Next = "WO-001" }, logger);
+
+        var file = CreateFormFile("Title,Description,CreatorUsername\nT1,D1,u1\n");
+
+        await controller.Post(file, CancellationToken.None);
+
+        logger.Entries.ShouldContain(e =>
+            e.Level == LogLevel.Information && e.Message == "Imported 1 work orders");
+    }
+
     private static WorkOrdersBulkImportController CreateController(
         StubBus bus,
-        StubNumberGenerator? numbers = null) =>
-        new(bus, numbers ?? new StubNumberGenerator());
+        StubNumberGenerator? numbers = null,
+        ILogger<WorkOrdersBulkImportController>? logger = null) =>
+        new(bus, numbers ?? new StubNumberGenerator(), logger ?? NullLogger<WorkOrdersBulkImportController>.Instance);
+
+    private sealed class CapturingLogger<T> : ILogger<T>
+    {
+        public List<(LogLevel Level, string Message)> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Entries.Add((logLevel, formatter(state, exception)));
+        }
+    }
 
     private static IFormFile CreateFormFile(string csvContent, string fileName = "import.csv", string contentType = "text/csv")
     {
