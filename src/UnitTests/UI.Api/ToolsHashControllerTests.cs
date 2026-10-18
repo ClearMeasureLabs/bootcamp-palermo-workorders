@@ -30,6 +30,20 @@ public class ToolsHashControllerTests
     }
 
     [Test]
+    public void Post_Should_ReturnUpperHex_When_UppercaseTrue()
+    {
+        var result = CreateController().Post(
+            new HashRequest("abc", IncludeMd5: true, IncludeSha1: true),
+            uppercase: true);
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<HashResponse>();
+        payload.Sha256.ShouldBe(AbcSha256.ToUpperInvariant());
+        payload.Md5.ShouldBe(AbcMd5.ToUpperInvariant());
+        payload.Sha1.ShouldBe(AbcSha1.ToUpperInvariant());
+    }
+
+    [Test]
     public void Post_Should_ReturnSha256_When_EmptyString()
     {
         var result = CreateController().Post(new HashRequest(""));

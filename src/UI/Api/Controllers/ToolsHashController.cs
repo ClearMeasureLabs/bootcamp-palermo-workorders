@@ -32,7 +32,8 @@ public class ToolsHashController : ControllerBase
     public IActionResult Post(
         [FromBody] HashRequest? request,
         [FromQuery] bool? includeMd5 = null,
-        [FromQuery] bool? includeSha1 = null)
+        [FromQuery] bool? includeSha1 = null,
+        [FromQuery] bool uppercase = false)
     {
         if (request?.Text is null)
         {
@@ -46,13 +47,13 @@ public class ToolsHashController : ControllerBase
         var wantSha1 = includeSha1 ?? request.IncludeSha1;
 
         return Ok(new HashResponse(
-            Sha256: ToLowerHex(SHA256.HashData(bytes)),
-            Md5: wantMd5 ? ToLowerHex(ComputeMd5(bytes)) : null,
-            Sha1: wantSha1 ? ToLowerHex(ComputeSha1(bytes)) : null));
+            Sha256: ToHex(SHA256.HashData(bytes), uppercase),
+            Md5: wantMd5 ? ToHex(ComputeMd5(bytes), uppercase) : null,
+            Sha1: wantSha1 ? ToHex(ComputeSha1(bytes), uppercase) : null));
     }
 
-    private static string ToLowerHex(byte[] hash) =>
-        Convert.ToHexString(hash).ToLowerInvariant();
+    private static string ToHex(byte[] hash, bool uppercase) =>
+        uppercase ? Convert.ToHexString(hash) : Convert.ToHexString(hash).ToLowerInvariant();
 
 #pragma warning disable CA5351 // MD5/SHA-1 exposed intentionally for optional legacy hash utility
     private static byte[] ComputeMd5(byte[] bytes) => MD5.HashData(bytes);
