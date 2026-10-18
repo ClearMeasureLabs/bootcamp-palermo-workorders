@@ -146,9 +146,7 @@ public partial class WorkOrderSearch : AppComponentBase
         ["Status"] = r => new SortKey(0, r.Status.FriendlyName),
         ["Title"] = r => new SortKey(0, new CaseInsensitiveString(r.Title)),
         ["Room"] = r => new SortKey(0, new CaseInsensitiveString(r.WorkOrder.RoomNumber)),
-        ["DueDate"] = r => new SortKey(
-            r.WorkOrder.DueDate.HasValue ? 0 : 1,
-            r.WorkOrder.DueDate.HasValue ? r.WorkOrder.DueDate.Value : null),
+        ["DueDate"] = r => new SortKey(r.WorkOrder.DueDate.HasValue ? 0 : 1, r.WorkOrder.DueDate),
     };
 
     private void ApplySort()
@@ -159,10 +157,7 @@ public partial class WorkOrderSearch : AppComponentBase
         Model.Results = SortResults(Model.Results, keyOf, _sortAscending);
     }
 
-    /// <summary>
-    /// Applies column sort: null-rank first (blank due dates last), then key ascending or descending.
-    /// </summary>
-    internal static WorkOrderSearchResultRow[] SortResults(
+    private static WorkOrderSearchResultRow[] SortResults(
         WorkOrderSearchResultRow[] results,
         Func<WorkOrderSearchResultRow, SortKey> keyOf,
         bool ascending)
@@ -187,7 +182,7 @@ public partial class WorkOrderSearch : AppComponentBase
         return SortResults(results, keyOf, ascending);
     }
 
-    internal readonly record struct SortKey(int NullRank, IComparable? Value);
+    internal readonly record struct SortKey(int NullRank, object? Value);
 
     private sealed class CaseInsensitiveString(string? value) : IComparable
     {
