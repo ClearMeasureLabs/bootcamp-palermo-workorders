@@ -50,4 +50,22 @@ public class CounterPageTests
         var button = component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']");
         button.GetAttribute("title").ShouldBe("Increase the count by one");
     }
+
+    [Test]
+    public async Task Should_ResetCountToZero_WhenClickingIncrementThenReset()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+
+        component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']").Click();
+        component.Find($"[data-testid='{nameof(Counter.Elements.CounterValue)}']")
+            .TextContent.ShouldBe("1");
+
+        component.Find($"[data-testid='{nameof(Counter.Elements.ResetButton)}']").Click();
+        component.Find($"[data-testid='{nameof(Counter.Elements.CounterValue)}']")
+            .TextContent.ShouldBe("0");
+    }
 }
