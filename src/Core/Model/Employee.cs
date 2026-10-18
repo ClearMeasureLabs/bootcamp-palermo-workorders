@@ -61,7 +61,9 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// </summary>
     public string GetLastFirstName()
     {
-        return $"{LastName.Trim()}, {FirstName.Trim()}";
+        var last = LastName.Trim();
+        var first = FirstName.Trim();
+        return $"{last}, {first}";
     }
 
     public override string ToString()
