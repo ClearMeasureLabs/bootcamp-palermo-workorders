@@ -98,4 +98,18 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void HasDueDate_ShouldReturnFalse_WhenDueDateIsNull()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.HasDueDate(), Is.False);
+    }
+
+    [Test]
+    public void HasDueDate_ShouldReturnTrue_WhenDueDateHasValue()
+    {
+        var workOrder = new WorkOrder { DueDate = new DateOnly(2026, 10, 18) };
+        Assert.That(workOrder.HasDueDate(), Is.True);
+    }
 }

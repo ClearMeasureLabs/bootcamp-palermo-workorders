@@ -59,6 +59,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public DateOnly? DueDate { get; set; }
 
+    /// <summary>
+    /// Returns whether this work order has a due date set.
+    /// </summary>
+    public bool HasDueDate() => DueDate.HasValue;
+
     private string GetTruncatedString(string? value)
     {
         if (value == null)
