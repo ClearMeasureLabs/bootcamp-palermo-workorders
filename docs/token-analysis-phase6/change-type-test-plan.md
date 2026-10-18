@@ -41,12 +41,12 @@ Categories, matching the catalog's recommended sets:
 | c16 | UI | Manage page: tooltip/help text for Instructions and Room Number fields (bUnit only) | UI-text cross-cut (6.9% of master) |
 | c17 | UI | Search: remember last filters in the session and restore them when returning to the page (bUnit + Playwright) | stateful UI |
 | c18 | ML | New MCP tool `list-overdue-work-orders` (Core query, DataAccess handler, MCP tool, integration and acceptance tests) | new MCP tool end to end |
-| c19 | Bug | "After cancelling a work order the assignee still sees it under My Work Orders" (re-check at prep) | symptom→query handler |
+| c19 | Bug | "Cancelled work orders stay in My Work Orders" (verified: the side panel queries by Creator with no status filter, and the change event adds any changed order) | symptom→component/query |
 | c20 | CI | Docs: docs/agent-pr-checklist.md (what an agent PR must pass), linked from docs/ai-workers.md | docs-only short circuit |
-| c21 | Qual | Qodana RedundantUsingDirective / unused private members sweep in UI.Server (10-15 findings) | many-file mechanical batch |
-| c22 | Test | Playwright acceptance test: Overdue-only toggle shows only overdue rows | acceptance-only item |
+| c21 | Qual | Seal the 12 request/notification handler classes in DataAccess/Handlers and UI/Server/Handlers. Re-scoped: Qodana already gates unused usings, so the planned sweep had no findings | many-file mechanical batch |
+| c22 | Test | Playwright acceptance test for the FetchData forecast page (5 rows). Replaced: an Overdue-only acceptance test already exists | acceptance-only item |
 | c23 | Vague | "Dispatchers want to see at a glance who is overloaded." | vague, multi-layer-ish |
-| c24 | Bug | "Health page says Healthy even when the LLM is turned off in settings" (re-check at prep) | symptom→health check |
+| c24 | Bug | "Sorting by Room puts Room 10 before Room 9" (verified: CurrentCultureIgnoreCase string sort). Replaced: the health/LLM-off item did not show a clear bug; c30 gets a new trap at round 25 prep | symptom→sort comparer |
 | c25 | UI | Work order manage page: character counter for Title with a warning colour near the limit (bUnit + Playwright) | UI with validation feedback |
 | c26 | ML | LLM: "Summarize work order" button on the manage page calling LlmGateway, with a stub chat client in tests | LLM feature across LlmGateway, UI.Server and UI.Shared |
 | c27 | Bug | "Exporting search results to the clipboard puts the newest work order last even when I sorted newest first" (re-check at prep) | symptom→UI sort/order |
@@ -80,3 +80,4 @@ Categories, matching the catalog's recommended sets:
 | 23 | v36g | c09 UI 1,930.8k, c10 ML 1,135.7k, c11 Bug 355.5k, c12 CI 183.2k, c13 Qual 203.9k, c14 Test 113.8k, c15 Trap 63.9k, c16 UI 179.7k; avg 520.8k, median 193.6k | probe edits 75→2; the read budget was gamed (c10 counter rewrites, c09 grep/read); v37g adds batched ranges |
 
 Round 23 prep (2026-10-18): issues #10636-10643, v36g, branches cursor/token-exp-p6-cNN-v36.
+Round 24 prep (2026-10-18): issues #10653-10660, v37g, branches cursor/token-exp-p6-cNN-v37. c20 is docs-only and exercises the NON_CODE path.
