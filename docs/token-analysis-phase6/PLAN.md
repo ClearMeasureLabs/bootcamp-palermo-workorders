@@ -20,7 +20,7 @@ Cross-cutting: wait-call turns 366k (23%); the turns of 3 CI retry cycles (g04, 
 | Lever | What | Estimated saving |
 |---|---|---|
 | Get-Context.ps1 | one call: files matching a regex (prod + tests) as line-numbered outlines; then read only ranges. Outlines of the 58 files read before first edit were 13% of their full size (40.5 KB vs 310 KB). | if half the pre-edit read bytes go: ~360k (~23%) |
-| Test-ChangeRisk.ps1 in Submit | local checks for the traps behind every past CI RED: est. CRAP (CC > 5 on changed methods), , options without the ReSharper line, Number > 7 chars in tests | up to the 221k retry share (~14%) |
+| Test-ChangeRisk.ps1 in Submit | local checks for the traps behind every past CI RED: est. CRAP (CC > 5 on changed methods), `new[] {}`, options without the ReSharper line, Number > 7 chars in tests | up to the 221k retry share (~14%) |
 | Changed integration tests on SQLite in Submit | runs the changed IntegrationTests classes locally (~3 s after build) | part of the retry share |
 | Wait inside Submit | Submit waits for CI with its remaining ~9-min budget; removes the first separate wait turn | ~135k (~9%) |
 | GENERAL.md 4.8 KB -> 2.1 KB | terse rules, one-line map, traps; tailored g02/g08 map lines removed | ~155k (~10%) |
