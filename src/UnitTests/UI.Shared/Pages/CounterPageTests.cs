@@ -60,9 +60,9 @@ public class CounterPageTests
 
         var component = ctx.Render<Counter>();
 
-        component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']").Click();
-        component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']").Click();
-        component.Find($"[data-testid='{nameof(Counter.Elements.DecrementButton)}']").Click();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']").ClickAsync();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']").ClickAsync();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.DecrementButton)}']").ClickAsync();
 
         component.Find($"[data-testid='{nameof(Counter.Elements.CounterValue)}']")
             .TextContent
@@ -78,7 +78,7 @@ public class CounterPageTests
 
         var component = ctx.Render<Counter>();
 
-        component.Find($"[data-testid='{nameof(Counter.Elements.DecrementButton)}']").Click();
+        await component.Find($"[data-testid='{nameof(Counter.Elements.DecrementButton)}']").ClickAsync();
 
         component.Find($"[data-testid='{nameof(Counter.Elements.CounterValue)}']")
             .TextContent
