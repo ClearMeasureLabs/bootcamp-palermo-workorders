@@ -98,4 +98,25 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void HasDescription_WhenNull_ShouldReturnFalse()
+    {
+        var order = new WorkOrder { Description = null };
+        Assert.That(order.HasDescription(), Is.False);
+    }
+
+    [Test]
+    public void HasDescription_WhenWhitespace_ShouldReturnFalse()
+    {
+        var order = new WorkOrder { Description = "   " };
+        Assert.That(order.HasDescription(), Is.False);
+    }
+
+    [Test]
+    public void HasDescription_WhenPopulated_ShouldReturnTrue()
+    {
+        var order = new WorkOrder { Description = "Fix the leak" };
+        Assert.That(order.HasDescription(), Is.True);
+    }
 }
