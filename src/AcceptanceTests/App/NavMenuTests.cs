@@ -18,14 +18,14 @@ public class NavMenuTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
-    public async Task FetchData_NavLink_ShouldNotBeVisible()
+    public async Task FetchData_NavLink_ShouldBeVisible()
     {
         await LoginAsCurrentUser();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        // The Fetch data nav link had no testid; locate by href and verify it is absent.
-        var fetchDataLink = Page.Locator("a.nav-link[href='fetchdata']");
-        await Expect(fetchDataLink).Not.ToBeVisibleAsync();
+        var weatherLink = Page.GetByTestId(nameof(NavMenu.Elements.Weather));
+        await Expect(weatherLink).ToBeVisibleAsync();
+        await Expect(weatherLink).ToHaveAttributeAsync("href", "fetchdata");
     }
 
     // Opening the page needs no chat client, unlike the chat tests in AiAgentPageTests, which are
