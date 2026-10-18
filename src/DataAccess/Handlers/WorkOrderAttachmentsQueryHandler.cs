@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-public class WorkOrderAttachmentsQueryHandler(DataContext context)
+public sealed class WorkOrderAttachmentsQueryHandler(DataContext context)
     : IRequestHandler<WorkOrderAttachmentsQuery, WorkOrderAttachment[]>
 {
     public async Task<WorkOrderAttachment[]> Handle(WorkOrderAttachmentsQuery request,

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-public class WorkOrderCountByStatusQueryHandler(DataContext context) :
+public sealed class WorkOrderCountByStatusQueryHandler(DataContext context) :
     IRequestHandler<WorkOrderCountByStatusQuery, Dictionary<string, int>>
 {
     public async Task<Dictionary<string, int>> Handle(WorkOrderCountByStatusQuery request,

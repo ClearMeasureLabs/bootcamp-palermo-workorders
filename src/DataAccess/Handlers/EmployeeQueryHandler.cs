@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-public class EmployeeQueryHandler(DataContext context)
+public sealed class EmployeeQueryHandler(DataContext context)
     : IRequestHandler<EmployeeByUserNameQuery, Employee>,
         IRequestHandler<EmployeeGetAllQuery, Employee[]>
 {

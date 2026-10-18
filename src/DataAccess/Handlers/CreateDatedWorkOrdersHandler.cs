@@ -12,7 +12,7 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 /// <summary>
 /// Persists multiple dated assigned work orders in one database transaction.
 /// </summary>
-public class CreateDatedWorkOrdersHandler(
+public sealed class CreateDatedWorkOrdersHandler(
     DbContext dbContext,
     IBus bus,
     IWorkOrderNumberGenerator numberGenerator,

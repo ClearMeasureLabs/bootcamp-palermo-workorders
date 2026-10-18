@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-public class WorkOrderSearchHandler(DataContext context) : IRequestHandler<WorkOrderSpecificationQuery, WorkOrder[]>
+public sealed class WorkOrderSearchHandler(DataContext context) : IRequestHandler<WorkOrderSpecificationQuery, WorkOrder[]>
 {
     public async Task<WorkOrder[]> Handle(WorkOrderSpecificationQuery specification,
         CancellationToken cancellationToken = default)

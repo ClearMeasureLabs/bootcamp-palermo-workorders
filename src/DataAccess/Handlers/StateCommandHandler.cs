@@ -13,7 +13,7 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 /// EF compares against database originals. Clear+Attach+Update left shadow FKs such as
 /// AssigneeId unmodified when Cancel nulled the navigation on a detached graph (#9118).
 /// </summary>
-public class StateCommandHandler(
+public sealed class StateCommandHandler(
     DbContext dbContext,
     TimeProvider time,
     IDistributedBus distributedBus,

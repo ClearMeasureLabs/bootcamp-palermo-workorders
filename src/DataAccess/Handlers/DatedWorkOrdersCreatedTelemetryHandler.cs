@@ -8,7 +8,7 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 /// <summary>
 /// Records a metric when dated work orders are created in a batch.
 /// </summary>
-public class DatedWorkOrdersCreatedTelemetryHandler(ILogger<DatedWorkOrdersCreatedTelemetryHandler> logger)
+public sealed class DatedWorkOrdersCreatedTelemetryHandler(ILogger<DatedWorkOrdersCreatedTelemetryHandler> logger)
     : INotificationHandler<DatedWorkOrdersCreatedEvent>
 {
     private static readonly Meter Meter = new("ChurchBulletin.Application", "1.0.0");

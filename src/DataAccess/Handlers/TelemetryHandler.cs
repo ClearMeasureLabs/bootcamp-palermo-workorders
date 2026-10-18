@@ -5,7 +5,7 @@ using System.Diagnostics.Metrics;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-public class TelemetryHandler(ILogger<TelemetryHandler> logger)
+public sealed class TelemetryHandler(ILogger<TelemetryHandler> logger)
     : INotificationHandler<UserLoggedInEvent>
 {
     private static readonly Meter Meter = new("ChurchBulletin.Application", "1.0.0");

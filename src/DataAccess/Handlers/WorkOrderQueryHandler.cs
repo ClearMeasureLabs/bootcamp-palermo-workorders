@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-public class WorkOrderQueryHandler(DataContext context) :
+public sealed class WorkOrderQueryHandler(DataContext context) :
     IRequestHandler<WorkOrderByNumberQuery, WorkOrder?>
 {
     public async Task<WorkOrder?> GetWorkOrderAsync(string number)

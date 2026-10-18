@@ -4,7 +4,7 @@ using MediatR;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-public class ForecastQueryHandler : IRequestHandler<ForecastQuery, WeatherForecast[]>
+public sealed class ForecastQueryHandler : IRequestHandler<ForecastQuery, WeatherForecast[]>
 {
     public Task<WeatherForecast[]> Handle(ForecastQuery request, CancellationToken cancellationToken)
     {

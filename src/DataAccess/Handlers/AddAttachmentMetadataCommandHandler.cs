@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-public class AddAttachmentMetadataCommandHandler(DbContext dbContext, TimeProvider time)
+public sealed class AddAttachmentMetadataCommandHandler(DbContext dbContext, TimeProvider time)
     : IRequestHandler<AddAttachmentMetadataCommand, WorkOrderAttachment>
 {
     public async Task<WorkOrderAttachment> Handle(AddAttachmentMetadataCommand request,
