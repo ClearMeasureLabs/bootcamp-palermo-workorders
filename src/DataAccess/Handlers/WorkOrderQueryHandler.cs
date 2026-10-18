@@ -26,6 +26,6 @@ public class WorkOrderQueryHandler(DataContext context) :
     public async Task<WorkOrder?> Handle(WorkOrderByNumberQuery request,
         CancellationToken cancellationToken = default)
     {
-        return await GetWorkOrderAsync(request.Number);
+        return await GetWorkOrderAsync(request.Number.Trim());
     }
 }

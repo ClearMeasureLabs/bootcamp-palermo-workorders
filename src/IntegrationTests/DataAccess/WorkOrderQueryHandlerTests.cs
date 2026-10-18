@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
@@ -280,5 +281,32 @@ public class WorkOrderQueryHandlerTests
         rehydratedOrder.Assignee.FirstName.ShouldBe(assignee.FirstName);
         rehydratedOrder.Assignee.LastName.ShouldBe(assignee.LastName);
         rehydratedOrder.Assignee.EmailAddress.ShouldBe(assignee.EmailAddress);
+    }
+
+    [Test]
+    public async Task ShouldGetWorkOrderByNumberWithLeadingAndTrailingSpaces()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("1", "1", "1", "1");
+        var order = new WorkOrder
+        {
+            Creator = creator,
+            Number = "WO-1"
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var handler = new WorkOrderQueryHandler(dataContext);
+        var found = (await handler.Handle(new WorkOrderByNumberQuery("  WO-1  ")))!;
+
+        found.Id.ShouldBe(order.Id);
+        found.Number.ShouldBe("WO-1");
     }
 }
