@@ -47,14 +47,14 @@ Categories, matching the catalog's recommended sets:
 | c22 | Test | Playwright acceptance test for the FetchData forecast page (5 rows). Replaced: an Overdue-only acceptance test already exists | acceptance-only item |
 | c23 | Vague | "Dispatchers want to see at a glance who is overloaded." | vague, multi-layer-ish |
 | c24 | Bug | "Sorting by Room puts Room 10 before Room 9" (verified: CurrentCultureIgnoreCase string sort). Replaced: the health/LLM-off item did not show a clear bug; c30 gets a new trap at round 25 prep | symptom→sort comparer |
-| c25 | UI | Work order manage page: character counter for Title with a warning colour near the limit (bUnit + Playwright) | UI with validation feedback |
+| c25 | UI | Title max length 200 (matching DB nvarchar(200); EF says 300) plus a characters-remaining counter with a warning at ≤20 (bUnit + Playwright) | UI + validation + mapping |
 | c26 | ML | LLM: "Summarize work order" button on the manage page calling LlmGateway, with a stub chat client in tests | LLM feature across LlmGateway, UI.Server and UI.Shared |
-| c27 | Bug | "Exporting search results to the clipboard puts the newest work order last even when I sorted newest first" (re-check at prep) | symptom→UI sort/order |
-| c28 | CI | build.yml: upload unit-test TRX results as an artifact with 7-day retention | workflow YAML in the main gate |
-| c29 | Qual | Add CancellationToken pass-through to every async DataAccess handler that drops it (batch) | signature batch across layers |
-| c30 | Trap | Acceptance test for search sort by Room; the natural string sort fails for room numbers like "9" vs "10" (realistic RED) | broken-acceptance→fix loop |
+| c27 | Bug | "Assistant fails on 'in progress' status; 'InProgress' works" (verified: WorkOrderStatus.FromKey matches Key only and throws on the friendly name). Replaced the clipboard item: that feature does not exist | symptom→MCP/status parsing |
+| c28 | CI | render-diagrams.yml: workflow_dispatch plus a rendered-SVG artifact on failure. Re-scoped: build.yml already uploads TRX | workflow YAML (agent push confirmed by the c04 probe) |
+| c29 | Qual | Pass CancellationToken through DataAccess handlers that drop it (GetWorkOrderAsync, PublishCreatedEventAsync, ...) | signature batch |
+| c30 | Trap | MCP list-work-orders cap via a new options class (McpServer:MaxListResults, default 100, truncated flag). The natural options class trips Qodana AutoPropertyCanBeMadeGetOnly; the static MCP tool needs options injection. Replaced the room-sort trap, which moved to c24 | options/Qodana trap in MCP |
 | c31 | Vague | "The work order screen feels slow and cluttered on a phone." | vague UI/CSS |
-| c32 | CI | PrivateBuild.ps1: print the elapsed time of each step and the total at the end | ps1 change, local-only validation |
+| c32 | CI | build.ps1: per-step "took mm:ss" timings (the total already exists) | ps1 change |
 | c33 | UI | Nav: active-page highlight plus aria-current="page" on the current link (bUnit) | a11y UI |
 | c34 | ML | gRPC: GetWorkOrder returns due_date and urgency fields (proto, service, mapper, unit test) | gRPC round 2 with the regen script |
 | c35 | Bug | "Work order numbers sometimes clash when two people create work orders at the same moment" (re-check at prep) | symptom→generator, concurrency reasoning |
@@ -82,3 +82,4 @@ Categories, matching the catalog's recommended sets:
 
 Round 23 prep (2026-10-18): issues #10636-10643, v36g, branches cursor/token-exp-p6-cNN-v36.
 Round 24 prep (2026-10-18): issues #10653-10660, v37g, branches cursor/token-exp-p6-cNN-v37. c20 is docs-only and exercises the NON_CODE path.
+Round 25 prep (2026-10-18): issues #10669-10676, v38g, branches cursor/token-exp-p6-cNN-v38.
