@@ -18,6 +18,18 @@ public class ToolsWordCountControllerTests
         payload.WordCount.ShouldBe(3);
         payload.CharacterCount.ShouldBe(15);
         payload.LineCount.ShouldBe(2);
+        payload.CharacterCountNoSpaces.ShouldBe(13);
+    }
+
+    [Test]
+    public void Post_Should_ReturnCharacterCountNoSpaces_When_TextHasWhitespace()
+    {
+        var result = CreateController().Post(new WordCountRequest("a b\tc\nd"));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WordCountResponse>();
+        payload.CharacterCount.ShouldBe(7);
+        payload.CharacterCountNoSpaces.ShouldBe(4);
     }
 
     [Test]
