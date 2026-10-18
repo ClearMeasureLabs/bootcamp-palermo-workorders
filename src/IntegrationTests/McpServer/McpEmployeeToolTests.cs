@@ -86,4 +86,29 @@ public class McpEmployeeToolTests
 
         result.ShouldContain("No employee found");
     }
+
+    [Test]
+    public async Task ShouldGetEmployee_WhenUsernameHasPadding()
+    {
+        var emp = new Employee("jdoe", "John", "Doe", "john@test.com");
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.GetEmployee(bus, "  jdoe  ");
+
+        result.ShouldContain("jdoe");
+        result.ShouldContain("John");
+    }
+
+    [Test]
+    public async Task ShouldReturnUsernameRequired_WhenUsernameIsBlank()
+    {
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.GetEmployee(bus, "   ");
+
+        result.ShouldBe("Username is required.");
+    }
 }

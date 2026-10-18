@@ -23,15 +23,21 @@ public class EmployeeTools
         IBus bus,
         [Description("The employee's username")] string username)
     {
+        var trimmed = username?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(trimmed))
+        {
+            return "Username is required.";
+        }
+
         try
         {
-            var employee = await bus.Send(new EmployeeByUserNameQuery(username));
+            var employee = await bus.Send(new EmployeeByUserNameQuery(trimmed));
             return JsonSerializer.Serialize(FormatEmployee(employee),
                 new JsonSerializerOptions { WriteIndented = true });
         }
         catch (InvalidOperationException)
         {
-            return $"No employee found with username '{username}'.";
+            return $"No employee found with username '{trimmed}'.";
         }
     }
 
