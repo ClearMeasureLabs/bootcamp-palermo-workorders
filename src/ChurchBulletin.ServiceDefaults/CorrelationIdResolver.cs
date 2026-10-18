@@ -25,12 +25,25 @@ internal static class CorrelationIdResolver
         }
 
         var id = fromHeader.ToString().Trim();
-        if (id.Length == 0 || id.Length > MaxIncomingLength)
+        if (id.Length == 0 || id.Length > MaxIncomingLength || !IsPrintableAscii(id))
         {
             return false;
         }
 
         correlationId = id;
+        return true;
+    }
+
+    private static bool IsPrintableAscii(string value)
+    {
+        foreach (var c in value)
+        {
+            if (c is < (char)0x21 or > (char)0x7E)
+            {
+                return false;
+            }
+        }
+
         return true;
     }
 }

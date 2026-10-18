@@ -151,6 +151,24 @@ public class CorrelationIdResolverTests
 
         Guid.TryParse(CorrelationIdResolver.Resolve(context), out _).ShouldBeTrue();
     }
+
+    [Test]
+    public void ShouldGenerateGuid_WhenHeaderContainsSpace()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers[CorrelationIdConstants.HeaderName] = "abc 123";
+
+        Guid.TryParse(CorrelationIdResolver.Resolve(context), out _).ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldGenerateGuid_WhenHeaderContainsControlCharacter()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers[CorrelationIdConstants.HeaderName] = "abc\x01def";
+
+        Guid.TryParse(CorrelationIdResolver.Resolve(context), out _).ShouldBeTrue();
+    }
 }
 
 [TestFixture]
