@@ -7,6 +7,8 @@
 param([int]$Issue, [string]$Branch, [switch]$VerifyOnly, [switch]$IgnoreRisk, [string]$Filter = '',
       [string]$Repo = 'ClearMeasureLabs/bootcamp-palermo-workorders')
 $ErrorActionPreference = 'Stop'
+# v26g: name the script line on any crash so SCRIPT_FAIL is diagnosable
+trap { "SCRIPT_ERROR $($_.InvocationInfo.ScriptName | Split-Path -Leaf):$($_.InvocationInfo.ScriptLineNumber) $($_.Exception.Message)"; exit 0 }  # exit 0: non-zero exits lose the output in transcripts
 Set-Location (git rev-parse --show-toplevel)  # v16g: was $PSScriptRoot/../.. which is "/" when run from the temp copy (round 2: every run broke)
 $t0 = Get-Date
 $tools = Join-Path ([IO.Path]::GetTempPath()) 'agent-scripts'
@@ -34,7 +36,10 @@ $out = & "$tools/Publish-AgentPr.ps1" -Issue $Issue -Branch $Branch -Title $titl
 if ($out -match 'no src changes') { 'NO_CHANGES: nothing to publish. If the criteria are already met, reply RESULT=ALREADY_DONE <file:line evidence>'; exit 0 }
 if ($out -match 'PUBLISH_FAIL') { $out; exit 0 }
 $out | Where-Object { $_ -match 'NO_CHANGE' }
-$pr = [int](($out | Select-String 'pull/(\d+)').Matches[0].Groups[1].Value)
+# v26g: never index a missing match (round 12 s03 "Cannot index into a null array."); fall back to a REST lookup.
+$m = @($out | Select-String 'pull/(\d+)')
+$pr = if ($m) { [int]$m[0].Matches[0].Groups[1].Value } else { [int](gh api "repos/$Repo/pulls?head=$($Repo.Split('/')[0]):$Branch&state=open" --jq '.[0].number // 0' 2>$null) }
+if (-not $pr) { $out; 'PUBLISH_FAIL: no PR number found (rerun Submit once; if again, reply with this line)'; exit 0 }
 "PR=https://github.com/$Repo/pull/$pr"
 # v19g: wait until the PR head is the commit just pushed; round 5 w02's inline wait read the previous head's RED (stale) and the
 # agent then fought a NO_CHANGE publish.

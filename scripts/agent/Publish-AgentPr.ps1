@@ -40,11 +40,13 @@ try {
   }
 } finally { Pop-Location; git worktree remove --force $wt 2>$null | Out-Null }
 $owner = $Repo.Split('/')[0]
-$pr = gh api "repos/$Repo/pulls?head=${owner}:$Branch&state=open" --jq '.[0].html_url // empty'
+# v26g: the open-PR lookup can come back empty transiently (round 12 s03: NO_CHANGE + empty PR= -> Submit crashed). Retry.
+$pr = $null
+foreach ($try in 1..3) { $pr = gh api "repos/$Repo/pulls?head=${owner}:$Branch&state=open" --jq '.[0].html_url // empty' 2>$null; if ($pr -match 'pull/\d+') { break }; $pr = $null; Start-Sleep 5 }
 if (-not $pr) {
   $body = "Closes #$Issue`n`nAutomated change via lean loop. Build + unit tests passed locally; full gates run in CI."
   $pr = gh api "repos/$Repo/pulls" -f title=$Title -f head=$Branch -f base=master -f body=$body --jq .html_url 2>&1
-  if ($LASTEXITCODE) { Fail "pr create: $pr" }
+  if ($LASTEXITCODE -or $pr -notmatch 'pull/\d+') { Fail "pr create: $pr" }
 }
 if ($c) { "HEAD=$c" }
 if (-not $c) { "PUBLISH=NO_CHANGE (same head; to retry CI use WAIT_CMD -ForceRerun)" }
