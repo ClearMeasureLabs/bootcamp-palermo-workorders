@@ -115,5 +115,10 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public bool IsOverdue() => GetDueDateUrgency() == DueDateUrgency.Overdue;
 
+    /// <summary>
+    /// Returns <c>true</c> when <see cref="Instructions"/> is not null or whitespace.
+    /// </summary>
+    public bool HasInstructions() => !string.IsNullOrWhiteSpace(Instructions);
+
     public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
 }

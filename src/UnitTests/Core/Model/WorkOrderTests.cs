@@ -98,4 +98,25 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void HasInstructions_WhenNull_ReturnsFalse()
+    {
+        var order = new WorkOrder() { Instructions = null };
+        Assert.That(order.HasInstructions(), Is.False);
+    }
+
+    [Test]
+    public void HasInstructions_WhenWhitespace_ReturnsFalse()
+    {
+        var order = new WorkOrder() { Instructions = "   " };
+        Assert.That(order.HasInstructions(), Is.False);
+    }
+
+    [Test]
+    public void HasInstructions_WhenPopulated_ReturnsTrue()
+    {
+        var order = new WorkOrder() { Instructions = "Bring ladder" };
+        Assert.That(order.HasInstructions(), Is.True);
+    }
 }
