@@ -227,4 +227,18 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void GetEmailDomain_WithAtSign_ShouldReturnLowerCaseDomain()
+    {
+        var employee = new Employee("user", "First", "Last", "Person@Example.COM");
+        employee.GetEmailDomain().ShouldBe("example.com");
+    }
+
+    [Test]
+    public void GetEmailDomain_WithoutAtSign_ShouldReturnEmptyString()
+    {
+        var employee = new Employee("user", "First", "Last", "not-an-email");
+        employee.GetEmailDomain().ShouldBe(string.Empty);
+    }
 }

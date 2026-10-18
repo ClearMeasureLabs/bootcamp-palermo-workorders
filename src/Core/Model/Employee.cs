@@ -68,6 +68,21 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// </summary>
     public bool CanFulfillWorkOrder() => Roles.Any(role => role.CanFulfillWorkOrder);
 
+    /// <summary>
+    /// Returns the domain portion of <see cref="EmailAddress"/> (after <c>@</c>), lower-cased.
+    /// Returns an empty string when there is no <c>@</c>.
+    /// </summary>
+    public string GetEmailDomain()
+    {
+        var atIndex = EmailAddress.IndexOf('@');
+        if (atIndex < 0)
+        {
+            return string.Empty;
+        }
+
+        return EmailAddress[(atIndex + 1)..].ToLowerInvariant();
+    }
+
     public void AddRole(Role role)
     {
         Roles.Add(role);
