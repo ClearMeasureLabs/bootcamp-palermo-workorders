@@ -41,6 +41,7 @@ public class EmployeeTools
         emp.FirstName,
         emp.MiddleName,
         emp.LastName,
+        fullName = emp.GetFullName(),
         emp.EmailAddress,
         Roles = emp.Roles.Select(r => new
         {
