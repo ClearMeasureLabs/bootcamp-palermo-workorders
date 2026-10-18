@@ -32,6 +32,9 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// </summary>
     public string? MiddleName { get; set; }
 
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global
+    public string? Department { get; set; }
+
     public string EmailAddress { get; set; }
 
     public string PreferredLanguage { get; set; } = "en-US";

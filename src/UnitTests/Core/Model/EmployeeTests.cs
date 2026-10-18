@@ -227,4 +227,11 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void ShouldSetDepartment()
+    {
+        var employee = new Employee() { Department = "Facilities" };
+        employee.Department.ShouldBe("Facilities");
+    }
 }
