@@ -31,8 +31,6 @@ public static class WorkOrderStatusBadgeCss
 		if (string.IsNullOrEmpty(statusKey))
 			return "status-badge status-badge--muted";
 
-		return ClassesByKey.TryGetValue(statusKey, out var cssClass)
-			? cssClass
-			: "status-badge status-badge--neutral";
+		return ClassesByKey.GetValueOrDefault(statusKey, "status-badge status-badge--neutral");
 	}
 }
