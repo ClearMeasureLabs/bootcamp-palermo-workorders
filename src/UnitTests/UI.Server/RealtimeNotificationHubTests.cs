@@ -47,8 +47,8 @@ public class RealtimeNotificationHubTests
 
     private sealed class NullPropSample
     {
-        public string Present { get; set; } = "";
-        public string? Missing { get; set; }
+        public string Present { get; init; } = "";
+        public string? Missing { get; init; }
     }
 
     private sealed class RecordingWebSocket : WebSocket
