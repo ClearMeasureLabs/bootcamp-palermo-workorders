@@ -311,6 +311,18 @@ public class WorkOrderStatusTests
     }
 
     [Test]
+    public void IsComplete_ShouldBeTrue_ForComplete()
+    {
+        WorkOrderStatus.Complete.IsComplete().ShouldBeTrue();
+    }
+
+    [Test]
+    public void IsComplete_ShouldBeFalse_ForDraft()
+    {
+        WorkOrderStatus.Draft.IsComplete().ShouldBeFalse();
+    }
+
+    [Test]
     public void ToString_ShouldReturnFriendlyName()
     {
         WorkOrderStatus.InProgress.ToString().ShouldBe("In Progress");
