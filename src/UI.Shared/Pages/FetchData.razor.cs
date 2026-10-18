@@ -16,8 +16,17 @@ public partial class FetchData : AppComponentBase
     public enum Elements
     {
         ForecastSourceNote,
-        ForecastTableTooltip
+        ForecastTableTooltip,
+        AverageTemperature
     }
+
+    /// <summary>
+    ///     Average Celsius temperature across loaded forecasts, rounded to whole degrees.
+    /// </summary>
+    public int AverageTemperatureC =>
+        Model is { Length: > 0 }
+            ? (int)Math.Round(Model.Average(static f => f.TemperatureC))
+            : 0;
 
     protected override async Task OnInitializedAsync()
     {
