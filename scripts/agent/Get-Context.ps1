@@ -80,6 +80,9 @@ foreach ($f in @($prod | Select-Object -First $Max) + @($test | Select-Object -F
   $lim = if ($f -eq $prod[0]) { 90 } elseif ($f -eq $test[0]) { 60 } else { 35 }  # v20g: likely edit target / sibling test in full
   if ($all.Count -le $lim) {
     [void]$sb.AppendLine("== $f FULL ($($all.Count) lines)")
+    # v24g: keep usings (one compact line); round 10 v02 rewrote files from FULL output and lost them -> BUILD=FAIL + grep hunt
+    $us = @($all | Where-Object { $_ -match '^\s*using [\w.]+;' } | ForEach-Object { ($_ -replace '^\s*using\s+|;\s*$', '') })
+    if ($us) { [void]$sb.AppendLine("  usings: " + ($us -join '; ')) }
     foreach ($l in $all) { $n++; if ($l -notmatch '^\s*(using |$)') { [void]$sb.AppendLine(("{0,3}:{1}" -f $n, $l.TrimEnd())) } }
     continue
   }
