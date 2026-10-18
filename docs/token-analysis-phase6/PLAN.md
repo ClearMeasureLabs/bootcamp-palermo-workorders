@@ -182,3 +182,18 @@ Each target was checked against master (rg) and is absent. Same mix of work type
 | v08 WorkOrder.ToString unnumbered (bug fix) | #10404 | cursor/token-exp-p6-v08-k10 |
 
 Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-vNN-k10. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-vNN-k10`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does (if a wait shows no output, run it again; never read terminal files). If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
+
+## Round 11 (v24g, 1c1a9f39)
+Each target was checked against master (rg) and is absent. Same work-type mix.
+| Item | Issue | Branch |
+|---|---|---|
+| t01 Employee.IsSameAs (domain) | #10413 | cursor/token-exp-p6-t01-k11 |
+| t02 Counter reset tooltip (UI/bUnit) | #10414 | cursor/token-exp-p6-t02-k11 |
+| t03 MCP employee fullName (MCP) | #10415 | cursor/token-exp-p6-t03-k11 |
+| t04 RoleByNameQuery (query) | #10416 | cursor/token-exp-p6-t04-k11 |
+| t05 hash includeSha512 (API JSON) | #10417 | cursor/token-exp-p6-t05-k11 |
+| t06 work order number whitespace rule (validation) | #10418 | cursor/token-exp-p6-t06-k11 |
+| t07 Employee JobTitle column (DbUp) | #10419 | cursor/token-exp-p6-t07-k11 |
+| t08 Employee.CompareTo(null) (bug fix) | #10420 | cursor/token-exp-p6-t08-k11 |
+
+Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-tNN-k11. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-tNN-k11`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does (if a wait shows no output, run it again; never read terminal files). If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
