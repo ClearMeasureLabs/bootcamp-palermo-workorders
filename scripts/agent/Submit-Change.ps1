@@ -31,8 +31,14 @@ if ($VerifyOnly) { 'VERIFY=OK'; exit 0 }
 if (-not $Issue -or -not $Branch) { 'need -Issue and -Branch to publish'; exit 1 }
 $title = gh api "repos/$Repo/issues/$Issue" --jq .title
 $out = & "$tools/Publish-AgentPr.ps1" -Issue $Issue -Branch $Branch -Title $title
+if ($out -match 'no src changes') { 'NO_CHANGES: nothing to publish. If the criteria are already met, reply RESULT=ALREADY_DONE <file:line evidence>'; exit 0 }
 if ($out -match 'PUBLISH_FAIL') { $out; exit 2 }
 $out | Where-Object { $_ -match 'NO_CHANGE' }
 $pr = [int](($out | Select-String 'pull/(\d+)').Matches[0].Groups[1].Value)
 "PR=$pr"
-"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9"
+# v18g: wait inline for what is left of an 8-minute budget (Submit itself takes ~1 min), so Submit + first wait is one turn
+# instead of two (round 4: wait turns replayed 13.5% of input). v14g's inline wait broke because it used the full 9 min on top.
+$left = [int][Math]::Floor(8 - ((Get-Date) - $t0).TotalMinutes)
+if ($left -ge 2) { & "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left }
+"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9  (only if no CHECKS=GREEN/RED above)"
+exit 0

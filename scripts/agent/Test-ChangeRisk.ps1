@@ -27,6 +27,7 @@ foreach ($l in git diff -U0 $base -- src) {
   if ($l -match '^\+\+\+ b/(.+)$') { $file = $Matches[1]; $changed[$file] = @(); continue }
   if ($l -match '^@@ .*\+(\d+)(?:,(\d+))? @@') { $s = [int]$Matches[1]; $c = if ($Matches[2]) { [int]$Matches[2] } else { 1 }; if ($c) { $changed[$file] += $s..($s + $c - 1) }; continue }
   if ($l -match '^\+(?!\+\+)(.*)$' -and $file) { $a = $Matches[1]
+    if ($file -match 'Tests' -and $a -match '\.(Click|Change|Input|Submit)\(') { "QODANA_RISK $file : use the async bUnit overload (ClickAsync/ChangeAsync/...) and await it: $($a.Trim())" }  # v18g: round 4 u03
     if ($a -match 'new\s*(\w+)?\[\]\s*\{|new List<[^>]+>\s*\{') { "QODANA_RISK $file : use a collection expression [a, b]: $($a.Trim())" }
     if ($file -match 'Tests' -and $a -match 'Number\s*=\s*"([^"]{8,})"') { "NUMBER_RISK $file : work order Number '$($Matches[1])' > 7 chars" } }
 }

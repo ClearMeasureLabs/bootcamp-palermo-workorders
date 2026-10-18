@@ -6,16 +6,26 @@ $ErrorActionPreference = 'Stop'
 Set-Location (git rev-parse --show-toplevel)
 # v17g: -Issue N prints the issue's Outcome/Acceptance criteria (boilerplate stripped) and, if -Find is not given, builds it
 # from the PascalCase identifiers named in backticks. One call replaces `gh issue view` + the first Get-Context call.
-if ($Issue) {
+# v18g: issue text is printed only on the first call (-Issue without -Find); round 4 reprinted it on every -Find retry.
+# Also prints EXISTING= src files whose names contain 2+ issue keywords (round 4 u05/u07: the feature already existed and
+# NO_TYPES sent agents guessing type names for 6-12 calls). On NO_TYPES those files become the -Find pattern.
+if ($Issue -and -not $Find) {
   $body = gh api "repos/ClearMeasureLabs/bootcamp-palermo-workorders/issues/$Issue" --jq .body
   $keep = ($body -split "`n" | Where-Object { $_ -notmatch 'Token-reduction experiment|The PR targets master|^## Done when' }) -join "`n"
   "ISSUE #$Issue"; $keep.Trim()
-  if (-not $Find) {
-    $ids = @([regex]::Matches($keep, '\b[A-Z][a-z]+[A-Z]\w*\b') | ForEach-Object { $_.Value }) +
-           @([regex]::Matches($keep, '`([a-z]+(-[a-z]+)+)`') | ForEach-Object { $_.Groups[1].Value }) | Sort-Object -Unique
-    $Find = ($ids | Select-Object -First 6) -join '|'
-  }
-  if (-not $Find) { 'NO_TYPES: run again with -Find ExactTypeName'; exit 0 }
+  $ids = @([regex]::Matches($keep, '\b[A-Z][a-z]+[A-Z]\w*\b') | ForEach-Object { $_.Value }) +
+         @([regex]::Matches($keep, '`([a-z]+(-[a-z]+)+)`') | ForEach-Object { $_.Groups[1].Value }) | Where-Object { $_ -notmatch '^(WorkOrder|Employee|DbUp|SQLite|SqlServer)$' } | Sort-Object -Unique
+  $stop = 'with|that|this|from|when|test|tests|unit|integration|have|then|each|only|work|order|orders|true|false|returns|null|empty|value|text|page|change|criteria|outcome|acceptance|works|given|server|sqlite|existing|optional|parameter|description|case|insensitively|unchanged|current|behavior|omitted|called|call|which|default|added'
+  $kw = @([regex]::Matches($keep.ToLower(), '[a-z]{4,}') | ForEach-Object { $_.Value.TrimEnd('s') } | Where-Object { $_ -notmatch "^($stop)$" } | Sort-Object -Unique)
+  $cand = @(rg --files src -g '*.cs' -g '*.razor' 2>$null | Where-Object { $_ -notmatch '[/\\](bin|obj)[/\\]' } | ForEach-Object {
+    $n = [IO.Path]::GetFileNameWithoutExtension($_).ToLower(); $hit = @($kw | Where-Object { $n.Contains($_) }).Count
+    if ($hit -ge 2) { [pscustomobject]@{ f = $_; h = $hit } } } | Sort-Object @{e={$_.h};Descending=$true}, @{e={$_.f -match 'Tests'}} | Select-Object -First 6 | ForEach-Object { $_.f })
+  $pc = @($cand | Where-Object { $_ -notmatch 'Tests' }); $cand = $pc
+  if ($cand) { "EXISTING (may already do part of this; check before adding new types): " + ($cand -join ' ') }
+  if (@($ids).Count -lt 2 -and $cand) { $ids = @($ids) + @($cand | Where-Object { $_ -notmatch 'Tests' } | Select-Object -First 3) | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) } }
+  $ids = @([regex]::Matches($keep, '`([A-Z]\w+)\.[A-Z]\w*') | ForEach-Object { 'class ' + $_.Groups[1].Value + '\b' }) + @($ids)  # Type.NewMember -> the type
+  $Find = (@($ids) | Select-Object -Unique -First 6) -join '|'
+  if (-not $Find) { 'NO_TYPES: one more call with -Find ExactTypeName'; exit 0 }
   "FIND=$Find"
 }
 if (-not $Find) { 'need -Find or -Issue'; exit 1 }  # v16g: was $PSScriptRoot/../.. which is "/" when run from the temp copy (round 2: every run broke)
