@@ -69,6 +69,26 @@ public class ToolsWordCountControllerTests
         payload.LineCount.ShouldBe(3);
     }
 
+    [Test]
+    public void Post_Should_ReturnLongestWord_When_TextProvided()
+    {
+        var result = CreateController().Post(new WordCountRequest("hi elephant cat"));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WordCountResponse>();
+        payload.LongestWord.ShouldBe("elephant");
+    }
+
+    [Test]
+    public void Post_Should_ReturnEmptyLongestWord_When_EmptyString()
+    {
+        var result = CreateController().Post(new WordCountRequest(""));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WordCountResponse>();
+        payload.LongestWord.ShouldBe("");
+    }
+
     private static ToolsWordCountController CreateController() =>
         new()
         {
