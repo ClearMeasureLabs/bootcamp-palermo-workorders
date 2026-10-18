@@ -46,5 +46,6 @@ if (-not $pr) {
   $pr = gh api "repos/$Repo/pulls" -f title=$Title -f head=$Branch -f base=master -f body=$body --jq .html_url 2>&1
   if ($LASTEXITCODE) { Fail "pr create: $pr" }
 }
+if ($c) { "HEAD=$c" }
 if (-not $c) { "PUBLISH=NO_CHANGE (same head; to retry CI use WAIT_CMD -ForceRerun)" }
 "PR=$pr"
