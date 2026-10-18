@@ -8,6 +8,8 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
     {
     }
 
+    public static Role CreateReadOnly(string name) => new(name, false, false);
+
     public string Name { get; set; } = name;
 
     public bool CanCreateWorkOrder { get; set; } = canCreate;
