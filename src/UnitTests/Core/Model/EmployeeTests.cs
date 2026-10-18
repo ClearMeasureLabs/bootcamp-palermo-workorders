@@ -227,4 +227,18 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void GetFullName_WithBlankFirstName_ShouldOmitFirstName()
+    {
+        var employee = new Employee("jdoe", "", "Doe", "");
+        employee.GetFullName().ShouldBe("Doe");
+    }
+
+    [Test]
+    public void GetFullName_WithFullName_ShouldJoinAllPartsWithSingleSpaces()
+    {
+        var employee = new Employee("jcamel", "Joe", "Camel", "") { MiddleName = "Big" };
+        employee.GetFullName().ShouldBe("Joe Big Camel");
+    }
 }
