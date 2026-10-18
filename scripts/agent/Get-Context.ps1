@@ -25,7 +25,9 @@ if ($Issue -and -not $Find) {
     "RECIPE $($parts[0]) (complete; copy this shape, don't re-read these):"
     foreach ($spec in $parts[2] -split '\s+') { $fp, $rg = $spec -split ':'; if (-not (Test-Path $fp)) { continue }
       $all = @(Get-Content $fp); $a = 1; $b = $all.Count; if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min($b, $all.Count) }
-      "== $fp $a-$b of $($all.Count)"; for ($i = $a; $i -le $b; $i++) { $l = $all[$i - 1]; if ($l -notmatch '^\s*(using |$)') { "{0,3}:{1}" -f $i, $l.TrimEnd() } } }
+      "== $fp $a-$b of $($all.Count)"
+      $us = @($all | Where-Object { $_ -match '^\s*using [\w.]+;' } | ForEach-Object { ($_ -replace '^\s*using\s+|;\s*$', '') }); if ($us) { "  usings: " + ($us -join '; ') }  # v28g: round 13 r07 read 2 recipe files in full
+      for ($i = $a; $i -le $b; $i++) { $l = $all[$i - 1]; if ($l -notmatch '^\s*(using |$)') { "{0,3}:{1}" -f $i, $l.TrimEnd() } } }
   }
   # v27g: db changes -> next DbUp script number (round 12 s07 globbed scripts/Update to find it)
   if ($keep -match '(?i)\b(DbUp|column)\b') { $last = Get-ChildItem src/Database/scripts/Update -Filter '*.sql' | Sort-Object Name | Select-Object -Last 1

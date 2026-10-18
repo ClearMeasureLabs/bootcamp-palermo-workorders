@@ -228,3 +228,17 @@ Each target was checked against master (git grep) and is absent. Same work-type 
 
 Launch prompt: same as round 12 with k13/rNN (see below).
 
+## Round 14 (v28g)
+Each target was checked against master (git grep) and is absent. Same work-type mix.
+| Item | Issue | Branch |
+|---|---|---|
+| q01 Employee.GetDisplayName (domain) | #10461 | cursor/token-exp-p6-q01-k14 |
+| q02 Counter decrement button (UI/bUnit) | #10462 | cursor/token-exp-p6-q02-k14 |
+| q03 MCP list-employees maxResults (MCP) | #10463 | cursor/token-exp-p6-q03-k14 |
+| q04 EmployeeCountQuery (query) | #10464 | cursor/token-exp-p6-q04-k14 |
+| q05 word-count sentenceCount (API JSON) | #10465 | cursor/token-exp-p6-q05-k14 |
+| q06 username rejects whitespace (validation) | #10466 | cursor/token-exp-p6-q06-k14 |
+| q07 Employee Department column (DbUp) | #10467 | cursor/token-exp-p6-q07-k14 |
+| q08 Employee.CompareTo(null) (bug fix) | #10468 | cursor/token-exp-p6-q08-k14 |
+
+Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-qNN-k14. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-qNN-k14`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does (if a wait shows no output, run it again; never read terminal files). If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board, journal, todos or handoff files. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`; make no tool calls after it.

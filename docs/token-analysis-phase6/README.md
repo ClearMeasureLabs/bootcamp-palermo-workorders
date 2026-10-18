@@ -17,3 +17,4 @@ See PLAN.md and round-N.md. Estimates: bytes/4 via scripts/agent/measure_transcr
 | 10 | v23g | v01-v08 (k10) | 8/8 | 622k | 77.7k | 8.51k |
 | 11 | v24g | t01-t08 (k11) | 8/8 | 439k | 54.9k | 5.01k |
 | 12 | v25g | s01-s08 (k12) | 8/8 | 434k | 54.2k (52.1k w/o s03 script bug) | 5.55k |
+| 13 | v27g | r01-r08 (k13) | 8/8 | 267k | 33.3k | 4.92k |
