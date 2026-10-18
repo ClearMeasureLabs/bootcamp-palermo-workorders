@@ -1,0 +1,11 @@
+BEGIN TRANSACTION
+GO
+PRINT N'Altering [dbo].[Employee] FirstName column from NVARCHAR(100) to NVARCHAR(120)'
+GO
+	ALTER TABLE [dbo].[Employee] ALTER COLUMN [FirstName] NVARCHAR(120) NOT NULL
+GO
+IF @@ERROR<>0 AND @@TRANCOUNT>0 ROLLBACK TRANSACTION
+GO
+PRINT 'The database update succeeded'
+COMMIT TRANSACTION
+GO
