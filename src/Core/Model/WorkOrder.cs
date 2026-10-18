@@ -103,6 +103,20 @@ public class WorkOrder : EntityBase<WorkOrder>
     }
 
     /// <summary>
+    /// Returns true when this work order's assignee matches <paramref name="employee"/>
+    /// by UserName (case-insensitive). Returns false when either side is null.
+    /// </summary>
+    public bool IsAssignedTo(Employee? employee)
+    {
+        if (Assignee is null || employee is null)
+        {
+            return false;
+        }
+
+        return string.Equals(Assignee.UserName, employee.UserName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Returns the urgency classification for this work order's due date relative to today
     /// in America/Chicago.
     /// </summary>

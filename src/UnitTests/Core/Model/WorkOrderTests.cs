@@ -98,4 +98,47 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void IsAssignedTo_WhenUserNamesMatch_ReturnsTrue()
+    {
+        var assignee = new Employee("jdoe", "Jane", "Doe", "jdoe@example.com");
+        var order = new WorkOrder { Assignee = assignee };
+
+        Assert.That(order.IsAssignedTo(new Employee("jdoe", "Other", "Name", "x@example.com")), Is.True);
+    }
+
+    [Test]
+    public void IsAssignedTo_WhenUserNamesDifferOnlyByCase_ReturnsTrue()
+    {
+        var order = new WorkOrder
+        {
+            Assignee = new Employee("JDoe", "Jane", "Doe", "jdoe@example.com")
+        };
+
+        Assert.That(order.IsAssignedTo(new Employee("jdoe", "Jane", "Doe", "jdoe@example.com")), Is.True);
+    }
+
+    [Test]
+    public void IsAssignedTo_WhenUserNamesDiffer_ReturnsFalse()
+    {
+        var order = new WorkOrder
+        {
+            Assignee = new Employee("jdoe", "Jane", "Doe", "jdoe@example.com")
+        };
+
+        Assert.That(order.IsAssignedTo(new Employee("asmith", "Ann", "Smith", "a@example.com")), Is.False);
+    }
+
+    [Test]
+    public void IsAssignedTo_WhenAssigneeOrEmployeeIsNull_ReturnsFalse()
+    {
+        var employee = new Employee("jdoe", "Jane", "Doe", "jdoe@example.com");
+        var assigned = new WorkOrder { Assignee = employee };
+        var unassigned = new WorkOrder();
+
+        Assert.That(assigned.IsAssignedTo(null), Is.False);
+        Assert.That(unassigned.IsAssignedTo(employee), Is.False);
+        Assert.That(unassigned.IsAssignedTo(null), Is.False);
+    }
 }
