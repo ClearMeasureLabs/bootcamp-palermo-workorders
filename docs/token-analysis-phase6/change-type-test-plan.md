@@ -31,12 +31,12 @@ Categories, matching the catalog's recommended sets:
 | c06 | Test | Acceptance test for GET /_version (only integration-tested today) | TEST SETUP path with no production change |
 | c07 | Trap | Search: colour-coded status badge per status (5 statuses + None + unknown); the natural switch has CC 7, over CRAP gate 6 | RED→fix loop stays bounded; the risk check should warn before push |
 | c08 | Vague | "New volunteers say the home page doesn't tell them what to do first. Make it more helpful." | cost on under-specified work |
-| c09 | UI | Settings: theme toggle (light/dark) persisted in localStorage and applied on load (bUnit + Playwright) | JS interop plus acceptance |
+| c09 | UI | Settings: "Compact tables" switch persisted in localStorage, applied to the search table (bUnit + Playwright). Replaced the theme toggle: dark mode already exists | stateful setting plus acceptance |
 | c10 | ML | WorkOrder optional EstimatedHours (decimal(5,2)): DbUp, EF, entity validation 0-999, manage form input, MCP save-work-order arg | multi-layer with a validator |
-| c11 | Bug | "Typing my room number with a trailing space makes the work order fail the length check at 900 characters even when it is shorter" (re-check at prep) | symptom→validator search |
+| c11 | Bug | "Description characters-remaining count only updates after I click elsewhere, not while typing". Replaced the trailing-space item, which did not reproduce; verified: the binding is onchange and acceptance tests blur first | symptom→Blazor binding |
 | c12 | CI | build.ps1/BuildFunctions.ps1: add -SkipAcceptance switch documented in quickstart.md | ps1 build-script change, no RECIPE exemplar |
-| c13 | Qual | Fix every CRAP>gate method listed by scripts/crap report in UI.Shared (batch, 4-6 methods) | refactor batch against the gate |
-| c14 | Test | Integration tests for WorkOrder Attachments repository round-trip (add/remove, cascade on delete) | integration-only TEST SETUP |
+| c13 | Qual | Refactor search sorting into one column→key-selector map (CC ≤4), tests for every column in both directions. Re-scoped: no UI.Shared method exceeds the CRAP gate today | multi-method refactor batch |
+| c14 | Test | Attachment integration tests: no cross-work-order leakage, multiple attachments keep their metadata, cascade on delete. Re-scoped: add/query are already tested | integration-only TEST SETUP |
 | c15 | Trap | MCP list-employees optional `role` filter; the natural `role?.Trim() ?? ""` on a non-nullable parameter trips Qodana | v34 null rule under MCP |
 | c16 | UI | Manage page: tooltip/help text for Instructions and Room Number fields (bUnit only) | UI-text cross-cut (6.9% of master) |
 | c17 | UI | Search: remember last filters in the session and restore them when returning to the page (bUnit + Playwright) | stateful UI |
@@ -77,3 +77,5 @@ Categories, matching the catalog's recommended sets:
 | round | skill | per item (input) | notes |
 |---|---|---|---|
 | 22 | v35g | c01 UI 810.9k, c02 ML 258.6k, c03 Bug 334.7k, c04 CI 44.8k (no PR: script), c05 Qual 382.7k, c06 Test 85.4k, c07 Trap 297.1k, c08 Vague 77.9k; avg 286.5k, median 277.9k | see round-22.md; v36g fixes the non-code publish path and LIMIT probing |
+
+Round 23 prep (2026-10-18): issues #10636-10643, v36g, branches cursor/token-exp-p6-cNN-v36.
