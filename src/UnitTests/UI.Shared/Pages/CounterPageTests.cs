@@ -50,4 +50,17 @@ public class CounterPageTests
         var button = component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']");
         button.GetAttribute("title").ShouldBe("Increase the count by one");
     }
+
+    [Test]
+    public async Task ShouldRenderTooltipWithExactTitleOnResetButton()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+
+        var button = component.Find($"[data-testid='{nameof(Counter.Elements.ResetButton)}']");
+        button.GetAttribute("title").ShouldBe("Reset the count to zero");
+    }
 }
