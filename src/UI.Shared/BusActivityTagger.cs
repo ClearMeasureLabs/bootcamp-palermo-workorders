@@ -11,13 +11,30 @@ internal static class BusActivityTagger
     {
         foreach (var property in message.GetType().GetProperties())
         {
-            if (IsScalarProperty(property.PropertyType)
-                && property.GetCustomAttribute<ExcludeFromBusActivityAttribute>() == null)
+            if (TryFormatScalarTag(message, property, out var tagValue))
             {
-                var propertyValue = property.GetValue(message);
-                activity.SetTag($"bus.message.{property.Name}", propertyValue?.ToString() ?? string.Empty);
+                activity.SetTag($"bus.message.{property.Name}", tagValue);
             }
         }
+    }
+
+    private static bool TryFormatScalarTag(object message, PropertyInfo property, out string tagValue)
+    {
+        tagValue = string.Empty;
+        if (!IsScalarProperty(property.PropertyType)
+            || property.GetCustomAttribute<ExcludeFromBusActivityAttribute>() != null)
+        {
+            return false;
+        }
+
+        var propertyValue = property.GetValue(message);
+        if (propertyValue is null)
+        {
+            return false;
+        }
+
+        tagValue = propertyValue.ToString() ?? string.Empty;
+        return true;
     }
 
     private static bool IsScalarProperty(Type propertyType) =>

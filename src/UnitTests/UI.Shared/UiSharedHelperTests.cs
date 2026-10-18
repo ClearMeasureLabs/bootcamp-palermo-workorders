@@ -28,6 +28,26 @@ public class BusActivityTaggerTests
     }
 
     [Test]
+    public void ShouldOmitTags_WhenScalarPropertyValueIsNull()
+    {
+        using var listener = new ActivityListener();
+        listener.ShouldListenTo = _ => true;
+        listener.Sample = SampleAllData;
+        ActivitySource.AddActivityListener(listener);
+
+        using var source = new ActivitySource("Test");
+        using var activity = source.CreateActivity("bus", ActivityKind.Internal)?.Start();
+        activity.ShouldNotBeNull();
+
+        BusActivityTagger.AddScalarPropertyTags(
+            new TestBusMessageWithOptional { Number = "WO-1", Title = null },
+            activity);
+
+        activity.GetTagItem("bus.message.Number").ShouldBe("WO-1");
+        activity.GetTagItem("bus.message.Title").ShouldBeNull();
+    }
+
+    [Test]
     public void ShouldExcludeMarkedFreeFormProperties()
     {
         using var listener = new ActivityListener();
@@ -64,5 +84,11 @@ public class BusActivityTaggerTests
     private sealed class TestBusMessage
     {
         public string Number { get; init; } = string.Empty;
+    }
+
+    private sealed class TestBusMessageWithOptional
+    {
+        public string Number { get; init; } = string.Empty;
+        public string? Title { get; init; }
     }
 }
