@@ -15,7 +15,7 @@ public class WorkOrderCountByAssigneeQueryHandler(DataContext context) :
         var rows = await context.Set<WorkOrder>()
             .AsNoTracking()
             .Where(wo => wo.Assignee != null)
-            .Select(wo => new { UserName = wo.Assignee!.UserName, wo.Status })
+            .Select(wo => new { wo.Assignee!.UserName, wo.Status })
             .ToListAsync(cancellationToken);
 
         return CountOpenByAssignee(rows.Select(r => (r.UserName, r.Status)));
