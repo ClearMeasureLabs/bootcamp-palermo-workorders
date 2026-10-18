@@ -90,4 +90,46 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
 
         attachments.ShouldBeEmpty();
     }
+
+    [Test]
+    public async Task WorkOrderAttachmentsQuery_ShouldReturnAttachmentsNewestFirst()
+    {
+        new DatabaseTests().Clean();
+
+        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
+        var workOrder = new WorkOrder { Number = "WO-004", Creator = uploader };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(uploader);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+            context.Add(new WorkOrderAttachment
+            {
+                WorkOrderId = workOrder.Id,
+                FileName = "older.jpg",
+                ContentType = "image/jpeg",
+                FileSize = 100,
+                UploadedById = uploader.Id,
+                UploadedDate = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc)
+            });
+            context.Add(new WorkOrderAttachment
+            {
+                WorkOrderId = workOrder.Id,
+                FileName = "newer.jpg",
+                ContentType = "image/jpeg",
+                FileSize = 200,
+                UploadedById = uploader.Id,
+                UploadedDate = new DateTime(2024, 6, 1, 12, 0, 0, DateTimeKind.Utc)
+            });
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var attachments = await bus.Send(new WorkOrderAttachmentsQuery(workOrder.Id));
+
+        attachments.Length.ShouldBe(2);
+        attachments[0].FileName.ShouldBe("newer.jpg");
+        attachments[1].FileName.ShouldBe("older.jpg");
+    }
 }

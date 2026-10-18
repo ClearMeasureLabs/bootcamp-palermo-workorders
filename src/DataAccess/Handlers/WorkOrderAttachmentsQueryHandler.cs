@@ -15,7 +15,7 @@ public class WorkOrderAttachmentsQueryHandler(DataContext context)
         return await context.Set<WorkOrderAttachment>()
             .Include(a => a.UploadedBy)
             .Where(a => a.WorkOrderId == request.WorkOrderId)
-            .OrderBy(a => a.UploadedDate)
+            .OrderByDescending(a => a.UploadedDate)
             .ToArrayAsync(cancellationToken);
     }
 }
