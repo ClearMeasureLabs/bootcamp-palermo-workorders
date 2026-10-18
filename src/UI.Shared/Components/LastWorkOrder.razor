@@ -5,7 +5,7 @@
 @if (WorkOrderLastChanged != null)
 {
     <a href="/workorder/manage/@(WorkOrderLastChanged?.Number)?mode=Edit"
-       title="Most recently viewed work order"
+       title="@TooltipText(WorkOrderLastChanged)"
        data-testid="@nameof(Elements.LastWorkOrderTooltip)">
         @WorkOrderLastChanged?.Number
     </a>
@@ -20,6 +20,14 @@
         var order = theEvent.Result.WorkOrder;
         WorkOrderLastChanged = order;
         InvokeAsync(StateHasChanged);
+    }
+
+    private static string TooltipText(WorkOrder? workOrder)
+    {
+        var title = workOrder?.Title;
+        return string.IsNullOrEmpty(title)
+            ? "Most recently viewed work order"
+            : $"Most recently viewed work order: {title}";
     }
 
     public enum Elements

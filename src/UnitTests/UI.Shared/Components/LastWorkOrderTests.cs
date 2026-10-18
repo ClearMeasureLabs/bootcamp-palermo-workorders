@@ -25,7 +25,25 @@ public class LastWorkOrderTests
 
         var component = ctx.Render<LastWorkOrder>();
 
-        var sampleWorkOrder = new WorkOrder { Number = "WO-001" };
+        var sampleWorkOrder = new WorkOrder { Number = "WO-001", Title = "Fix HVAC" };
+        component.Instance.Handle(new WorkOrderChangedEvent(new StateCommandResult(sampleWorkOrder)));
+        component.Render();
+
+        var link = component.Find($"[data-testid='{nameof(LastWorkOrder.Elements.LastWorkOrderTooltip)}']");
+        link.GetAttribute("title").ShouldBe("Most recently viewed work order: Fix HVAC");
+    }
+
+    [Test]
+    public async Task ShouldRenderBaseTooltipWhenWorkOrderTitleIsEmpty()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+
+        var component = ctx.Render<LastWorkOrder>();
+
+        var sampleWorkOrder = new WorkOrder { Number = "WO-002", Title = "" };
         component.Instance.Handle(new WorkOrderChangedEvent(new StateCommandResult(sampleWorkOrder)));
         component.Render();
 
