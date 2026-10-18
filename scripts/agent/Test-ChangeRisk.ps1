@@ -26,7 +26,8 @@ function Test-ImplicitUsings([string]$f) { $d = Split-Path $f
   while ($d) { $p = @(Get-ChildItem $d -Filter *.csproj -ErrorAction SilentlyContinue); if ($p) { return (Get-Content $p[0].FullName -Raw) -match 'ImplicitUsings>enable' }; $d = Split-Path $d }
   $false }
 git add -A -N src 2>$null | Out-Null
-$base = if (git rev-parse -q --verify origin/analysis/token-reduction 2>$null) { 'origin/analysis/token-reduction' } else { 'origin/master' }
+# names experiment: the workspace starts from analysis/token-names; diff against it so the comment refactor isn't part of the agent's change
+$base = @('origin/analysis/token-names', 'origin/analysis/token-reduction', 'origin/master') | Where-Object { git rev-parse -q --verify $_ 2>$null } | Select-Object -First 1
 $changed = @{}; $file = $null
 foreach ($l in git diff -U0 $base -- src) {
   if ($l -match '^\+\+\+ b/(.+)$') { $file = $Matches[1]; $changed[$file] = @(); continue }
