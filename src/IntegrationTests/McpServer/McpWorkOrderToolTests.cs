@@ -62,6 +62,39 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldFilterWorkOrdersByRoomNumberIgnoringCase()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var matching = new WorkOrder
+        {
+            Creator = employee,
+            Number = "WO-101",
+            Title = "Matching room",
+            RoomNumber = "HallA"
+        };
+        var other = new WorkOrder
+        {
+            Creator = employee,
+            Number = "WO-202",
+            Title = "Other room",
+            RoomNumber = "HallB"
+        };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(matching);
+        context.Add(other);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var unfiltered = await WorkOrderTools.ListWorkOrders(bus);
+        var filtered = await WorkOrderTools.ListWorkOrders(bus, roomNumber: "halla");
+
+        ExtractNumbers(unfiltered).ShouldBeSet("WO-101", "WO-202");
+        ExtractNumbers(filtered).ShouldBeSet("WO-101");
+    }
+
+    [Test]
     public async Task ShouldFilterWorkOrdersByCreatorUsername()
     {
         await SeedFilterWorkOrders();
