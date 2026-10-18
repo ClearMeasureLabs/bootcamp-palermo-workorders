@@ -110,4 +110,41 @@ public class WorkOrderBulkImportCsvParserTests
         result.Rows.Count.ShouldBe(1);
         result.Rows[0].Title.ShouldBe("Keep");
     }
+
+    [Test]
+    public void ShouldFail_WhenDuplicateHeaderPresent()
+    {
+        var csv = "Title,Description,CreatorUsername,Title\n"
+                  + "A,B,user1\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeFalse();
+        result.Error.ShouldBe("Duplicate column 'Title'");
+    }
+
+    [Test]
+    public void ShouldFail_WhenDuplicateHeaderDiffersOnlyByCase()
+    {
+        var csv = "Title,Description,CreatorUsername,title\n"
+                  + "A,B,user1\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeFalse();
+        result.Error.ShouldBe("Duplicate column 'title'");
+    }
+
+    [Test]
+    public void ShouldSucceed_WhenNormalHeaderPresent()
+    {
+        var csv = "Title,Description,CreatorUsername\n"
+                  + "Fix,Desc,user1\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeTrue();
+        result.Rows.Count.ShouldBe(1);
+        result.Rows[0].Title.ShouldBe("Fix");
+    }
 }

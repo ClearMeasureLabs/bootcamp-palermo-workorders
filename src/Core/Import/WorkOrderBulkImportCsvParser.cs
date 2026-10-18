@@ -28,7 +28,12 @@ public static class WorkOrderBulkImportCsvParser
             return WorkOrderBulkImportParseResult.Fail("CSV is empty.");
         }
 
-        var columnIndex = CsvColumnIndex.FromHeader(headerLine);
+        var columnIndex = CsvColumnIndex.FromHeader(headerLine, out var duplicateColumn);
+        if (duplicateColumn != null)
+        {
+            return WorkOrderBulkImportParseResult.Fail($"Duplicate column '{duplicateColumn}'");
+        }
+
         var missingColumn = columnIndex.FindMissingRequiredColumn(RequiredHeaders);
         if (missingColumn != null)
         {
@@ -77,25 +82,32 @@ public static class WorkOrderBulkImportCsvParser
 
         private CsvColumnIndex(Dictionary<string, int> columns) => _columns = columns;
 
-        public static CsvColumnIndex FromHeader(string headerLine)
+        public static CsvColumnIndex FromHeader(string headerLine, out string? duplicateColumn)
         {
+            duplicateColumn = null;
             var headerValues = CsvLineReader.SplitCsvLine(headerLine);
             var columnIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < headerValues.Count; i++)
             {
-                AddUniqueHeader(columnIndex, headerValues[i], i);
+                duplicateColumn = TryAddUniqueHeader(columnIndex, headerValues[i], i);
+                if (duplicateColumn != null)
+                {
+                    return new CsvColumnIndex(columnIndex);
+                }
             }
 
             return new CsvColumnIndex(columnIndex);
         }
 
-        private static void AddUniqueHeader(Dictionary<string, int> columnIndex, string rawName, int index)
+        private static string? TryAddUniqueHeader(Dictionary<string, int> columnIndex, string rawName, int index)
         {
             var name = rawName.Trim();
-            if (name.Length > 0)
+            if (name.Length == 0)
             {
-                columnIndex.TryAdd(name, index);
+                return null;
             }
+
+            return columnIndex.TryAdd(name, index) ? null : name;
         }
 
         public string? FindMissingRequiredColumn(IEnumerable<string> requiredHeaders)
