@@ -65,7 +65,7 @@ public class CounterPageTests
             await increment.ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
         }
 
-        Should.Throw<Bunit.ElementNotFoundException>(() =>
+        Should.Throw<ElementNotFoundException>(() =>
             component.Find($"[data-testid='{nameof(Counter.Elements.GoalReached)}']"));
     }
 
