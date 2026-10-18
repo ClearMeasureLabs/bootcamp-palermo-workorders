@@ -21,8 +21,8 @@ if ($File -and $Find) { 'REJECTED: use -File or -Find, not both (this call was n
 # bytes, drove its 1.9M tokens.
 $parts = @($File -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 $ranged = $parts -and -not @($parts | Where-Object { $_ -notmatch ':\d+-\d+$' })
-$lnf = "$cnt.lines"; $lnUsed = if (Test-Path $lnf) { [int]("$(Get-Content $lnf)".Trim() + '0') / 10 } else { 0 }
-if ($used -ge 7 -or $lnUsed -ge 800 -or ($used -ge 3 -and -not $ranged)) { 'LIMIT: Get-Context used. Edit now. If exact lines are missing: ONE call -File ''path:a-b,path2:c-d'' (5 ranges x 80 lines; 4 calls, 800 lines total). Never read via shell or grep/read tools, never touch /tmp/agent-* files, never probe with edits.'; exit 0 }
+$lnf = "$cnt.lines"; $lnUsed = if (Test-Path $lnf) { [int]("0$(Get-Content $lnf)".Trim()) } else { 0 }  # v38g: v37 stored lines*10 -> budget hit after ~80 lines (round 24 c17/c18)
+if ($used -ge 7 -or $lnUsed -ge 800 -or ($used -ge 3 -and -not $ranged)) { 'NEXT: read budget used up (normal, not an error; never reply SCRIPT_FAIL for this). Edit now with what you have, then Submit; Submit names anything missing. Only if exact lines are missing: ONE call -File ''path:a-b,path2:c-d'' (5 ranges x 80 lines; 4 calls, 800 lines). Never shell/grep/read tools, never touch /tmp/agent-*, never probe with edits.'; exit 0 }
 $tmpc = "$cnt.$PID"; Set-Content $tmpc ($used + 1); Move-Item -Force $tmpc $cnt
 # v30g: an explicit -Find is a capped grep: matching lines with 2 lines of context, max 25 hits / ~1500 chars (v29g returned
 # 3-5 KB outlines per -Find and often missed what the agent was hunting for).
@@ -51,7 +51,7 @@ if ($File) {
   $us = @($all | Where-Object { $_ -match '^\s*using [\w.]+;' } | ForEach-Object { ($_ -replace '^\s*using\s+|;\s*$', '') }); if ($us -and $a -gt 1) { "  usings: " + ($us -join '; ') }
   for ($i = $a; $i -le $b; $i++) { "{0,3}:{1}" -f $i, $all[$i - 1].TrimEnd() }
   $lines += $b - $a + 1 }
-  if ($used -ge 3) { Set-Content $lnf (($lnUsed + $lines) * 10) }
+  if ($used -ge 3) { Set-Content $lnf ($lnUsed + $lines) }
   exit 0
 }
 # v17g: -Issue N prints the issue's Outcome/Acceptance criteria (boilerplate stripped) and, if -Find is not given, builds it

@@ -78,6 +78,7 @@ Categories, matching the catalog's recommended sets:
 |---|---|---|---|
 | 22 | v35g | c01 UI 810.9k, c02 ML 258.6k, c03 Bug 334.7k, c04 CI 44.8k (no PR: script), c05 Qual 382.7k, c06 Test 85.4k, c07 Trap 297.1k, c08 Vague 77.9k; avg 286.5k, median 277.9k | see round-22.md; v36g fixes the non-code publish path and LIMIT probing |
 | 23 | v36g | c09 UI 1,930.8k, c10 ML 1,135.7k, c11 Bug 355.5k, c12 CI 183.2k, c13 Qual 203.9k, c14 Test 113.8k, c15 Trap 63.9k, c16 UI 179.7k; avg 520.8k, median 193.6k | probe edits 75→2; the read budget was gamed (c10 counter rewrites, c09 grep/read); v37g adds batched ranges |
+| 24 | v37g | c17 UI 79.8k (no PR), c18 ML 458.2k, c19 Bug 100.2k, c20 Docs 18.5k, c21 Qual 230.8k, c22 Test 38.7k, c23 Vague 896.7k, c24 Bug 305.6k; avg 266.1k, median 165.5k; c04 workflow probe 18.3k GREEN | v37 budget ×10 bug → LIMIT loops; v38g fixes it and makes the message NEXT: |
 
 Round 23 prep (2026-10-18): issues #10636-10643, v36g, branches cursor/token-exp-p6-cNN-v36.
 Round 24 prep (2026-10-18): issues #10653-10660, v37g, branches cursor/token-exp-p6-cNN-v37. c20 is docs-only and exercises the NON_CODE path.
