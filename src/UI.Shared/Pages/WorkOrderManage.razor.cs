@@ -48,7 +48,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     [Parameter] public string? Id { get; set; }
 
     [SupplyParameterFromQuery] public string? Mode { get; set; }
-    private EditMode CurrentMode => Mode?.ToLower() == "edit" ? EditMode.Edit : EditMode.New;
+    private EditMode CurrentMode => EditModeResolver.FromQuery(Mode);
 
     protected override async Task OnInitializedAsync()
     {

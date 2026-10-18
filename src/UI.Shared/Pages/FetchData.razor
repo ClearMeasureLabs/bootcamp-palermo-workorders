@@ -77,7 +77,7 @@
     {
         if (string.IsNullOrEmpty(summary)) return "🌤️";
 
-        return summary.ToLower() switch
+        return summary.ToLowerInvariant() switch
         {
             var s when s.Contains("sun") => "☀️",
             var s when s.Contains("rain") => "🌧️",
@@ -93,7 +93,7 @@
     private string GetChurchPlanning(WeatherForecast forecast)
     {
         var temp = forecast.TemperatureC;
-        var summary = forecast.Summary?.ToLower() ?? "";
+        var summary = forecast.Summary?.ToLowerInvariant() ?? "";
 
         if (summary.Contains("rain") || summary.Contains("storm"))
             return "Indoor activities recommended";

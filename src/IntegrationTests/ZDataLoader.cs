@@ -32,7 +32,7 @@ public class ZDataLoader
         // Create Christmas Concert Work Orders
         var christmasOrder1 = new WorkOrder
         {
-            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper(),
+            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpperInvariant(),
             Creator = revLovejoy,
             Assignee = maudeFlanders,
             Status = WorkOrderStatus.Draft,
@@ -45,7 +45,7 @@ public class ZDataLoader
 
         var christmasOrder2 = new WorkOrder
         {
-            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper(),
+            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpperInvariant(),
             Creator = revLovejoy,
             Assignee = groundskeeperWillie,
             Status = WorkOrderStatus.Assigned,
@@ -59,7 +59,7 @@ public class ZDataLoader
 
         var christmasOrder3 = new WorkOrder
         {
-            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper(),
+            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpperInvariant(),
             Creator = nedFlanders,
             Assignee = organistEmployee,
             Status = WorkOrderStatus.InProgress,
@@ -73,7 +73,7 @@ public class ZDataLoader
 
         var christmasOrder4 = new WorkOrder
         {
-            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper(),
+            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpperInvariant(),
             Creator = revLovejoy,
             Assignee = nedFlanders,
             Status = WorkOrderStatus.Draft,
@@ -86,7 +86,7 @@ public class ZDataLoader
 
         var christmasOrder5 = new WorkOrder
         {
-            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper(),
+            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpperInvariant(),
             Creator = nedFlanders,
             Assignee = groundskeeperWillie,
             Status = WorkOrderStatus.Complete,
@@ -101,7 +101,7 @@ public class ZDataLoader
 
         var christmasOrder6 = new WorkOrder
         {
-            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpper(),
+            Number = Guid.NewGuid().ToString().Substring(0, 5).ToUpperInvariant(),
             Creator = revLovejoy,
             Assignee = maudeFlanders,
             Status = WorkOrderStatus.Assigned,
