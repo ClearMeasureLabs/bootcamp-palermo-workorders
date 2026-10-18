@@ -37,18 +37,7 @@ public static class DueDateUrgencyCalculator
             return DueDateUrgency.None;
         }
 
-        var today = ChurchTimeZone.Today(timeProvider);
-        if (dueDate.Value == today)
-        {
-            return DueDateUrgency.DueToday;
-        }
-
-        if (dueDate.Value < today)
-        {
-            return DueDateUrgency.Overdue;
-        }
-
-        return DueDateUrgency.None;
+        return ForOpenDueDate(dueDate.Value, ChurchTimeZone.Today(timeProvider));
     }
 
     /// <summary>
@@ -59,6 +48,7 @@ public static class DueDateUrgencyCalculator
         {
             DueDateUrgency.DueToday => "due-date-today",
             DueDateUrgency.Overdue => "due-date-overdue",
+            DueDateUrgency.DueSoon => "due-date-soon",
             _ => string.Empty
         };
 
@@ -70,6 +60,7 @@ public static class DueDateUrgencyCalculator
         {
             DueDateUrgency.DueToday => "Due today",
             DueDateUrgency.Overdue => "Overdue",
+            DueDateUrgency.DueSoon => "Due soon",
             _ => null
         };
 
@@ -84,6 +75,27 @@ public static class DueDateUrgencyCalculator
             DueDateUrgency.DueToday => "Due Today",
             _ => dueDate.HasValue ? "On Track" : null
         };
+
+    private static DueDateUrgency ForOpenDueDate(DateOnly dueDate, DateOnly today)
+    {
+        var daysUntilDue = dueDate.DayNumber - today.DayNumber;
+        if (daysUntilDue < 0)
+        {
+            return DueDateUrgency.Overdue;
+        }
+
+        if (daysUntilDue == 0)
+        {
+            return DueDateUrgency.DueToday;
+        }
+
+        if (daysUntilDue <= 2)
+        {
+            return DueDateUrgency.DueSoon;
+        }
+
+        return DueDateUrgency.None;
+    }
 
     private static bool IsOpen(WorkOrderStatus status) =>
         status == WorkOrderStatus.Draft

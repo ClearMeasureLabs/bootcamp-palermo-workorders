@@ -86,13 +86,57 @@ public class DueDateUrgencyCalculatorTests
         DueDateUrgencyCalculator.Calculate(workOrder, clock).ShouldBe(DueDateUrgency.None);
     }
 
+    [TestCase(1)]
+    [TestCase(2)]
+    public void Calculate_WhenOpenAndDueInOneOrTwoDays_ReturnsDueSoon(int daysAhead)
+    {
+        var clock = ChicagoNoonOn(2026, 8, 29);
+        var workOrder = new WorkOrder
+        {
+            Status = WorkOrderStatus.Assigned,
+            DueDate = ChurchTimeZone.Today(clock).AddDays(daysAhead)
+        };
+
+        var urgency = DueDateUrgencyCalculator.Calculate(workOrder, clock);
+
+        urgency.ShouldBe(DueDateUrgency.DueSoon);
+        DueDateUrgencyCalculator.CssClass(urgency).ShouldBe("due-date-soon");
+        DueDateUrgencyCalculator.ScreenReaderText(urgency).ShouldBe("Due soon");
+    }
+
+    [Test]
+    public void Calculate_WhenOpenAndDueInThreeDays_ReturnsNone()
+    {
+        var clock = ChicagoNoonOn(2026, 8, 29);
+        var workOrder = new WorkOrder
+        {
+            Status = WorkOrderStatus.Assigned,
+            DueDate = ChurchTimeZone.Today(clock).AddDays(3)
+        };
+
+        DueDateUrgencyCalculator.Calculate(workOrder, clock).ShouldBe(DueDateUrgency.None);
+    }
+
+    [Test]
+    public void Calculate_WhenClosedAndDueSoon_ReturnsNone()
+    {
+        var clock = ChicagoNoonOn(2026, 8, 29);
+        var workOrder = new WorkOrder
+        {
+            Status = WorkOrderStatus.Complete,
+            DueDate = ChurchTimeZone.Today(clock).AddDays(1)
+        };
+
+        DueDateUrgencyCalculator.Calculate(workOrder, clock).ShouldBe(DueDateUrgency.None);
+    }
+
     [Test]
     public void Calculate_WhenEditableDueDateChanges_UpdatesUrgency()
     {
         var clock = ChicagoNoonOn(2026, 8, 29);
         var today = ChurchTimeZone.Today(clock);
 
-        var futureUrgency = DueDateUrgencyCalculator.Calculate(
+        var soonUrgency = DueDateUrgencyCalculator.Calculate(
             today.AddDays(1),
             WorkOrderStatus.Draft,
             clock);
@@ -101,7 +145,7 @@ public class DueDateUrgencyCalculatorTests
             WorkOrderStatus.Draft,
             clock);
 
-        futureUrgency.ShouldBe(DueDateUrgency.None);
+        soonUrgency.ShouldBe(DueDateUrgency.DueSoon);
         todayUrgency.ShouldBe(DueDateUrgency.DueToday);
     }
 

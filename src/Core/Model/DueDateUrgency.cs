@@ -12,5 +12,8 @@ public enum DueDateUrgency
     DueToday = 1,
 
     /// <summary>Open work order with a due date before today in America/Chicago.</summary>
-    Overdue = 2
+    Overdue = 2,
+
+    /// <summary>Open work order due 1–2 Chicago calendar days from today.</summary>
+    DueSoon = 3
 }
