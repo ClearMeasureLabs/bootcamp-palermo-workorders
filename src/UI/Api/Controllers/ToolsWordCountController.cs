@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net.Mime;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
@@ -41,8 +42,11 @@ public class ToolsWordCountController : ControllerBase
         var characterCount = text.Length;
         // Normalize CRLF to LF, then split on LF to count lines (handles CR, LF, and CRLF).
         var lineCount = text.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n').Length;
+        var averageWordLength = wordCount == 0
+            ? 0m
+            : Math.Round(text.Count(char.IsLetter) / (decimal)wordCount, 2);
 
-        return Ok(new WordCountResponse(wordCount, characterCount, lineCount));
+        return Ok(new WordCountResponse(wordCount, characterCount, lineCount, averageWordLength));
     }
 }
 
@@ -54,4 +58,4 @@ public record WordCountRequest(string? Text);
 /// <summary>
 /// JSON payload for <c>POST /api/tools/word-count</c>.
 /// </summary>
-public record WordCountResponse(int WordCount, int CharacterCount, int LineCount);
+public record WordCountResponse(int WordCount, int CharacterCount, int LineCount, decimal AverageWordLength);

@@ -33,6 +33,26 @@ public class ToolsWordCountControllerTests
     }
 
     [Test]
+    public void Post_Should_ReturnAverageWordLength_When_SentenceProvided()
+    {
+        var result = CreateController().Post(new WordCountRequest("one two three"));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WordCountResponse>();
+        payload.AverageWordLength.ShouldBe(3.67m);
+    }
+
+    [Test]
+    public void Post_Should_ReturnZeroAverageWordLength_When_BlankText()
+    {
+        var result = CreateController().Post(new WordCountRequest(""));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WordCountResponse>();
+        payload.AverageWordLength.ShouldBe(0m);
+    }
+
+    [Test]
     public void Post_Should_CountSingleLine_When_NoNewlines()
     {
         var result = CreateController().Post(new WordCountRequest("one two three"));
