@@ -18,9 +18,9 @@ internal static class ProblemDetailsExceptionHandler
         {
             Title = "An error occurred while processing your request.",
             Status = StatusCodes.Status500InternalServerError,
-            Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1"
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
+            Extensions = { ["traceId"] = context.TraceIdentifier }
         };
-        problemDetails.Extensions["traceId"] = context.TraceIdentifier;
 
         if (environment.IsDevelopment() && exception is not null)
         {
