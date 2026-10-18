@@ -13,6 +13,15 @@ public class WorkOrderSearchModel
         public string? Assignee { get; set; }
         public string? Status { get; set; }
         public bool OverdueOnly { get; set; }
+
+        /// <summary>
+        /// True when any search filter is active.
+        /// </summary>
+        public bool HasAny =>
+            !string.IsNullOrEmpty(Creator)
+            || !string.IsNullOrEmpty(Assignee)
+            || !string.IsNullOrEmpty(Status)
+            || OverdueOnly;
     }
 }
 
