@@ -86,4 +86,24 @@ public class McpEmployeeToolTests
 
         result.ShouldContain("No employee found");
     }
+
+    [Test]
+    public async Task ShouldFilterEmployeesByNameContains()
+    {
+        var alice = new Employee("alice", "Alice", "Smith", "alice@test.com");
+        var bob = new Employee("bob", "Bob", "Jones", "bob@test.com");
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(alice);
+        context.Add(bob);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus, "smi");
+
+        result.ShouldContain("Alice");
+        result.ShouldContain("alice");
+        result.ShouldNotContain("Bob");
+        result.ShouldNotContain("\"bob\"");
+    }
 }
