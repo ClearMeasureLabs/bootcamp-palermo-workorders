@@ -4,6 +4,11 @@
 param([string]$Find = '', [int]$Issue = 0, [int]$Max = 3, [int]$Lines = 18, [int]$Cap = 5500)
 $ErrorActionPreference = 'Stop'
 Set-Location (git rev-parse --show-toplevel)
+# v21g: hard limit of 2 calls per workspace (round 7 y05 made 13 calls despite the skill rule).
+$cnt = Join-Path ([IO.Path]::GetTempPath()) 'agent-getcontext-count'
+$used = if (Test-Path $cnt) { [int](Get-Content $cnt) } else { 0 }
+if ($used -ge 2) { 'LIMIT: Get-Context already used twice. Read line ranges of files listed above (or copy the RECIPE), then edit.'; exit 0 }
+Set-Content $cnt ($used + 1)
 # v17g: -Issue N prints the issue's Outcome/Acceptance criteria (boilerplate stripped) and, if -Find is not given, builds it
 # from the PascalCase identifiers named in backticks. One call replaces `gh issue view` + the first Get-Context call.
 # v18g: issue text is printed only on the first call (-Issue without -Find); round 4 reprinted it on every -Find retry.
@@ -13,6 +18,15 @@ if ($Issue -and -not $Find) {
   $body = gh api "repos/ClearMeasureLabs/bootcamp-palermo-workorders/issues/$Issue" --jq .body
   $keep = ($body -split "`n" | Where-Object { $_ -notmatch 'Token-reduction experiment|The PR targets master|^## Done when' }) -join "`n"
   "ISSUE #$Issue"; $keep.Trim()
+  # v21g: recipes = complete exemplar of the change kind (round 7 y04/y05: 17 reads / 13 calls hunting the query+validator+test pattern)
+  foreach ($r in Get-Content (Join-Path $PSScriptRoot 'recipes.txt') | Where-Object { $_ -and $_ -notmatch '^#' }) {
+    $parts = $r -split "`t"; if ($keep -notmatch "(?i)$($parts[1])") { continue }
+    $Max = 1; $Cap = 2500  # recipe already shows the pattern; keep the outline small
+    "RECIPE $($parts[0]) (complete; copy this shape, don't re-read these):"
+    foreach ($spec in $parts[2] -split '\s+') { $fp, $rg = $spec -split ':'; if (-not (Test-Path $fp)) { continue }
+      $all = @(Get-Content $fp); $a = 1; $b = $all.Count; if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min($b, $all.Count) }
+      "== $fp $a-$b of $($all.Count)"; for ($i = $a; $i -le $b; $i++) { $l = $all[$i - 1]; if ($l -notmatch '^\s*(using |$)') { "{0,3}:{1}" -f $i, $l.TrimEnd() } } }
+  }
   $ids = @([regex]::Matches($keep, '\b[A-Z][a-z]+[A-Z]\w*\b') | ForEach-Object { $_.Value }) +
          @([regex]::Matches($keep, '`([a-z]+(-[a-z]+)+)`') | ForEach-Object { $_.Groups[1].Value }) | Where-Object { $_ -notmatch '^(WorkOrder|Employee|DbUp|SQLite|SqlServer)$' } | Sort-Object -Unique
   $stop = 'with|that|this|from|when|test|tests|unit|integration|have|then|each|only|work|order|orders|true|false|returns|null|empty|value|text|page|change|criteria|outcome|acceptance|works|given|server|sqlite|existing|optional|parameter|description|case|insensitively|unchanged|current|behavior|omitted|called|call|which|default|added'

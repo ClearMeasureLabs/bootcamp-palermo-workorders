@@ -1,0 +1,4 @@
+# v21g: general "how this kind of change is done here" exemplars, printed by Get-Context -Issue when the issue text matches.
+# Format (tab-separated): name	regex on issue text	file[:from-to] ... (whole file if no range). Keep each recipe under ~3 KB.
+new-query	\b(query|handler)\b	src/Core/Queries/WorkOrderCountByStatusQuery.cs src/Core/Validation/WorkOrderCountByStatusQueryValidator.cs src/DataAccess/Handlers/WorkOrderCountByStatusQueryHandler.cs src/UnitTests/Core/Validation/WorkOrderCountByStatusQueryValidatorTests.cs src/IntegrationTests/DataAccess/Handlers/WorkOrderCountByStatusQueryHandlerTests.cs
+mcp-tool-param	\bMCP\b	src/McpServer/Tools/WorkOrderTools.cs:14-40 src/IntegrationTests/McpServer/McpWorkOrderToolTests.cs:1-63
