@@ -40,10 +40,10 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public int CompareTo(Employee? other)
     {
-        var compareResult = string.Compare(LastName, other!.LastName, StringComparison.Ordinal);
+        var compareResult = string.Compare(LastName, other!.LastName, StringComparison.OrdinalIgnoreCase);
         if (compareResult == 0)
         {
-            compareResult = string.Compare(FirstName, other.FirstName, StringComparison.Ordinal);
+            compareResult = string.Compare(FirstName, other.FirstName, StringComparison.OrdinalIgnoreCase);
         }
 
         return compareResult;

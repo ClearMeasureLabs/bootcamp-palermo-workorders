@@ -119,6 +119,17 @@ public class EmployeeTests
     }
 
     [Test]
+    public void ShouldCompareEmployeesByLastNameIgnoringCase()
+    {
+        var smith = new Employee("", "Ann", "smith", "");
+        var zed = new Employee("", "Bob", "Zed", "");
+
+        Assert.That(smith.CompareTo(zed), Is.LessThan(0));
+        Assert.That(zed.CompareTo(smith), Is.GreaterThan(0));
+        Assert.That(smith.CompareTo(new Employee("", "Ann", "SMITH", "")), Is.EqualTo(0));
+    }
+
+    [Test]
     public void ShouldImplementEquality()
     {
         var employee1 = new Employee();
