@@ -23,4 +23,12 @@ public class RequestBodyBufferingExtensionsTests
 
         RequestBodyBufferingRules.ShouldBuffer(request).ShouldBe(expected);
     }
+
+    [TestCase(0L, 1L)]
+    [TestCase(5000L, 5000L)]
+    [TestCase(50_000_000L, 10_485_760L)]
+    public void ClampBufferThreshold_ReturnsExpected(long input, long expected)
+    {
+        RequestBodyBufferingRules.ClampBufferThreshold(input).ShouldBe(expected);
+    }
 }

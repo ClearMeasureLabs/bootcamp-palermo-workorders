@@ -58,6 +58,8 @@ internal static class RequestBodyBufferingRules
     private static bool IsMutableMethod(string method) =>
         HttpMethods.IsPost(method) || HttpMethods.IsPut(method) || HttpMethods.IsPatch(method);
 
+    private const long MaxBufferThreshold = 10_485_760;
+
     internal static long ClampBufferThreshold(long bufferThreshold) =>
-        bufferThreshold < 1 ? 1 : bufferThreshold;
+        Math.Clamp(bufferThreshold, 1, MaxBufferThreshold);
 }
