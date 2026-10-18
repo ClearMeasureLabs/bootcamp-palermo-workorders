@@ -23,5 +23,6 @@ public class HealthCheckLinkTests
         var link = component.Find($"[data-testid='{nameof(HealthCheckLink.Elements.HealthCheckLink)}']");
         link.GetAttribute("title").ShouldBe("View application health status");
         link.GetAttribute("href").ShouldBe("/_clienthealthcheck");
+        link.GetAttribute("aria-label").ShouldBe("Application health check");
     }
 }
