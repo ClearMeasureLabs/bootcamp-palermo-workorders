@@ -8,7 +8,7 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
     {
     }
 
-    public string Name { get; set; } = name;
+    public string? Name { get; set; } = name;
 
     public bool CanCreateWorkOrder { get; set; } = canCreate;
 
