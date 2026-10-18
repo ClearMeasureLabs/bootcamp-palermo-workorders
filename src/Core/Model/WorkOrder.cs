@@ -115,5 +115,12 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public bool IsOverdue() => GetDueDateUrgency() == DueDateUrgency.Overdue;
 
+    /// <summary>
+    /// Returns days until <see cref="DueDate"/> relative to <paramref name="today"/>
+    /// (negative when past due), or <c>null</c> when there is no due date.
+    /// </summary>
+    public int? GetDaysUntilDue(DateOnly today) =>
+        DueDate is { } due ? due.DayNumber - today.DayNumber : null;
+
     public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
 }

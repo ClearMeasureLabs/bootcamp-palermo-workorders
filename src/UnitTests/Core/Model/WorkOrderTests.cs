@@ -98,4 +98,30 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void GetDaysUntilDue_WhenDueInFuture_ReturnsPositiveDays()
+    {
+        var today = new DateOnly(2026, 10, 18);
+        var order = new WorkOrder { DueDate = today.AddDays(5) };
+
+        Assert.That(order.GetDaysUntilDue(today), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void GetDaysUntilDue_WhenPastDue_ReturnsNegativeDays()
+    {
+        var today = new DateOnly(2026, 10, 18);
+        var order = new WorkOrder { DueDate = today.AddDays(-3) };
+
+        Assert.That(order.GetDaysUntilDue(today), Is.EqualTo(-3));
+    }
+
+    [Test]
+    public void GetDaysUntilDue_WhenNoDueDate_ReturnsNull()
+    {
+        var order = new WorkOrder { DueDate = null };
+
+        Assert.That(order.GetDaysUntilDue(new DateOnly(2026, 10, 18)), Is.Null);
+    }
 }
