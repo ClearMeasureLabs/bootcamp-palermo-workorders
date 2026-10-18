@@ -32,6 +32,15 @@ public class RealtimeNotificationHubTests
         hub.ConnectionCount.ShouldBe(0);
     }
 
+    [Test]
+    public void ForRemotableEvent_SetsKindAndMessageJsonWithEventTypeName()
+    {
+        var envelope = RealtimeNotificationEnvelope.ForRemotableEvent(new UserLoggedInEvent("user1"));
+
+        envelope.Kind.ShouldBe(RealtimeNotificationKinds.RemotableEvent);
+        envelope.MessageJson.ShouldContain(nameof(UserLoggedInEvent));
+    }
+
     private sealed class RecordingWebSocket : WebSocket
     {
         // ReSharper disable once ConvertToPrimaryConstructor -- epic guardrail: no mass primary-constructor conversion

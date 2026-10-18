@@ -43,10 +43,7 @@ public sealed class RealtimeNotificationHub : IRealtimeNotificationHub
 
     public async Task BroadcastRemotableEventAsync(IRemotableEvent @event, CancellationToken cancellationToken = default)
     {
-        var messageJson = new WebServiceMessage(@event).GetJson();
-        var envelope = new RealtimeNotificationEnvelope(
-            RealtimeNotificationKinds.RemotableEvent,
-            messageJson);
+        var envelope = RealtimeNotificationEnvelope.ForRemotableEvent(@event);
         var json = JsonSerializer.Serialize(envelope, RealtimeNotificationHubJson.Options);
         await BroadcastUtf8JsonAsync(json, cancellationToken).ConfigureAwait(false);
     }
@@ -98,7 +95,11 @@ public static class RealtimeNotificationKinds
 /// <summary>
 /// Wire envelope: <c>kind</c> plus <c>messageJson</c> (serialized <see cref="WebServiceMessage"/>).
 /// </summary>
-public sealed record RealtimeNotificationEnvelope(string Kind, string MessageJson);
+public sealed record RealtimeNotificationEnvelope(string Kind, string MessageJson)
+{
+    public static RealtimeNotificationEnvelope ForRemotableEvent(IRemotableEvent @event) =>
+        new(RealtimeNotificationKinds.RemotableEvent, new WebServiceMessage(@event).GetJson());
+}
 
 internal static class RealtimeNotificationHubJson
 {
