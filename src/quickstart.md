@@ -58,6 +58,8 @@ Update variable group references:
     Change line 127 in onion8-clean-pipeline to read "- group: <name of tdd variable group>"
     Change line 203 in onion8-clean-pipeline to read "- group: <name of tdd variable group>"
     Change line 244 in onion8-clean-pipeline to read "- group: <name of uat variable group>"
+
+PrivateBuild.ps1 -SkipAcceptance skips the acceptance-test step (prints "Skipping acceptance tests").
     Change line 322 in onion8-clean-pipeline to read "- group: <name of prod variable group>"
 
 Increment minor version number by one. (This prevents pipeline failure in re-used Artifact feeds)

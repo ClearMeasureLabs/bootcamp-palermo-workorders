@@ -202,7 +202,10 @@ Function Build {
 		[string]$databaseName = "",
 
 		[Parameter(Mandatory = $false)]
-		[switch]$UseSqlite
+		[switch]$UseSqlite,
+
+		[Parameter(Mandatory = $false)]
+		[switch]$SkipAcceptance
 	)
 
 	if ($UseSqlite) {
@@ -225,6 +228,10 @@ Function Build {
 	UnitTests
 	Setup-DatabaseForBuild
 	IntegrationTest
+
+	if ($SkipAcceptance) {
+		Log-Message -Message "Skipping acceptance tests" -Type "INFO"
+	}
 
 	$script:buildStopwatch.Stop()
 	$elapsed = $script:buildStopwatch.Elapsed.ToString()

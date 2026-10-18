@@ -1,9 +1,12 @@
 param (
     [Parameter(Mandatory=$false)]
     [string]$databaseServer = "",
-	
+
     [Parameter(Mandatory=$false)]
-    [string]$databaseName = ""
+    [string]$databaseName = "",
+
+    [Parameter(Mandatory=$false)]
+    [switch]$SkipAcceptance
 )
 
 . .\build.ps1
@@ -16,6 +19,9 @@ if (-not [string]::IsNullOrEmpty($databaseServer)) {
 }
 if (-not [string]::IsNullOrEmpty($databaseName)) {
     $buildArgs["databaseName"] = $databaseName
+}
+if ($SkipAcceptance) {
+    $buildArgs["SkipAcceptance"] = $true
 }
 Build @buildArgs
 
