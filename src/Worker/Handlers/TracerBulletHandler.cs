@@ -21,5 +21,6 @@ public class TracerBulletHandler : IHandleMessages<TracerBulletCommand>
     {
         _logger.LogInformation("TracerBullet received: {CorrelationId}. Sending reply.", message.CorrelationId);
         await context.Reply(new TracerBulletReplyMessage(message.CorrelationId));
+        _logger.LogInformation("TracerBullet reply sent: {CorrelationId}", message.CorrelationId);
     }
 }

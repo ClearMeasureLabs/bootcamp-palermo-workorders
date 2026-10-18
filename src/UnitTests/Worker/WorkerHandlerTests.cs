@@ -1,6 +1,6 @@
 using ClearMeasure.Bootcamp.Core.Model.Events;
 using ClearMeasure.Bootcamp.Core.Model.Messages;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Shouldly;
 using Worker.Handlers;
 using Worker.Sagas.AiBotWorkerOrder.Commands;
@@ -41,7 +41,8 @@ public class WorkerHandlerTests
     public async Task TracerBulletHandler_Handle_ShouldReplyWithSameCorrelationId()
     {
         var stub = StubMessageHandlerContext.Create();
-        var handler = new TracerBulletHandler(NullLogger<TracerBulletHandler>.Instance);
+        var logger = new CapturingLogger<TracerBulletHandler>();
+        var handler = new TracerBulletHandler(logger);
         var correlationId = Guid.NewGuid();
 
         await handler.Handle(new TracerBulletCommand(correlationId), stub.Context);
@@ -49,5 +50,27 @@ public class WorkerHandlerTests
         stub.RepliedMessages.Count.ShouldBe(1);
         var reply = stub.RepliedMessages[0].ShouldBeOfType<TracerBulletReplyMessage>();
         reply.CorrelationId.ShouldBe(correlationId);
+        logger.Entries.ShouldContain(e =>
+            e.Level == LogLevel.Information
+            && e.Message.Contains($"TracerBullet reply sent: {correlationId}"));
+    }
+
+    private sealed class CapturingLogger<T> : ILogger<T>
+    {
+        public List<(LogLevel Level, string Message)> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Entries.Add((logLevel, formatter(state, exception)));
+        }
     }
 }
