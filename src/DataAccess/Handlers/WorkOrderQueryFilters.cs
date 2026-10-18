@@ -11,7 +11,8 @@ internal static class WorkOrderQueryFilters
         Employee? assignee,
         Employee? creator,
         WorkOrderStatus? status,
-        bool overdueOnly = false)
+        bool overdueOnly = false,
+        DateOnly? dueBefore = null)
     {
         if (assignee != null)
         {
@@ -33,7 +34,7 @@ internal static class WorkOrderQueryFilters
             query = ApplyOverdueFilter(query);
         }
 
-        return query;
+        return ApplyDueBeforeFilter(query, dueBefore);
     }
 
     private static IQueryable<WorkOrder> ApplyOverdueFilter(IQueryable<WorkOrder> query)
@@ -47,6 +48,17 @@ internal static class WorkOrderQueryFilters
             (wo.Status == draft || wo.Status == assigned || wo.Status == inProgress));
     }
 
+    private static IQueryable<WorkOrder> ApplyDueBeforeFilter(IQueryable<WorkOrder> query, DateOnly? dueBefore)
+    {
+        if (!dueBefore.HasValue)
+        {
+            return query;
+        }
+
+        var before = dueBefore.Value;
+        return query.Where(wo => wo.DueDate < before);
+    }
+
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,
         WorkOrderSearchSpecification specification) =>
@@ -55,5 +67,6 @@ internal static class WorkOrderQueryFilters
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,
         WorkOrderSpecificationQuery specification) =>
-        Apply(query, specification.Assignee, specification.Creator, specification.Status, specification.OverdueOnly);
+        Apply(query, specification.Assignee, specification.Creator, specification.Status,
+            specification.OverdueOnly, specification.DueBefore);
 }

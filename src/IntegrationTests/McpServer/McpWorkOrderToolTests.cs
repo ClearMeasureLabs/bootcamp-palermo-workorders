@@ -42,6 +42,41 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldFilterWorkOrdersByDueBeforeAndLeaveUnfilteredWhenOmitted()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var early = new WorkOrder
+        {
+            Creator = employee,
+            Number = "WO-001",
+            Title = "Early due",
+            DueDate = new DateOnly(2026, 1, 10)
+        };
+        var late = new WorkOrder
+        {
+            Creator = employee,
+            Number = "WO-002",
+            Title = "Late due",
+            DueDate = new DateOnly(2026, 3, 15)
+        };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(early);
+        context.Add(late);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var unfiltered = await WorkOrderTools.ListWorkOrders(bus);
+        var filtered = await WorkOrderTools.ListWorkOrders(bus, dueBefore: "2026-02-01");
+
+        unfiltered.ShouldContain("WO-001");
+        unfiltered.ShouldContain("WO-002");
+        filtered.ShouldContain("WO-001");
+        filtered.ShouldNotContain("WO-002");
+    }
+
+    [Test]
     public async Task ShouldFilterWorkOrdersByStatus()
     {
         var employee = new Employee("user1", "John", "Doe", "john@test.com");

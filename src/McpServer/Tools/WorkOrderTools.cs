@@ -13,12 +13,31 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class WorkOrderTools
 {
-    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, and assignee username. Valid statuses: Draft, Assigned, InProgress, Complete.")]
+    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, assignee username, and due-before date. Valid statuses: Draft, Assigned, InProgress, Complete.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
         [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null,
         [Description("Optional creator username filter")] string? creatorUsername = null,
-        [Description("Optional assignee username filter")] string? assigneeUsername = null)
+        [Description("Optional assignee username filter")] string? assigneeUsername = null,
+        [Description("Optional due-before filter as yyyy-MM-dd; returns work orders whose DueDate is before this date")] string? dueBefore = null)
+    {
+        var (query, earlyResult) = await BuildListWorkOrdersQuery(bus, status, creatorUsername, assigneeUsername, dueBefore);
+        if (earlyResult != null)
+        {
+            return earlyResult;
+        }
+
+        var workOrders = await bus.Send(query!);
+        return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
+            new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static async Task<(WorkOrderSpecificationQuery? Query, string? EarlyResult)> BuildListWorkOrdersQuery(
+        IBus bus,
+        string? status,
+        string? creatorUsername,
+        string? assigneeUsername,
+        string? dueBefore)
     {
         var query = new WorkOrderSpecificationQuery();
         if (!string.IsNullOrWhiteSpace(status))
@@ -26,6 +45,27 @@ public class WorkOrderTools
             query.MatchStatus(WorkOrderStatus.FromKey(status));
         }
 
+        var personError = await ApplyListPersonFilters(bus, query, creatorUsername, assigneeUsername);
+        if (personError != null)
+        {
+            return (null, personError);
+        }
+
+        var dueBeforeError = ApplyListDueBeforeFilter(query, dueBefore);
+        if (dueBeforeError != null)
+        {
+            return (null, dueBeforeError);
+        }
+
+        return (query, null);
+    }
+
+    private static async Task<string?> ApplyListPersonFilters(
+        IBus bus,
+        WorkOrderSpecificationQuery query,
+        string? creatorUsername,
+        string? assigneeUsername)
+    {
         if (!string.IsNullOrWhiteSpace(creatorUsername))
         {
             var creator = await FindEmployeeByUsername(bus, creatorUsername);
@@ -48,9 +88,22 @@ public class WorkOrderTools
             query.MatchAssignee(assignee);
         }
 
-        var workOrders = await bus.Send(query);
-        return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
-            new JsonSerializerOptions { WriteIndented = true });
+        return null;
+    }
+
+    private static string? ApplyListDueBeforeFilter(WorkOrderSpecificationQuery query, string? dueBefore)
+    {
+        if (!DatedWorkOrderScheduling.TryParseOptionalDueDate(dueBefore, out var parsedDueBefore, out var dueBeforeError))
+        {
+            return dueBeforeError;
+        }
+
+        if (parsedDueBefore.HasValue)
+        {
+            query.MatchDueBefore(parsedDueBefore);
+        }
+
+        return null;
     }
 
     [McpServerTool(Name = "get-work-order"), Description("Retrieves a single work order by its number, including full details.")]

@@ -31,6 +31,7 @@ internal class BogusOverrides : AutoGeneratorOverride
                 break;
             case WorkOrderSpecificationQuery query:
                 query.StatusKey = context.Faker.PickRandom(WorkOrderStatus.GetAllItems()).Key;
+                query.DueBefore = null;
                 break;
             case Employee employee:
                 employee.MiddleName = null;
