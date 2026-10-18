@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Net.Mime;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
