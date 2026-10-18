@@ -311,6 +311,13 @@ public class WorkOrderStatusTests
     }
 
     [Test]
+    public void IsInProgress_ShouldBeTrue_OnlyForInProgress()
+    {
+        WorkOrderStatus.InProgress.IsInProgress().ShouldBeTrue();
+        WorkOrderStatus.Draft.IsInProgress().ShouldBeFalse();
+    }
+
+    [Test]
     public void ToString_ShouldReturnFriendlyName()
     {
         WorkOrderStatus.InProgress.ToString().ShouldBe("In Progress");
