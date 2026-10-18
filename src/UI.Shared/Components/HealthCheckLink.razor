@@ -1,12 +1,13 @@
 <a data-testid="@Elements.HealthCheckLink" href="/_clienthealthcheck" class="health-check-link" title="View application health status">
-    <i class="bi bi-gear-fill" aria-hidden="true"></i> Health Check
+    <i class="bi bi-gear-fill" aria-hidden="true"></i>@if (ShowLabel) { <text> Health Check</text> }
 </a>
 
 @code {
+    [Parameter]
+    public bool ShowLabel { get; set; } = true;
 
     public enum Elements
     {
         HealthCheckLink
     }
-
 }
