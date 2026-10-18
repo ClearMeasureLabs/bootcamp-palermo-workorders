@@ -21,13 +21,8 @@ public class EmployeeTools
     [McpServerTool(Name = "get-employee"), Description("Retrieves a single employee by username.")]
     public static async Task<string> GetEmployee(
         IBus bus,
-        [Description("The employee's username")] string? username)
+        [Description("The employee's username")] string username)
     {
-        if (string.IsNullOrWhiteSpace(username))
-        {
-            return "Username is required.";
-        }
-
         try
         {
             var employee = await bus.Send(new EmployeeByUserNameQuery(username));
