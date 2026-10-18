@@ -88,12 +88,8 @@ public class WorkOrderManageTitleCharCountTests
         return ctx;
     }
 
-    private class StubWorkOrderManageBus : Bus
+    private class StubWorkOrderManageBus() : Bus(null!)
     {
-        public StubWorkOrderManageBus() : base(null!)
-        {
-        }
-
         public override Task Publish(INotification notification) => Task.CompletedTask;
 
         public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
