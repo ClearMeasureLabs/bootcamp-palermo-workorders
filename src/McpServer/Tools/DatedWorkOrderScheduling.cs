@@ -5,14 +5,8 @@ using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.McpServer.Tools;
 
-/// <summary>
-/// Resolves and formats due dates for dated work-order scheduling tools.
-/// </summary>
 internal static class DatedWorkOrderScheduling
 {
-    /// <summary>
-    /// Builds due dates from an explicit comma-separated list or consecutive Chicago Saturdays.
-    /// </summary>
     internal static (IReadOnlyList<DateOnly> Dates, string? Error) ResolveDueDates(
         TimeProvider timeProvider,
         string? dueDates,
@@ -35,9 +29,6 @@ internal static class DatedWorkOrderScheduling
         return (BuildComingSaturdays(timeProvider, saturdayCount), null);
     }
 
-    /// <summary>
-    /// Formats a successful or failed dated create result for the AI reply.
-    /// </summary>
     internal static string FormatResult(CreateDatedWorkOrdersResult result)
     {
         if (!result.Success)
@@ -56,9 +47,6 @@ internal static class DatedWorkOrderScheduling
         return reply.ToString().TrimEnd();
     }
 
-    /// <summary>
-    /// Coming Saturday in America/Chicago, then increments of seven days.
-    /// </summary>
     internal static IReadOnlyList<DateOnly> BuildComingSaturdays(TimeProvider timeProvider, int count)
     {
         var first = ChurchTimeZone.ComingSaturday(timeProvider);

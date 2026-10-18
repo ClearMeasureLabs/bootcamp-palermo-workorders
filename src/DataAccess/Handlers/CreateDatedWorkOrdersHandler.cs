@@ -9,9 +9,6 @@ using Microsoft.Extensions.Logging;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-/// <summary>
-/// Persists multiple dated assigned work orders in one database transaction.
-/// </summary>
 public class CreateDatedWorkOrdersHandler(
     DbContext dbContext,
     IBus bus,

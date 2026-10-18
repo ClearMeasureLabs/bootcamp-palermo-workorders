@@ -6,9 +6,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Counts words, characters, and lines in submitted text for operators and integrations.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/tools/word-count")]
@@ -16,9 +13,6 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class ToolsWordCountController : ControllerBase
 {
-    /// <summary>
-    /// Returns word, character, and line counts for the submitted <paramref name="request"/>.Text.
-    /// </summary>
     [HttpPost]
     [AllowAnonymous]
     [Consumes(MediaTypeNames.Application.Json)]
@@ -39,19 +33,57 @@ public class ToolsWordCountController : ControllerBase
             ? 0
             : text.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries).Length;
         var characterCount = text.Length;
-        // Normalize CRLF to LF, then split on LF to count lines (handles CR, LF, and CRLF).
-        var lineCount = text.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n').Length;
+        var lineCount = CountLinesTreatingCrLfCrAndLfAsLineBreaks(text);
+        var sentenceCount = CountSentencesEndingInPeriodExclamationOrQuestion(text);
 
-        return Ok(new WordCountResponse(wordCount, characterCount, lineCount));
+        return Ok(new WordCountResponse(wordCount, characterCount, lineCount, sentenceCount));
+    }
+
+    private static int CountLinesTreatingCrLfCrAndLfAsLineBreaks(string text) =>
+        text.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n').Length;
+
+    private static int CountSentencesEndingInPeriodExclamationOrQuestion(string text)
+    {
+        if (text.Length == 0)
+        {
+            return 0;
+        }
+
+        return CountTerminatorsAfterContent(text);
+    }
+
+    private static int CountTerminatorsAfterContent(string text)
+    {
+        var count = 0;
+        var hasContent = false;
+        foreach (var c in text)
+        {
+            ApplySentenceChar(c, ref hasContent, ref count);
+        }
+
+        return count;
+    }
+
+    private static void ApplySentenceChar(char c, ref bool hasContent, ref int count)
+    {
+        if (c is '.' or '!' or '?')
+        {
+            if (hasContent)
+            {
+                count++;
+                hasContent = false;
+            }
+
+            return;
+        }
+
+        if (!char.IsWhiteSpace(c))
+        {
+            hasContent = true;
+        }
     }
 }
 
-/// <summary>
-/// Request body for <c>POST /api/tools/word-count</c>.
-/// </summary>
 public record WordCountRequest(string? Text);
 
-/// <summary>
-/// JSON payload for <c>POST /api/tools/word-count</c>.
-/// </summary>
-public record WordCountResponse(int WordCount, int CharacterCount, int LineCount);
+public record WordCountResponse(int WordCount, int CharacterCount, int LineCount, int SentenceCount);

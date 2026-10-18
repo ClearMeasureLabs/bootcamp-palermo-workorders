@@ -7,9 +7,6 @@ using System.Text.Json;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Api;
 
-/// <summary>
-/// Unit coverage for <see cref="MetricsController"/> (issue #9158 metrics summary contract).
-/// </summary>
 [TestFixture]
 public class MetricsControllerTests
 {
