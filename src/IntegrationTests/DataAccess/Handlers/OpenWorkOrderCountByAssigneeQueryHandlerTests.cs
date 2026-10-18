@@ -26,23 +26,23 @@ public class OpenWorkOrderCountByAssigneeQueryHandlerTests
             context.Add(creator);
             context.Add(new WorkOrder
             {
-                Creator = creator, Assignee = assignee, Number = "OWOCBA-1", Status = WorkOrderStatus.Assigned
+                Creator = creator, Assignee = assignee, Number = "OA-1", Status = WorkOrderStatus.Assigned
             });
             context.Add(new WorkOrder
             {
-                Creator = creator, Assignee = assignee, Number = "OWOCBA-2", Status = WorkOrderStatus.InProgress
+                Creator = creator, Assignee = assignee, Number = "OA-2", Status = WorkOrderStatus.InProgress
             });
             context.Add(new WorkOrder
             {
-                Creator = creator, Assignee = assignee, Number = "OWOCBA-3", Status = WorkOrderStatus.Draft
+                Creator = creator, Assignee = assignee, Number = "OA-3", Status = WorkOrderStatus.Draft
             });
             context.Add(new WorkOrder
             {
-                Creator = creator, Assignee = assignee, Number = "OWOCBA-4", Status = WorkOrderStatus.Complete
+                Creator = creator, Assignee = assignee, Number = "OA-4", Status = WorkOrderStatus.Complete
             });
             context.Add(new WorkOrder
             {
-                Creator = creator, Assignee = other, Number = "OWOCBA-5", Status = WorkOrderStatus.Assigned
+                Creator = creator, Assignee = other, Number = "OA-5", Status = WorkOrderStatus.Assigned
             });
             await context.SaveChangesAsync();
         }
