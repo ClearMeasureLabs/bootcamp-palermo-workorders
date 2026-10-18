@@ -21,4 +21,15 @@ public class RoleTests
         Assert.That(role2.CanCreateWorkOrder, Is.True);
         Assert.That(role2.CanFulfillWorkOrder, Is.True);
     }
+
+    [TestCase(false, false, false)]
+    [TestCase(true, false, false)]
+    [TestCase(false, true, false)]
+    [TestCase(true, true, true)]
+    public void HasFullAccess_GivenFlags_ReturnsExpected(bool canCreate, bool canFulfill, bool expected)
+    {
+        var role = new Role("r", canCreate, canFulfill);
+
+        Assert.That(role.HasFullAccess(), Is.EqualTo(expected));
+    }
 }
