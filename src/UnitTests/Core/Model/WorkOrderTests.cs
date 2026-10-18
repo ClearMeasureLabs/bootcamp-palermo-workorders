@@ -98,4 +98,22 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void GetTimeToComplete_BothDatesSet_ReturnsDifference()
+    {
+        var assigned = new DateTime(2024, 1, 1, 10, 0, 0);
+        var completed = new DateTime(2024, 1, 1, 12, 30, 0);
+        var order = new WorkOrder { AssignedDate = assigned, CompletedDate = completed };
+
+        Assert.That(order.GetTimeToComplete(), Is.EqualTo(TimeSpan.FromHours(2.5)));
+    }
+
+    [Test]
+    public void GetTimeToComplete_MissingCompletedDate_ReturnsNull()
+    {
+        var order = new WorkOrder { AssignedDate = new DateTime(2024, 1, 1), CompletedDate = null };
+
+        Assert.That(order.GetTimeToComplete(), Is.Null);
+    }
 }

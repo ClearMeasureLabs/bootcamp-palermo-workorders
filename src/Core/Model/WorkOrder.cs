@@ -59,6 +59,19 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public DateOnly? DueDate { get; set; }
 
+    /// <summary>
+    /// Elapsed time from assignment to completion, or null when either date is missing.
+    /// </summary>
+    public TimeSpan? GetTimeToComplete()
+    {
+        if (AssignedDate is null || CompletedDate is null)
+        {
+            return null;
+        }
+
+        return CompletedDate.Value - AssignedDate.Value;
+    }
+
     private string GetTruncatedString(string? value)
     {
         if (value == null)
