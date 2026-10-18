@@ -47,13 +47,13 @@ public sealed class WorkOrdersBulkImportController(
             return Problem(detail: parseResult.Error, statusCode: StatusCodes.Status400BadRequest);
         }
 
-        if (parseResult.Rows.Count == 0)
+        if (parseResult.Rows.Count == 0 && parseResult.RowErrors.Count == 0)
         {
             return Problem(detail: "CSV contains no data rows.", statusCode: StatusCodes.Status400BadRequest);
         }
 
         var processor = new WorkOrderBulkImportProcessor(bus, numberGenerator);
         var response = await processor.ImportAsync(parseResult.Rows, cancellationToken);
-        return Ok(response);
+        return Ok(WorkOrderBulkImportProcessor.MergeParseRowErrors(response, parseResult.RowErrors));
     }
 }

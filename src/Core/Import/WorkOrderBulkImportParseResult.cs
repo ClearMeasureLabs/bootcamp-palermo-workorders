@@ -5,11 +5,16 @@ namespace ClearMeasure.Bootcamp.Core.Import;
 /// </summary>
 public sealed class WorkOrderBulkImportParseResult
 {
-    private WorkOrderBulkImportParseResult(bool success, string? error, IReadOnlyList<WorkOrderBulkImportRow> rows)
+    private WorkOrderBulkImportParseResult(
+        bool success,
+        string? error,
+        IReadOnlyList<WorkOrderBulkImportRow> rows,
+        IReadOnlyList<WorkOrderBulkImportRowError> rowErrors)
     {
         Success = success;
         Error = error;
         Rows = rows;
+        RowErrors = rowErrors;
     }
 
     public bool Success { get; }
@@ -18,9 +23,14 @@ public sealed class WorkOrderBulkImportParseResult
 
     public IReadOnlyList<WorkOrderBulkImportRow> Rows { get; }
 
-    public static WorkOrderBulkImportParseResult Ok(IReadOnlyList<WorkOrderBulkImportRow> rows) =>
-        new(true, null, rows);
+    /// <summary>Per-row validation messages (file-level parse still succeeded).</summary>
+    public IReadOnlyList<WorkOrderBulkImportRowError> RowErrors { get; }
+
+    public static WorkOrderBulkImportParseResult Ok(
+        IReadOnlyList<WorkOrderBulkImportRow> rows,
+        IReadOnlyList<WorkOrderBulkImportRowError>? rowErrors = null) =>
+        new(true, null, rows, rowErrors ?? []);
 
     public static WorkOrderBulkImportParseResult Fail(string error) =>
-        new(false, error, Array.Empty<WorkOrderBulkImportRow>());
+        new(false, error, [], []);
 }

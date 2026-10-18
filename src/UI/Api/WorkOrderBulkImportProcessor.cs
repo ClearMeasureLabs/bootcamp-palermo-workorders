@@ -58,6 +58,21 @@ internal sealed class WorkOrderBulkImportProcessor(IBus bus, IWorkOrderNumberGen
         return new WorkOrderBulkImportResponse(created, results);
     }
 
+    internal static WorkOrderBulkImportResponse MergeParseRowErrors(
+        WorkOrderBulkImportResponse response,
+        IReadOnlyList<WorkOrderBulkImportRowError> rowErrors)
+    {
+        if (rowErrors.Count == 0)
+        {
+            return response;
+        }
+
+        var errorResults = rowErrors.Select(static e =>
+            new WorkOrderBulkImportRowResult(e.LineNumber, false, null, e.Message));
+        var merged = response.Results.Concat(errorResults).OrderBy(static r => r.LineNumber).ToList();
+        return new WorkOrderBulkImportResponse(response.CreatedCount, merged);
+    }
+
     private async Task<WorkOrderBulkImportRowResult> ImportRowAsync(
         WorkOrderBulkImportRow row,
         Dictionary<string, Employee> creatorsByUsername,

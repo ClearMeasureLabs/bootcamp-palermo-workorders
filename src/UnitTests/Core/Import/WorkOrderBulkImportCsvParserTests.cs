@@ -110,4 +110,37 @@ public class WorkOrderBulkImportCsvParserTests
         result.Rows.Count.ShouldBe(1);
         result.Rows[0].Title.ShouldBe("Keep");
     }
+
+    [Test]
+    public void ShouldParseRow_WhenTitleIsExactlyMaxLength()
+    {
+        var title = new string('T', WorkOrderBulkImportCsvParser.MaxTitleLength);
+        var csv = "Title,Description,CreatorUsername\n"
+                  + $"{title},Desc,user1\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeTrue();
+        result.Rows.Count.ShouldBe(1);
+        result.Rows[0].Title!.Length.ShouldBe(WorkOrderBulkImportCsvParser.MaxTitleLength);
+    }
+
+    [Test]
+    public void ShouldReportRowError_WhenTitleExceedsMaxLength()
+    {
+        var title = new string('T', WorkOrderBulkImportCsvParser.MaxTitleLength + 1);
+        var csv = "Title,Description,CreatorUsername\n"
+                  + "Ok,Desc,user1\n"
+                  + $"{title},Desc,user1\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        var result = WorkOrderBulkImportCsvParser.Parse(ms);
+
+        result.Success.ShouldBeTrue();
+        result.Rows.Count.ShouldBe(1);
+        result.Rows[0].Title.ShouldBe("Ok");
+        result.RowErrors.Count.ShouldBe(1);
+        result.RowErrors[0].LineNumber.ShouldBe(3);
+        result.RowErrors[0].Message.ShouldContain("Row 3");
+        result.RowErrors[0].Message.ShouldContain(WorkOrderBulkImportCsvParser.MaxTitleLength.ToString());
+    }
 }

@@ -9,6 +9,9 @@ public static class WorkOrderBulkImportCsvParser
 {
     private static readonly string[] RequiredHeaders = ["Title", "Description", "CreatorUsername"];
 
+    /// <summary>Maximum stored Title length (matches WorkOrder mapping).</summary>
+    public const int MaxTitleLength = 300;
+
     /// <summary>
     /// Parses the stream as UTF-8 (BOM allowed). Returns rows or an error message.
     /// </summary>
@@ -36,37 +39,55 @@ public static class WorkOrderBulkImportCsvParser
                 $"Missing required column \"{missingColumn}\". Expected header: Title, Description, CreatorUsername, RoomNumber (optional).");
         }
 
-        var rows = ParseDataRows(reader, columnIndex, ref lineNumber, cancellationToken);
-        return WorkOrderBulkImportParseResult.Ok(rows);
+        return ParseDataRows(reader, columnIndex, ref lineNumber, cancellationToken);
     }
 
-    private static List<WorkOrderBulkImportRow> ParseDataRows(
+    private static WorkOrderBulkImportParseResult ParseDataRows(
         TextReader reader,
         CsvColumnIndex columnIndex,
         ref int lineNumber,
         CancellationToken cancellationToken)
     {
         var rows = new List<WorkOrderBulkImportRow>();
+        var rowErrors = new List<WorkOrderBulkImportRowError>();
         while (CsvLineReader.ReadLogicalLine(reader, ref lineNumber, cancellationToken) is { } line)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            AddNonEmptyRow(rows, columnIndex, line, lineNumber);
+            TryAddNonEmptyRow(rows, rowErrors, columnIndex, line, lineNumber);
         }
 
-        return rows;
+        return WorkOrderBulkImportParseResult.Ok(rows, rowErrors);
     }
 
-    private static void AddNonEmptyRow(
+    private static void TryAddNonEmptyRow(
         List<WorkOrderBulkImportRow> rows,
+        List<WorkOrderBulkImportRowError> rowErrors,
         CsvColumnIndex columnIndex,
         string line,
         int lineNumber)
     {
-        if (!string.IsNullOrWhiteSpace(line))
+        if (string.IsNullOrWhiteSpace(line))
         {
-            rows.Add(columnIndex.ParseRow(line, lineNumber));
+            return;
         }
+
+        var row = columnIndex.ParseRow(line, lineNumber);
+        var titleError = TitleLengthError(row);
+        if (titleError != null)
+        {
+            rowErrors.Add(titleError);
+            return;
+        }
+
+        rows.Add(row);
     }
+
+    private static WorkOrderBulkImportRowError? TitleLengthError(WorkOrderBulkImportRow row) =>
+        row.Title is { Length: > MaxTitleLength }
+            ? new WorkOrderBulkImportRowError(
+                row.LineNumber,
+                $"Row {row.LineNumber}: Title exceeds maximum length of {MaxTitleLength} characters.")
+            : null;
 
     private static string? NullIfWhitespace(string? s) =>
         string.IsNullOrWhiteSpace(s) ? null : s.Trim();
