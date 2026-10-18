@@ -49,8 +49,16 @@ internal static class WorkOrderQueryFilters
 
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,
-        WorkOrderSearchSpecification specification) =>
-        Apply(query, specification.Assignee, specification.Creator, specification.Status);
+        WorkOrderSearchSpecification specification)
+    {
+        query = Apply(query, specification.Assignee, specification.Creator, specification.Status);
+        if (specification.RoomNumber != null)
+        {
+            query = query.Where(wo => wo.RoomNumber == specification.RoomNumber);
+        }
+
+        return query;
+    }
 
     public static IQueryable<WorkOrder> Apply(
         IQueryable<WorkOrder> query,

@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.DataAccess.Handlers;
 using Shouldly;
 
@@ -22,5 +23,23 @@ public class WorkOrderQueryFiltersTests
 
         filtered.Length.ShouldBe(1);
         filtered[0].Number.ShouldBe("1");
+    }
+
+    [Test]
+    public void ShouldFilterByRoomNumber_WhenMatchRoomNumberSet_WithTwoRooms()
+    {
+        var orders = new[]
+        {
+            new WorkOrder { Number = "1", RoomNumber = "101" },
+            new WorkOrder { Number = "2", RoomNumber = "202" }
+        }.AsQueryable();
+        var specification = new WorkOrderSearchSpecification();
+        specification.MatchRoomNumber("101");
+
+        var filtered = WorkOrderQueryFilters.Apply(orders, specification).ToArray();
+
+        filtered.Length.ShouldBe(1);
+        filtered[0].Number.ShouldBe("1");
+        filtered[0].RoomNumber.ShouldBe("101");
     }
 }

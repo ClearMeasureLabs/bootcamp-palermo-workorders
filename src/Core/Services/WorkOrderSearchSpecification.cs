@@ -19,9 +19,16 @@ public class WorkOrderSearchSpecification
         Creator = creator;
     }
 
+    public void MatchRoomNumber(string? roomNumber)
+    {
+        RoomNumber = roomNumber;
+    }
+
     public WorkOrderStatus? Status { get; private set; }
 
     public Employee? Assignee { get; private set; }
 
     public Employee? Creator { get; private set; }
+
+    public string? RoomNumber { get; private set; }
 }
