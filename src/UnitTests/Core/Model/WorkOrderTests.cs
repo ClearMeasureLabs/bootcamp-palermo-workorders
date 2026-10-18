@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -24,7 +25,21 @@ public class WorkOrderTests
     public void ToStringShouldReturnWoNumber()
     {
         var order = new WorkOrder() { Number = "456" };
-        Assert.That(order.ToString(), Is.EqualTo("Work Order 456"));
+        order.ToString().ShouldBe("Work Order 456");
+    }
+
+    [Test]
+    public void ToString_WhenNumberIsNull_ShouldReturnUnnumbered()
+    {
+        var order = new WorkOrder() { Number = null };
+        order.ToString().ShouldBe("Work Order (unnumbered)");
+    }
+
+    [Test]
+    public void ToString_WhenNumberIsWhitespace_ShouldReturnUnnumbered()
+    {
+        var order = new WorkOrder() { Number = "   " };
+        order.ToString().ShouldBe("Work Order (unnumbered)");
     }
 
     [Test]

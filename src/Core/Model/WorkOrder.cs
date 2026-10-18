@@ -79,7 +79,9 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public override string ToString()
     {
-        return "Work Order " + Number;
+        return string.IsNullOrWhiteSpace(Number)
+            ? "Work Order (unnumbered)"
+            : "Work Order " + Number;
     }
 
     public void ChangeStatus(WorkOrderStatus status)
