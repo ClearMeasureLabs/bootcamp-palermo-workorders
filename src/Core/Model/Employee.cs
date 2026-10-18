@@ -68,6 +68,11 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// </summary>
     public bool CanFulfillWorkOrder() => Roles.Any(role => role.CanFulfillWorkOrder);
 
+    /// <summary>
+    /// Returns whether this employee has a non-empty email address.
+    /// </summary>
+    public bool HasEmailAddress() => !string.IsNullOrWhiteSpace(EmailAddress);
+
     public void AddRole(Role role)
     {
         Roles.Add(role);

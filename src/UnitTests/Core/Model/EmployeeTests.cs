@@ -84,6 +84,22 @@ public class EmployeeTests
     }
 
     [Test]
+    public void HasEmailAddress_WhenEmpty_ShouldReturnFalse()
+    {
+        var employee = new Employee();
+
+        employee.HasEmailAddress().ShouldBeFalse();
+    }
+
+    [Test]
+    public void HasEmailAddress_WhenPopulated_ShouldReturnTrue()
+    {
+        var employee = new Employee("bobjoe", "Bob", "Joe", "bob@example.com");
+
+        employee.HasEmailAddress().ShouldBeTrue();
+    }
+
+    [Test]
     public void FullNameShouldCombineFirstAndLastName()
     {
         var employee = new Employee()
