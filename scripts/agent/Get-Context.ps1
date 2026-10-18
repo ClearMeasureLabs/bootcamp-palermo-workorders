@@ -155,10 +155,22 @@ if ($Issue) {
       $d = rg -l -e "(class|record|interface) $_\b" --glob '*.cs' src/UnitTests src/IntegrationTests src/AcceptanceTests 2>$null | Select-Object -First 1
       if ($d) { "$_ ($d)" } } | Select-Object -First 8)
     "TEST SETUP (example: $($test[0])): " + $(if ($helpers) { $helpers -join ', ' } else { 'no test-project helpers; copy the example' }) }
+  # v32g: ACCESS for internal edit targets (round 18: r08 BUILD=FAIL testing an internal class its tests couldn't see; r01 tested
+  # around an internal mapper through a constructor and hit TEST=FAIL). Says whether UnitTests can see internals, or the exact fix.
+  $acc = [ordered]@{}
+  foreach ($f in @($prod | Where-Object { $_ -match '\.cs$' } | Select-Object -First $Max)) {
+    $int = @(Select-String -Path $f -Pattern '^\s*internal\b.*\b(class|record|interface|struct|enum)\s+(\w+)' | ForEach-Object { $_.Matches[0].Groups[2].Value })
+    if (-not $int) { continue }
+    $d = Split-Path $f; $proj = $null; while ($d -and -not $proj) { $proj = Get-ChildItem $d -Filter *.csproj -ErrorAction SilentlyContinue | Select-Object -First 1; if (-not $proj) { $d = Split-Path $d } }
+    if ($proj) { $acc[$proj.FullName] = @(@($acc[$proj.FullName]) + $int | Where-Object { $_ }) } }
+  foreach ($k in $acc.Keys) { $pd = Split-Path $k; $pp = (Resolve-Path -Relative $k) -replace '^\./', ''
+    $vis = (Get-Content $k -Raw) -match 'InternalsVisibleTo Include="ClearMeasure\.Bootcamp\.UnitTests"' -or [bool](rg -l -F 'InternalsVisibleTo("ClearMeasure.Bootcamp.UnitTests")' --glob '*.cs' $pd 2>$null)
+    if ($vis) { "ACCESS: $($acc[$k] -join ', ') internal in $pp; visible to UnitTests: test it directly" }
+    else { "ACCESS: $($acc[$k] -join ', ') internal in $pp; NOT visible to UnitTests: add <InternalsVisibleTo Include=`"ClearMeasure.Bootcamp.UnitTests`" /> inside an <ItemGroup> in $pp (not an assembly attribute)" } }
   # v30g: existing tests that already mention the issue's existing symbols / backticked names (round 16 p05: an acceptance test
   # contradicted the change and was only found after a CI RED)
   $syms = @(@($terms) + @([regex]::Matches($keep, '`([\w-]{4,})(?:\([^`]*\))?`') | ForEach-Object { $_.Groups[1].Value }) | Where-Object { $_ -cmatch '^[A-Z][a-z0-9]+[A-Z]\w+$' -and $_ -notin $newNames } | Sort-Object -Unique | Select-Object -First 8)
-  if ($syms) { $refs = @(rg -n -w -F @($syms | ForEach-Object { '-e'; $_ }) src/UnitTests src/IntegrationTests src/AcceptanceTests 2>$null |
+  if ($syms) { $refs = @(rg -n -w -F @($syms | ForEach-Object { '-e'; $_ }) --glob '*.cs' src/UnitTests src/IntegrationTests src/AcceptanceTests 2>$null |
       Where-Object { $test.Count -eq 0 -or $_ -notlike "$($test[0])*" } | Select-Object -First 8 | ForEach-Object { $t = $_.Trim(); $t.Substring(0, [Math]::Min(140, $t.Length)) })
     if ($refs) { "TESTS ALREADY MENTIONING $($syms -join '/'):"; $refs } }
 }
