@@ -4,6 +4,11 @@ internal static class TelemetryFileMaintenance
 {
     public static void DeleteFilesOlderThan(string directory, int retentionDays)
     {
+        if (retentionDays <= 0)
+        {
+            return;
+        }
+
         try
         {
             var cutoffDate = DateTime.UtcNow.AddDays(-retentionDays);

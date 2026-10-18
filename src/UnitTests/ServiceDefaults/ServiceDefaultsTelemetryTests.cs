@@ -27,6 +27,19 @@ public class LocalTelemetryFileWriterTests
     }
 
     [Test]
+    public void ShouldKeepJsonlFiles_WhenRetentionDaysIsZero()
+    {
+        var directory = CreateTempDirectory();
+        var file = Path.Combine(directory, "logs_1999-01-01.jsonl");
+        File.WriteAllText(file, "{}");
+        File.SetCreationTimeUtc(file, DateTime.UtcNow.AddDays(-10));
+
+        TelemetryFileMaintenance.DeleteFilesOlderThan(directory, 0);
+
+        File.Exists(file).ShouldBeTrue();
+    }
+
+    [Test]
     public async Task ShouldDisposeWriters_WhenDisposeAsyncCalled()
     {
         await using var writer = new StreamWriter(Path.GetTempFileName());
