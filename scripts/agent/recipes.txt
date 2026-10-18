@@ -3,4 +3,4 @@
 new-query	\b(query|handler)\b	src/Core/Queries/WorkOrderCountByStatusQuery.cs src/Core/Validation/WorkOrderCountByStatusQueryValidator.cs src/DataAccess/Handlers/WorkOrderCountByStatusQueryHandler.cs src/UnitTests/Core/Validation/WorkOrderCountByStatusQueryValidatorTests.cs src/IntegrationTests/DataAccess/Handlers/WorkOrderCountByStatusQueryHandlerTests.cs
 mcp-tool-param	\bMCP\b	src/McpServer/Tools/WorkOrderTools.cs:14-40 src/IntegrationTests/McpServer/McpWorkOrderToolTests.cs:1-63
 db-column	\b(DbUp|column)\b	src/Database/scripts/Update/032_AddMiddleNameToEmployee.sql src/DataAccess/Mappings/EmployeeMap.cs src/IntegrationTests/DataAccess/Mappings/EmployeeMappingTests.cs:58-78
-api-json-field	\b(endpoint|controller)\b.*\b(response|field)\b|\bresponse gains\b	src/UI/Api/Controllers/ToolsWordCountController.cs:20-57 src/UnitTests/UI.Api/ToolsWordCountControllerTests.cs:1-40
+api-json-field	\b(endpoint|controller)\b.*\b(response|field)\b|\bresponse gains\b	src/UI/Api/Controllers/ToolsWordCountController.cs:8-47 src/UnitTests/UI.Api/ToolsWordCountControllerTests.cs:1-40

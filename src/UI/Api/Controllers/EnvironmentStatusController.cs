@@ -6,10 +6,8 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Runtime environment snapshot for operations and support. Environment variable
-/// values are never returned.
-/// </summary>
+// Runtime environment snapshot for operations and support. Environment variable
+// values are never returned.
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/status/environment")]
@@ -30,9 +28,6 @@ public class EnvironmentStatusController : ControllerBase
         RedactionProbeVariableName
     ];
 
-    /// <summary>
-    /// Returns OS description, processor count, CLR version, and selected env var names.
-    /// </summary>
     [HttpGet]
     public IActionResult Get()
     {
@@ -82,9 +77,6 @@ public class EnvironmentStatusController : ControllerBase
     }
 }
 
-/// <summary>
-/// JSON payload for <c>GET /api/status/environment</c> and the versioned twin.
-/// </summary>
 public record EnvironmentStatusResponse(
     string OsDescription,
     int ProcessorCount,

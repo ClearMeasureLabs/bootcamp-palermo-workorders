@@ -44,7 +44,6 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
 
     public byte SortBy { get; set; }
 
-    /// <inheritdoc />
     public bool Equals(WorkOrderStatus? other) =>
         ReferenceEquals(this, other) || HasSameCode(other);
 
@@ -74,11 +73,6 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
         return Code is null ? 0 : Code.GetHashCode();
     }
 
-    /// <summary>
-    /// Value equality by <see cref="Code"/> (not reference). Thin wrapper over
-    /// <see cref="Equals(WorkOrderStatus?)"/> so Qodana reference-comparison findings
-    /// and CRAP stay on the covered Equals path.
-    /// </summary>
     public static bool operator ==(WorkOrderStatus? left, WorkOrderStatus? right) =>
         left?.Equals(right) ?? right is null;
 

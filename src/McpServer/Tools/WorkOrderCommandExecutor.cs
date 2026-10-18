@@ -6,9 +6,6 @@ using ClearMeasure.Bootcamp.Core.Queries;
 
 namespace ClearMeasure.Bootcamp.McpServer.Tools;
 
-/// <summary>
-/// Resolves work-order state commands for MCP tool execution.
-/// </summary>
 internal static class WorkOrderCommandExecutor
 {
     private const string AvailableCommandsList =

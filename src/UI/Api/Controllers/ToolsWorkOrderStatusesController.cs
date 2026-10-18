@@ -7,9 +7,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Returns all valid work order statuses for integrators and operators.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/tools/work-order-statuses")]
@@ -17,9 +14,6 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class ToolsWorkOrderStatusesController : ControllerBase
 {
-    /// <summary>
-    /// Returns all valid work order statuses (code, key, friendlyName, sortBy) in sort order.
-    /// </summary>
     [HttpGet]
     [AllowAnonymous]
     [Produces(MediaTypeNames.Application.Json)]
@@ -35,7 +29,4 @@ public class ToolsWorkOrderStatusesController : ControllerBase
     }
 }
 
-/// <summary>
-/// Represents a single work order status entry for the discovery endpoint.
-/// </summary>
 public record WorkOrderStatusDto(string Code, string Key, string FriendlyName, byte SortBy);

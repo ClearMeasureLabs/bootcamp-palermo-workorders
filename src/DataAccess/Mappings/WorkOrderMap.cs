@@ -24,7 +24,6 @@ public class WorkOrderMap : IEntityFrameworkMapping
             entity.Property(e => e.RoomNumber).HasMaxLength(WorkOrder.RoomNumberMaxLength);
             entity.Property(e => e.DueDate).HasColumnType("date");
 
-            // Configure relationships
             entity.HasOne(e => e.Creator)
                 .WithMany()
                 .HasForeignKey("CreatorId")
@@ -36,11 +35,9 @@ public class WorkOrderMap : IEntityFrameworkMapping
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure navigation properties for eager loading
             entity.Navigation(e => e.Creator).AutoInclude();
             entity.Navigation(e => e.Assignee).AutoInclude();
 
-            // Configure Status with converter
             entity.Property(e => e.Status)
                 .HasConversion(statusConverter)
                 .HasMaxLength(3);

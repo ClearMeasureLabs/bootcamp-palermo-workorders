@@ -61,10 +61,8 @@ public class WorkOrderSearchTests
     {
         await using var ctx = CreateContext();
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
         var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
@@ -73,7 +71,6 @@ public class WorkOrderSearchTests
         assigneeSelect.ShouldNotBeNull();
         statusSelect.ShouldNotBeNull();
 
-        // Verify user options are loaded (5 employees + "All" option = 6 options)
         var creatorOptions = creatorSelect.QuerySelectorAll("option");
         creatorOptions.Length.ShouldBe(6);
         creatorOptions[0].TextContent.ShouldBe("All");
@@ -82,7 +79,6 @@ public class WorkOrderSearchTests
         assigneeOptions.Length.ShouldBe(6);
         assigneeOptions[0].TextContent.ShouldBe("All");
 
-        // Verify status options are loaded (4 statuses + "All" option = 5 options)
         var statusOptions = statusSelect.QuerySelectorAll("option");
         statusOptions.Length.ShouldBe(6);
         statusOptions[0].TextContent.ShouldBe("All");
@@ -114,10 +110,8 @@ public class WorkOrderSearchTests
     {
         await using var ctx = CreateContext();
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
         var workOrderTable = component.Find(".grid-data");
         workOrderTable.ShouldNotBeNull();
 
@@ -134,10 +128,8 @@ public class WorkOrderSearchTests
         var uri = navigationManager.GetUriWithQueryParameter("Creator", "somename");
         navigationManager.NavigateTo(uri);
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
         var workOrderTable = component.Find(".grid-data");
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
         workOrderRows.Length.ShouldBe(2);
@@ -152,10 +144,8 @@ public class WorkOrderSearchTests
         var uri = navigationManager.GetUriWithQueryParameter("Assignee", "somename");
         navigationManager.NavigateTo(uri);
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
         var workOrderTable = component.Find(".grid-data");
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
         workOrderRows.Length.ShouldBe(2);
@@ -170,10 +160,8 @@ public class WorkOrderSearchTests
         var uri = navigationManager.GetUriWithQueryParameter("Status", WorkOrderStatus.Assigned.Key);
         navigationManager.NavigateTo(uri);
 
-        // Act
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Assert
         var workOrderTable = component.Find(".grid-data");
         var workOrderRows = workOrderTable.QuerySelectorAll("tbody tr");
         workOrderRows.Length.ShouldBe(2);
@@ -186,7 +174,6 @@ public class WorkOrderSearchTests
 
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Act
         var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
@@ -198,7 +185,6 @@ public class WorkOrderSearchTests
         var searchButton = component.Find($"#{WorkOrderSearch.Elements.SearchButton}");
         await searchButton.ClickAsync(new());
 
-        // Assert
         var workOrderTable = component.Find(".grid-data");
         workOrderTable.ShouldNotBeNull();
 
@@ -386,7 +372,6 @@ public class WorkOrderSearchTests
 
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Set all three filters
         var creatorSelect = component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
@@ -397,11 +382,9 @@ public class WorkOrderSearchTests
 
         var sendCountBeforeClear = stubBus.SendCallCount;
 
-        // Click clear
         var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
         await clearButton.ClickAsync(new());
 
-        // Assert selects reset
         component.Find($"#{WorkOrderSearch.Elements.CreatorSelect}").GetAttribute("value").ShouldBeNullOrEmpty();
         component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}").GetAttribute("value").ShouldBeNullOrEmpty();
         component.Find($"#{WorkOrderSearch.Elements.StatusSelect}").GetAttribute("value").ShouldBeNullOrEmpty();
@@ -509,15 +492,12 @@ public class WorkOrderSearchTests
 
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Checkbox should be checked (restored from session state)
         var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
         checkbox.HasAttribute("checked").ShouldBeTrue();
 
-        // Assignee select should be disabled
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         assigneeSelect.HasAttribute("disabled").ShouldBeTrue();
 
-        // The query sent to the bus should have the current user's username as assignee
         stubBus.LastAssigneeQueried.ShouldBe(CurrentUsername);
     }
 
@@ -544,11 +524,9 @@ public class WorkOrderSearchTests
         var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
         await checkbox.ChangeAsync(new() { Value = true });
 
-        // Assignee select should be disabled
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         assigneeSelect.HasAttribute("disabled").ShouldBeTrue();
 
-        // The query sent to the bus should have the current user's username as assignee
         stubBus.LastAssigneeQueried.ShouldBe(CurrentUsername);
     }
 
@@ -560,15 +538,12 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
 
         var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
-        // Check then uncheck
         await checkbox.ChangeAsync(new() { Value = true });
         await checkbox.ChangeAsync(new() { Value = false });
 
-        // Assignee dropdown should be re-enabled
         var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
         assigneeSelect.HasAttribute("disabled").ShouldBeFalse();
 
-        // Assignee filter should be cleared
         assigneeSelect.GetAttribute("value").ShouldBeNullOrEmpty();
     }
 
@@ -582,14 +557,11 @@ public class WorkOrderSearchTests
         var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
         await checkbox.ChangeAsync(new() { Value = true });
 
-        // Clear filters
         var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
         await clearButton.ClickAsync(new());
 
-        // Checkbox should be unchecked
         component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}").HasAttribute("checked").ShouldBeFalse();
 
-        // Clear button should be disabled (no active filters)
         clearButton.HasAttribute("disabled").ShouldBeTrue();
     }
 
@@ -641,7 +613,6 @@ public class WorkOrderSearchTests
 
         var component = ctx.Render<WorkOrderSearch>();
 
-        // Toggle the checkbox
         var toggle = component.Find($"#{WorkOrderSearch.Elements.OverdueOnlyToggle}");
         await toggle.ChangeAsync(new() { Value = true });
 
@@ -657,12 +628,10 @@ public class WorkOrderSearchTests
         var component = ctx.Render<WorkOrderSearch>();
         var instance = component.Instance;
 
-        // Set the toggle
         var toggle = component.Find($"#{WorkOrderSearch.Elements.OverdueOnlyToggle}");
         await toggle.ChangeAsync(new() { Value = true });
         instance.Model.Filters.OverdueOnly.ShouldBeTrue();
 
-        // Clear filters
         var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
         await clearButton.ClickAsync(new());
 

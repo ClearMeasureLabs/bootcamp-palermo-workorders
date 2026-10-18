@@ -4,10 +4,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Exposes a JSON summary of process runtime metrics for operators and integrations
-/// (<c>GET /api/metrics/summary</c> and versioned equivalent; issue #9158).
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/metrics")]
@@ -17,9 +13,6 @@ public class MetricsController(
     TimeProvider timeProvider,
     IHttpRequestMetricsCounter requestCounter) : ControllerBase
 {
-    /// <summary>
-    /// Returns uptime, total requests served, memory usage, and GC collection counts.
-    /// </summary>
     [HttpGet("summary")]
     public IActionResult GetSummary()
     {

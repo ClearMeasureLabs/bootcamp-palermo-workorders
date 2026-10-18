@@ -5,10 +5,6 @@ using FluentValidation;
 // assembly-scan/DI reflection, not by direct reference; qodana.yaml exclude is documentation-only.
 namespace ClearMeasure.Bootcamp.Core.Validation;
 
-/// <summary>
-/// Validator for <see cref="CreateDatedWorkOrdersCommand"/> so the remotable command is accepted by
-/// the single-API validation middleware.
-/// </summary>
 public sealed class CreateDatedWorkOrdersCommandValidator : AbstractValidator<CreateDatedWorkOrdersCommand>
 {
     public CreateDatedWorkOrdersCommandValidator()
