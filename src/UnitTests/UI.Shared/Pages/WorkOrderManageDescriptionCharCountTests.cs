@@ -106,6 +106,22 @@ public class WorkOrderManageDescriptionCharCountTests
         textarea.GetAttribute("maxlength").ShouldBe(WorkOrder.DescriptionMaxLength.ToString());
     }
 
+    [Test]
+    public async Task DescriptionCharCount_UpdatesLive_WhileTyping()
+    {
+        await using var ctx = CreateNewModeContext(description: null);
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        var textarea = await component.WaitForElementAsync(
+            $"[data-testid='{WorkOrderManage.Elements.Description}']");
+        await textarea.InputAsync(new ChangeEventArgs { Value = "Hello" });
+
+        var caption = await component.WaitForElementAsync(
+            $"[data-testid='{WorkOrderManage.Elements.DescriptionCharCount}']");
+        caption.TextContent.Trim().ShouldBe("3995 characters remaining");
+    }
+
     private static BunitContext CreateNewModeContext(string? description)
     {
         var ctx = new BunitContext();
