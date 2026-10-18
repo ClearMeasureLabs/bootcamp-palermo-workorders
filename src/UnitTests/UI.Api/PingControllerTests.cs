@@ -24,4 +24,18 @@ public class PingControllerTests
         content.ContentType.ShouldContain("text/plain");
         content.Content.ShouldBe("pong");
     }
+
+    [Test]
+    public void Head_Should_Return200WithNoBody()
+    {
+        var controller = new PingController
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
+
+        var result = controller.Head();
+
+        var status = result.ShouldBeOfType<StatusCodeResult>();
+        status.StatusCode.ShouldBe(200);
+    }
 }

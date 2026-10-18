@@ -27,4 +27,11 @@ public class PingController : ControllerBase
             ContentType = "text/plain; charset=utf-8",
             StatusCode = StatusCodes.Status200OK
         };
+
+    /// <summary>
+    /// Returns 200 with an empty body for monitor HEAD probes.
+    /// </summary>
+    [HttpHead]
+    [AllowAnonymous]
+    public IActionResult Head() => new StatusCodeResult(StatusCodes.Status200OK);
 }
