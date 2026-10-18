@@ -142,7 +142,20 @@ public class McpCreateDatedWorkOrdersToolTests
 
         dates.Count.ShouldBe(0);
         error.ShouldNotBeNull();
-        error.ShouldContain("cannot exceed 10");
+        error.ShouldBe("A dated work-order batch cannot exceed 10 dates (got 11).");
+    }
+
+    [Test]
+    public void ResolveDueDates_WhenTooManyDates_IncludesGotCountInError()
+    {
+        var dueDates = string.Join(',', Enumerable.Repeat("2026-09-01", 12));
+
+        var (_, error) = DatedWorkOrderScheduling.ResolveDueDates(
+            TimeProvider.System,
+            dueDates,
+            10);
+
+        error.ShouldBe("A dated work-order batch cannot exceed 10 dates (got 12).");
     }
 
     [Test]
