@@ -20,11 +20,14 @@ public class PingController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult Get() =>
-        new ContentResult
+    public IActionResult Get()
+    {
+        Response.Headers.CacheControl = "no-store";
+        return new ContentResult
         {
             Content = "pong",
             ContentType = "text/plain; charset=utf-8",
             StatusCode = StatusCodes.Status200OK
         };
+    }
 }

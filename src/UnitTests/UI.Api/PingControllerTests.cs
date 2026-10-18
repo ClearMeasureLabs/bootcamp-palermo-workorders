@@ -11,10 +11,7 @@ public class PingControllerTests
     [Test]
     public void Get_Should_ReturnPlainTextPong()
     {
-        var controller = new PingController
-        {
-            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
-        };
+        var controller = CreateController();
 
         var result = controller.Get();
 
@@ -24,4 +21,20 @@ public class PingControllerTests
         content.ContentType.ShouldContain("text/plain");
         content.Content.ShouldBe("pong");
     }
+
+    [Test]
+    public void Get_Should_SetCacheControlNoStore()
+    {
+        var controller = CreateController();
+
+        controller.Get();
+
+        controller.Response.Headers.CacheControl.ToString().ShouldBe("no-store");
+    }
+
+    private static PingController CreateController() =>
+        new()
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
 }
