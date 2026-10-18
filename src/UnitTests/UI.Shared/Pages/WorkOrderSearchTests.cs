@@ -499,6 +499,51 @@ public class WorkOrderSearchTests
         cells[1].TextContent.Trim().ShouldBe("B");
         cells[2].TextContent.Trim().ShouldBe("A");
     }
+
+    [Test]
+    public async Task SortByRoom_Ascending_SortsRoomNumbersNaturally()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-010", Title = "Ten", Status = WorkOrderStatus.Draft, RoomNumber = "Room 10" },
+            new WorkOrder { Number = "WO-012", Title = "Twelve", Status = WorkOrderStatus.Draft, RoomNumber = "Room 12" },
+            new WorkOrder { Number = "WO-009", Title = "Nine", Status = WorkOrderStatus.Draft, RoomNumber = "Room 9" },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
+        await sortBtn.ClickAsync(new());
+
+        var cells = component.FindAll("tbody tr td:nth-child(7)");
+        cells[0].TextContent.Trim().ShouldBe("Room 9");
+        cells[1].TextContent.Trim().ShouldBe("Room 10");
+        cells[2].TextContent.Trim().ShouldBe("Room 12");
+    }
+
+    [Test]
+    public async Task SortByRoom_Descending_SortsRoomNumbersNaturally()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-010", Title = "Ten", Status = WorkOrderStatus.Draft, RoomNumber = "Room 10" },
+            new WorkOrder { Number = "WO-012", Title = "Twelve", Status = WorkOrderStatus.Draft, RoomNumber = "Room 12" },
+            new WorkOrder { Number = "WO-009", Title = "Nine", Status = WorkOrderStatus.Draft, RoomNumber = "Room 9" },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
+        await sortBtn.ClickAsync(new());
+        await sortBtn.ClickAsync(new());
+
+        var cells = component.FindAll("tbody tr td:nth-child(7)");
+        cells[0].TextContent.Trim().ShouldBe("Room 12");
+        cells[1].TextContent.Trim().ShouldBe("Room 10");
+        cells[2].TextContent.Trim().ShouldBe("Room 9");
+    }
     [Test]
     public async Task AssignedToMeCheckbox_WhenSessionStateIsTrue_RestoresCheckboxAndFiltersOnLoad()
     {
