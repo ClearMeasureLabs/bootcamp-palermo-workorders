@@ -137,4 +137,22 @@ public class TranslationGuardTests
     {
         TranslationGuard.ShouldReturnOriginal("hello", "bad code").ShouldBeTrue();
     }
+
+    [Test]
+    public void ShouldReturnOriginal_WhenTextIsDigitsOnly()
+    {
+        TranslationGuard.ShouldReturnOriginal("12:30", "es").ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldReturnOriginal_WhenTextIsPunctuationOnly()
+    {
+        TranslationGuard.ShouldReturnOriginal("#42 - 7", "es").ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldReturnOriginal_WhenTextIsNormalSentence_ShouldBeFalseForValidNonEnglish()
+    {
+        TranslationGuard.ShouldReturnOriginal("Hello world", "es").ShouldBeFalse();
+    }
 }
