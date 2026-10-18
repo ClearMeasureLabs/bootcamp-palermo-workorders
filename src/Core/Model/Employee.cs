@@ -68,6 +68,13 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// </summary>
     public bool CanFulfillWorkOrder() => Roles.Any(role => role.CanFulfillWorkOrder);
 
+    /// <summary>
+    /// Returns whether this employee has a role with the given name (case-insensitive).
+    /// </summary>
+    public bool IsInRole(string roleName) =>
+        !string.IsNullOrWhiteSpace(roleName) &&
+        Roles.Any(role => string.Equals(role.Name, roleName, StringComparison.OrdinalIgnoreCase));
+
     public void AddRole(Role role)
     {
         Roles.Add(role);

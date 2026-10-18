@@ -208,6 +208,44 @@ public class EmployeeTests
     }
 
     [Test]
+    public void IsInRole_ShouldReturnTrue_WhenRoleNameMatches()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.AddRole(new Role("Admin", true, false));
+
+        employee.IsInRole("Admin").ShouldBeTrue();
+    }
+
+    [Test]
+    public void IsInRole_ShouldReturnTrue_WhenRoleNameDiffersOnlyByCase()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.AddRole(new Role("Admin", true, false));
+
+        employee.IsInRole("admin").ShouldBeTrue();
+    }
+
+    [Test]
+    public void IsInRole_ShouldReturnFalse_WhenRoleNameDoesNotMatch()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.AddRole(new Role("Admin", true, false));
+
+        employee.IsInRole("Viewer").ShouldBeFalse();
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void IsInRole_ShouldReturnFalse_WhenRoleNameIsBlank(string? roleName)
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.AddRole(new Role("Admin", true, false));
+
+        employee.IsInRole(roleName!).ShouldBeFalse();
+    }
+
+    [Test]
     public void PreferredLanguageShouldDefaultToEnUs()
     {
         var employee = new Employee();
