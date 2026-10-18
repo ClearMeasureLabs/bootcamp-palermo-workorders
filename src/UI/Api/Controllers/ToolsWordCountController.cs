@@ -17,7 +17,7 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 public class ToolsWordCountController : ControllerBase
 {
     /// <summary>
-    /// Returns word, character, and line counts for the submitted <paramref name="request"/>.Text.
+    /// Returns word, character, line, and sentence counts for the submitted <paramref name="request"/>.Text.
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
@@ -41,8 +41,53 @@ public class ToolsWordCountController : ControllerBase
         var characterCount = text.Length;
         // Normalize CRLF to LF, then split on LF to count lines (handles CR, LF, and CRLF).
         var lineCount = text.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n').Length;
+        var sentenceCount = CountSentences(text);
 
-        return Ok(new WordCountResponse(wordCount, characterCount, lineCount));
+        return Ok(new WordCountResponse(wordCount, characterCount, lineCount, sentenceCount));
+    }
+
+    /// <summary>
+    /// Counts runs of text that end in <c>.</c>, <c>!</c>, or <c>?</c>; blank text is 0.
+    /// </summary>
+    private static int CountSentences(string text)
+    {
+        if (text.Length == 0)
+        {
+            return 0;
+        }
+
+        var count = 0;
+        var start = 0;
+        while (start < text.Length)
+        {
+            var end = text.IndexOfAny(['.', '!', '?'], start);
+            if (end < 0)
+            {
+                break;
+            }
+
+            if (HasNonWhitespace(text, start, end))
+            {
+                count++;
+            }
+
+            start = end + 1;
+        }
+
+        return count;
+    }
+
+    private static bool HasNonWhitespace(string text, int start, int end)
+    {
+        for (var i = start; i < end; i++)
+        {
+            if (!char.IsWhiteSpace(text[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
@@ -54,4 +99,4 @@ public record WordCountRequest(string? Text);
 /// <summary>
 /// JSON payload for <c>POST /api/tools/word-count</c>.
 /// </summary>
-public record WordCountResponse(int WordCount, int CharacterCount, int LineCount);
+public record WordCountResponse(int WordCount, int CharacterCount, int LineCount, int SentenceCount);

@@ -69,6 +69,26 @@ public class ToolsWordCountControllerTests
         payload.LineCount.ShouldBe(3);
     }
 
+    [Test]
+    public void Post_Should_ReturnSentenceCount_When_TwoSentences()
+    {
+        var result = CreateController().Post(new WordCountRequest("Hello world. How are you?"));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WordCountResponse>();
+        payload.SentenceCount.ShouldBe(2);
+    }
+
+    [Test]
+    public void Post_Should_ReturnZeroSentenceCount_When_BlankText()
+    {
+        var result = CreateController().Post(new WordCountRequest(""));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<WordCountResponse>();
+        payload.SentenceCount.ShouldBe(0);
+    }
+
     private static ToolsWordCountController CreateController() =>
         new()
         {
