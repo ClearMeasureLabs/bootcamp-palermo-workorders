@@ -15,6 +15,7 @@ internal static class TraceEntryMapper
             ParentSpanId = activity.ParentSpanId != default ? activity.ParentSpanId.ToString() : null,
             Name = activity.DisplayName,
             Source = activity.Source.Name,
+            Kind = activity.Kind.ToString(),
             DurationMs = activity.Duration.TotalMilliseconds,
             StatusCode = activity.Status != ActivityStatusCode.Unset ? activity.Status.ToString() : null,
             Error = activity.Status == ActivityStatusCode.Error ? activity.StatusDescription : null,

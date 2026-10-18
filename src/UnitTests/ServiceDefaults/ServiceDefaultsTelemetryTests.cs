@@ -119,6 +119,23 @@ public class TraceEntryTests
         entry.Tags["key"].ShouldBe("value");
     }
 
+    [Test]
+    public void ShouldMapKind_WhenActivityKindIsServer()
+    {
+        using var listener = new ActivityListener();
+        listener.ShouldListenTo = _ => true;
+        listener.Sample = SampleAllData;
+        ActivitySource.AddActivityListener(listener);
+
+        using var source = new ActivitySource("TestSource");
+        using var activity = source.CreateActivity("sample", ActivityKind.Server)?.Start();
+        activity.ShouldNotBeNull();
+
+        var entry = new TraceEntry(activity, "STARTED");
+
+        entry.Kind.ShouldBe("Server");
+    }
+
     private static ActivitySamplingResult SampleAllData(ref ActivityCreationOptions<ActivityContext> _) =>
         ActivitySamplingResult.AllData;
 }

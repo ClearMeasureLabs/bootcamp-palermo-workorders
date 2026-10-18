@@ -43,6 +43,11 @@ public class TraceEntry
     public string Source { get; init; } = string.Empty;
 
     /// <summary>
+    /// Gets the kind of the activity (server, client, or internal).
+    /// </summary>
+    public string Kind { get; init; } = string.Empty;
+
+    /// <summary>
     /// Gets the duration of the activity in milliseconds.
     /// </summary>
     public double DurationMs { get; init; }
@@ -85,6 +90,7 @@ public class TraceEntry
         ParentSpanId = mapped.ParentSpanId;
         Name = mapped.Name;
         Source = mapped.Source;
+        Kind = mapped.Kind;
         DurationMs = mapped.DurationMs;
         StatusCode = mapped.StatusCode;
         Error = mapped.Error;
