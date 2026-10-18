@@ -37,6 +37,7 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// <summary>
     /// Optional phone number. Null when not provided.
     /// </summary>
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global -- EF Core materialization requires set
     public string? PhoneNumber { get; set; }
 
     public string PreferredLanguage { get; set; } = "en-US";
