@@ -22,13 +22,14 @@ public class ToolsGuidGeneratorController : ControllerBase
     /// <summary>
     /// Returns a JSON array of newly generated GUIDs in D format.
     /// Optional <paramref name="count"/> defaults to 1 and must be between 1 and 100 inclusive.
+    /// Optional <paramref name="uppercase"/> returns upper-case GUID strings when true; default is lower-case.
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
     [Produces(MediaTypeNames.Application.Json)]
     [ProducesResponseType(typeof(string[]), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public IActionResult Post([FromQuery] int count = DefaultCount)
+    public IActionResult Post([FromQuery] int count = DefaultCount, [FromQuery] bool uppercase = false)
     {
         if (count < DefaultCount || count > MaxCount)
         {
@@ -40,7 +41,8 @@ public class ToolsGuidGeneratorController : ControllerBase
         var guids = new string[count];
         for (var i = 0; i < count; i++)
         {
-            guids[i] = Guid.NewGuid().ToString("D");
+            var value = Guid.NewGuid().ToString("D");
+            guids[i] = uppercase ? value.ToUpperInvariant() : value;
         }
 
         return Ok(guids);

@@ -19,6 +19,24 @@ public class ToolsGuidGeneratorControllerTests
         guids.ShouldNotBeNull();
         guids.Length.ShouldBe(1);
         Guid.TryParseExact(guids[0], "D", out _).ShouldBeTrue();
+        guids[0].ShouldBe(guids[0].ToLowerInvariant());
+    }
+
+    [Test]
+    public void Post_Should_ReturnUpperCaseGuids_When_UppercaseTrue()
+    {
+        var result = CreateController().Post(count: 3, uppercase: true);
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        ok.StatusCode.ShouldBe(200);
+        var guids = ok.Value.ShouldBeAssignableTo<string[]>();
+        guids.ShouldNotBeNull();
+        guids.Length.ShouldBe(3);
+        foreach (var guid in guids)
+        {
+            Guid.TryParseExact(guid, "D", out _).ShouldBeTrue();
+            guid.ShouldBe(guid.ToUpperInvariant());
+        }
     }
 
     [Test]
