@@ -66,6 +66,27 @@ public class AssignedToCancelledCommandTests : StateCommandBaseTests
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
     }
 
+    [Test]
+    public void ShouldClearAssigneeAndAssignedDate_WhenCancelled()
+    {
+        var employee = new Employee();
+        var order = new WorkOrder()
+        {
+            Number = "123",
+            Status = WorkOrderStatus.Assigned,
+            Creator = employee,
+            Assignee = employee,
+            AssignedDate = new DateTime(2024, 1, 15)
+        };
+
+        var command = new AssignedToCancelledCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        Assert.That(order.Assignee, Is.Null);
+        Assert.That(order.AssignedDate, Is.Null);
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Cancelled));
+    }
+
     protected override StateCommandBase GetStateCommand(WorkOrder order, Employee employee)
     {
         return new AssignedToCancelledCommand(order, employee);
