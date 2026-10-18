@@ -8,9 +8,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Exposes build and deployment metadata for operators and integrations.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/version")]
@@ -18,9 +15,6 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class VersionController(IHostEnvironment hostEnvironment) : ControllerBase
 {
-    /// <summary>
-    /// Returns assembly, runtime, and host metadata.
-    /// </summary>
     [HttpGet]
     [AllowAnonymous]
     [OutputCache(PolicyName = OutputCachePolicyNames.VersionMetadata)]
@@ -58,9 +52,6 @@ public class VersionController(IHostEnvironment hostEnvironment) : ControllerBas
     }
 }
 
-/// <summary>
-/// JSON payload for <c>GET /api/version</c> and <c>GET /api/v1.0/version</c>.
-/// </summary>
 public record VersionMetadataResponse(
     string? AssemblyVersion,
     string? InformationalVersion,

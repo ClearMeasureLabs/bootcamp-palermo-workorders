@@ -15,7 +15,6 @@ public class RoleMap : IEntityFrameworkMapping
                 .ValueGeneratedOnAdd()
                 .HasDefaultValue(Guid.Empty);
 
-            // Configure properties
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.CanCreateWorkOrder).IsRequired();
             entity.Property(e => e.CanFulfillWorkOrder).IsRequired();
