@@ -152,3 +152,18 @@ Each target was checked against master (rg) and is absent. z04 and z05 exercise 
 | z08 WorkOrderStatus.IsInProgress | #10372 | cursor/token-exp-p6-z08-k8 |
 
 Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-zNN-k8. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-zNN-k8`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
+
+## Round 9 (v22g, 8e294bbb)
+Each target was checked against master (rg) and is absent. The work types vary: domain, UI, MCP, query, API, validation, DB column, bug fix.
+| Item | Issue | Branch |
+|---|---|---|
+| w01 WorkOrder.IsCreatedBy (domain) | #10381 | cursor/token-exp-p6-w01-k9 |
+| w02 average temperature (UI/bUnit) | #10382 | cursor/token-exp-p6-w02-k9 |
+| w03 list-work-orders limit (MCP) | #10383 | cursor/token-exp-p6-w03-k9 |
+| w04 OverdueWorkOrderCountQuery (query) | #10384 | cursor/token-exp-p6-w04-k9 |
+| w05 time endpoint dayOfWeek (API) | #10385 | cursor/token-exp-p6-w05-k9 |
+| w06 user name whitespace rule (validation) | #10386 | cursor/token-exp-p6-w06-k9 |
+| w07 Employee PhoneNumber column (DbUp) | #10387 | cursor/token-exp-p6-w07-k9 |
+| w08 GetFullName spacing (bug fix) | #10388 | cursor/token-exp-p6-w08-k9 |
+
+Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-wNN-k9. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-wNN-k9`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
