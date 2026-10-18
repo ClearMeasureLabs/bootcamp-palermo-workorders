@@ -6,11 +6,13 @@ $ErrorActionPreference = 'Stop'
 Set-Location (git rev-parse --show-toplevel)
 # v21g: hard limit of 2 calls per workspace (round 7 y05 made 13 calls despite the skill rule).
 $cnt = Join-Path ([IO.Path]::GetTempPath()) 'agent-getcontext-count'
-$used = if (Test-Path $cnt) { [int](Get-Content $cnt) } else { 0 }
+# v32g fix: parallel Get-Context calls race on this file and can leave "2`n2" -> [int](Object[]) threw and the agent replied
+# SCRIPT_FAIL (round 19 s02: -File and -Find issued in the same turn). Take the largest number; write atomically.
+$used = 0; if (Test-Path $cnt) { $used = [int](@(Get-Content $cnt -ErrorAction SilentlyContinue | ForEach-Object { if ("$_" -match '(\d+)') { [int]$Matches[1] } }) + 0 | Measure-Object -Maximum).Maximum }
 # v30g: limit 3 (issue + 2). v29g's 6 became a target (round 16: 49 calls, 6.1/run, 4 runs hit LIMIT then shell-read).
 if ($File -and $Find) { 'REJECTED: use -File or -Find, not both (this call was not counted)'; exit 0 }
 if ($used -ge 3) { 'LIMIT: Get-Context used 3 times. Edit now with what you have (never read files via shell); Submit names what is missing.'; exit 0 }
-Set-Content $cnt ($used + 1)
+$tmpc = "$cnt.$PID"; Set-Content $tmpc ($used + 1); Move-Item -Force $tmpc $cnt
 # v30g: an explicit -Find is a capped grep: matching lines with 2 lines of context, max 25 hits / ~1500 chars (v29g returned
 # 3-5 KB outlines per -Find and often missed what the agent was hunting for).
 if ($PSBoundParameters.ContainsKey('Find')) {
