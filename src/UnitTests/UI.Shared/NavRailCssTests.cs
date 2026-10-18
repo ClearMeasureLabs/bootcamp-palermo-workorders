@@ -41,4 +41,25 @@ public class NavRailCssTests
         NavRailCss.SidebarClass(isNarrowViewport: false, navVisible: true).ShouldBe("modern-sidebar");
         NavRailCss.SidebarClass(isNarrowViewport: true, navVisible: false).ShouldBe("modern-sidebar");
     }
+
+    [Test]
+    public void ShouldCollapseMainContent_WhenWideViewportAndNavHidden()
+    {
+        NavRailCss.MainContentClass(isNarrowViewport: false, navVisible: false)
+            .ShouldBe("modern-main rail-collapsed");
+    }
+
+    [Test]
+    public void ShouldKeepDefaultMainContent_WhenWideViewportAndNavVisible()
+    {
+        NavRailCss.MainContentClass(isNarrowViewport: false, navVisible: true)
+            .ShouldBe("modern-main");
+    }
+
+    [Test]
+    public void ShouldKeepDefaultMainContent_WhenNarrowViewportAndNavHidden()
+    {
+        NavRailCss.MainContentClass(isNarrowViewport: true, navVisible: false)
+            .ShouldBe("modern-main");
+    }
 }

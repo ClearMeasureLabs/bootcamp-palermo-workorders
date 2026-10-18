@@ -5,6 +5,9 @@ internal static class NavRailCss
     public static string AppContainerClass(bool isNarrowViewport, bool navVisible) =>
         !isNarrowViewport && !navVisible ? "modern-app rail-collapsed" : "modern-app";
 
+    public static string MainContentClass(bool isNarrowViewport, bool navVisible) =>
+        !isNarrowViewport && !navVisible ? "modern-main rail-collapsed" : "modern-main";
+
     public static string SidebarClass(bool isNarrowViewport, bool navVisible)
     {
         const string baseClass = "modern-sidebar";
