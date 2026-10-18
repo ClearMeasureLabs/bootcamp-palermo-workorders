@@ -30,7 +30,10 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// <summary>
     /// Optional middle name. When null or blank it is omitted from <see cref="GetFullName"/>.
     /// </summary>
-    public string? MiddleName { get; set; }
+        public string? MiddleName { get; set; }
+
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global
+    public string? JobTitle { get; set; }
 
     public string EmailAddress { get; set; }
 
@@ -51,9 +54,10 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string GetFullName()
     {
-        return string.IsNullOrWhiteSpace(MiddleName)
+        var name = string.IsNullOrWhiteSpace(MiddleName)
             ? $"{FirstName} {LastName}"
             : $"{FirstName} {MiddleName} {LastName}";
+        return string.IsNullOrWhiteSpace(JobTitle) ? name : $"{name} ({JobTitle})";
     }
 
     public override string ToString()

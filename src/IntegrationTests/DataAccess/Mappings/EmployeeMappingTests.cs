@@ -77,6 +77,26 @@ public class EmployeeMappingTests
     }
 
     [Test]
+    public void ShouldPersistJobTitle()
+    {
+        new DatabaseTests().Clean();
+
+        var emp = new Employee("userjobtitle", "First", "Last", "emailjobtitle@example.com") { JobTitle = "Facilities Manager" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            rehydrated.JobTitle.ShouldBe("Facilities Manager");
+        }
+    }
+
+    [Test]
     public void ShouldPersistNullMiddleName()
     {
         new DatabaseTests().Clean();

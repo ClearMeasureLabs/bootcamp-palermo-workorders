@@ -86,4 +86,21 @@ public class McpEmployeeToolTests
 
         result.ShouldContain("No employee found");
     }
+
+    [Test]
+    public async Task ShouldIncludeJobTitle_WhenGetEmployee()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("jtitle", "Jane", "Title", "jane@test.com") { JobTitle = "Facilities Manager" };
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.GetEmployee(bus, "jtitle");
+
+        result.ShouldContain("Facilities Manager");
+        result.ShouldContain("JobTitle");
+    }
 }

@@ -19,6 +19,27 @@ public class EmployeeTests
     }
 
     [Test]
+    public void GetFullName_WhenJobTitleSet_IncludesJobTitleInParentheses()
+    {
+        var employee = new Employee("user", "First", "Last", "email@example.com") { JobTitle = "Facilities Manager" };
+        employee.GetFullName().ShouldBe("First Last (Facilities Manager)");
+    }
+
+    [Test]
+    public void GetFullName_WhenJobTitleNull_ReturnsNameOnly()
+    {
+        var employee = new Employee("user", "First", "Last", "email@example.com");
+        employee.GetFullName().ShouldBe("First Last");
+    }
+
+    [Test]
+    public void GetFullName_WhenJobTitleWhitespace_ReturnsNameOnly()
+    {
+        var employee = new Employee("user", "First", "Last", "email@example.com") { JobTitle = "   " };
+        employee.GetFullName().ShouldBe("First Last");
+    }
+
+    [Test]
     public void ToStringShouldReturnFullName()
     {
         var employee = new Employee("", "Joe", "Camel", "");
