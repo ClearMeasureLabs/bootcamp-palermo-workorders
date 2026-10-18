@@ -227,4 +227,11 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void ShouldSetPhoneNumber()
+    {
+        var employee = new Employee() { PhoneNumber = "555-01" };
+        employee.PhoneNumber.ShouldBe("555-01");
+    }
 }
