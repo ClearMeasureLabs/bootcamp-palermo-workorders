@@ -21,6 +21,9 @@
                 <button data-testid="@Elements.IncrementButton" title="Increase the count by one" class="btn btn-primary counter-btn" @onclick="IncrementCount">
                     ➕ Add Activity
                 </button>
+                <button data-testid="@Elements.DecrementButton" title="Decrease the count by one" class="btn btn-secondary counter-btn" @onclick="DecrementCount">
+                    ➖ Remove Activity
+                </button>
                 <button data-testid="@Elements.ResetButton" class="btn btn-secondary counter-btn" @onclick="ResetCount">
                     🔄 Reset Counter
                 </button>
@@ -47,6 +50,7 @@
     {
         CounterValue,
         IncrementButton,
+        DecrementButton,
         ResetButton,
         CounterSubtitle,
         CounterHint
@@ -57,6 +61,14 @@
     private void IncrementCount()
     {
         _currentCount++;
+    }
+
+    private void DecrementCount()
+    {
+        if (_currentCount > 0)
+        {
+            _currentCount--;
+        }
     }
 
     private void ResetCount()
