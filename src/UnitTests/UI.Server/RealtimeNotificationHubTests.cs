@@ -36,14 +36,20 @@ public class RealtimeNotificationHubTests
     [Test]
     public void Options_OmitsNullPropertiesWhenSerializing()
     {
-        var json = JsonSerializer.Serialize(new NullPropSample("present", null), RealtimeNotificationHubJson.Options);
+        var sample = new NullPropSample { Present = "present", Missing = null };
+        sample.Missing.ShouldBeNull();
+        var json = JsonSerializer.Serialize(sample, RealtimeNotificationHubJson.Options);
 
-        json.ShouldContain("present");
+        json.ShouldContain(sample.Present);
         json.ShouldNotContain("missing");
         json.ShouldNotContain("null");
     }
 
-    private sealed record NullPropSample(string Present, string? Missing);
+    private sealed class NullPropSample
+    {
+        public string Present { get; set; } = "";
+        public string? Missing { get; set; }
+    }
 
     private sealed class RecordingWebSocket : WebSocket
     {
