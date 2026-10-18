@@ -37,6 +37,29 @@ public class McpEmployeeToolTests
     }
 
     [Test]
+    public async Task ShouldListEmployeesFilteredByRoleName_CaseInsensitive()
+    {
+        var manager = new Employee("mgr1", "Pat", "Manager", "pat@test.com");
+        manager.AddRole(new Role("Manager", true, false));
+        var worker = new Employee("wrk1", "Sam", "Worker", "sam@test.com");
+        worker.AddRole(new Role("Worker", false, true));
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(manager);
+        context.Add(worker);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var filtered = await EmployeeTools.ListEmployees(bus, "manager");
+        var unfiltered = await EmployeeTools.ListEmployees(bus);
+
+        filtered.ShouldContain("mgr1");
+        filtered.ShouldNotContain("wrk1");
+        unfiltered.ShouldContain("mgr1");
+        unfiltered.ShouldContain("wrk1");
+    }
+
+    [Test]
     public async Task ShouldReturnEmptyListWhenNoEmployees()
     {
         var bus = TestHost.GetRequiredService<IBus>();
