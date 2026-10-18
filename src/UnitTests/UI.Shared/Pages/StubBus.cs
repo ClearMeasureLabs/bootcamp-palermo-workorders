@@ -50,7 +50,7 @@ public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
             return Task.FromResult<TResponse>((TResponse)(object)workOrder);
         }
 
-        if (request is WorkOrderCountByStatusQuery)
+        if (request is WorkOrderCountByStatusQuery || request is WorkOrderCountByAssigneeQuery)
         {
             var counts = WorkOrderStatus.GetAllItems().ToDictionary(s => s.Key, _ => 0);
             return Task.FromResult<TResponse>((TResponse)(object)counts);
