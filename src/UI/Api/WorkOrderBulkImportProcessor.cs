@@ -70,7 +70,7 @@ internal sealed class WorkOrderBulkImportProcessor(IBus bus, IWorkOrderNumberGen
         var errorResults = rowErrors.Select(static e =>
             new WorkOrderBulkImportRowResult(e.LineNumber, false, null, e.Message));
         var merged = response.Results.Concat(errorResults).OrderBy(static r => r.LineNumber).ToList();
-        return new WorkOrderBulkImportResponse(response.CreatedCount, merged);
+        return response with { Results = merged };
     }
 
     private async Task<WorkOrderBulkImportRowResult> ImportRowAsync(
