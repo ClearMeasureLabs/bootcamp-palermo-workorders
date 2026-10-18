@@ -137,3 +137,18 @@ Each target was checked against master (rg) and is absent.
 | y08 WorkOrderStatus.IsComplete | #10356 | cursor/token-exp-p6-y08-k7 |
 
 Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-yNN-k7. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-yNN-k7`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
+
+## Round 8 (v21g, e907ebcd)
+Each target was checked against master (rg) and is absent. z04 and z05 exercise the new MCP and query recipes.
+| Item | Issue | Branch |
+|---|---|---|
+| z01 WorkOrder.HasDueDate | #10365 | cursor/token-exp-p6-z01-k8 |
+| z02 Role.IsCreatorOnly | #10366 | cursor/token-exp-p6-z02-k8 |
+| z03 Counter x2 button | #10367 | cursor/token-exp-p6-z03-k8 |
+| z04 list-work-orders dueBefore (MCP) | #10368 | cursor/token-exp-p6-z04-k8 |
+| z05 EmployeesByRoleQuery | #10369 | cursor/token-exp-p6-z05-k8 |
+| z06 random tool type=bool | #10370 | cursor/token-exp-p6-z06-k8 |
+| z07 Employee.GetEmailDomain | #10371 | cursor/token-exp-p6-z07-k8 |
+| z08 WorkOrderStatus.IsInProgress | #10372 | cursor/token-exp-p6-z08-k8 |
+
+Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-zNN-k8. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-zNN-k8`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
