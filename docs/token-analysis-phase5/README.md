@@ -7,3 +7,5 @@ See PLAN.md and rep-1.md. Estimates: bytes/4 via scripts/agent/measure_transcrip
 | **Phase 5 rep 1 (new items v01-v08)** | 8/8 | 796k | 99.5k | 6.74k | **-75%** |
 
 Result: the general skill held its saving on change kinds it was never tuned on.
+
+Phase 5 fixes applied as v13g (Number max 7 trap, options ReSharper-comment trap, large test file by range); not yet measured.

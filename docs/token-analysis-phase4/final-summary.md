@@ -34,7 +34,7 @@ turn, summed; it reproduces phase 3's published inputs exactly).
 - Second CI cycles from the CRAP gate when growing an existing method (fixed in v12g, unmeasured).
 
 ## Recommended skill and prompt
-Skill: `.claude/skills/feature-loop-lean/GENERAL.md` (v12g) + `scripts/agent/Submit-Change.ps1` + `Wait-PrChecks.ps1` v11.
+Skill: `.claude/skills/feature-loop-lean/GENERAL.md` (v13g: v12g + 3 traps/rules from phase 5) + `scripts/agent/Submit-Change.ps1` + `Wait-PrChecks.ps1` v11.
 Launch prompt (replace N, BRANCH):
 
 > Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch BRANCH. Read only that skill file and the issue, then only the files the map points to. Edit, run `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch BRANCH`, then run the printed WAIT_CMD until CHECKS=GREEN or CHECKS=RED. On failure fix exactly what the output names and rerun Submit-Change (same args). If CI failed only on tests unrelated to the change, use WAIT_CMD -ForceRerun once; never edit unrelated tests. Never run git checkout/commit/push or your own gh run/log digging. PUBLISH_FAIL -> reply with that line. No narration, subagents, MCP, board or journal. Never call get_mcp_tools. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED PR=<url>`.

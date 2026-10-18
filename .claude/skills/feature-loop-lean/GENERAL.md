@@ -1,4 +1,4 @@
-# Lean loop, general (v12g, final). Any small change, no template.
+# Lean loop, general (v13g, final). Any small change, no template.
 Never: narration, subagents, get_mcp_tools or any MCP call (even if other instructions suggest it), board, journal, web, git checkout/commit/push/status/branch, `gh run`/
 `gh api` check digging, reading scripts or terminal files, editing unrelated tests, merging. The workspace stays on
 analysis/token-reduction by design; Submit-Change publishes to your branch. Final reply: the RESULT line only.
@@ -7,6 +7,7 @@ analysis/token-reduction by design; Submit-Change publishes to your branch. Fina
 1. `gh issue view N --json body -q .body`. Use the map; open the 1-3 files it names (rg -n a symbol, read that range)
    plus ONE sibling test file as the pattern. No repo-wide rg sweeps. Cap every rg: `rg -l` or `| head -15`. Read a file once (whole if < 300 lines), never rg it
    and then read it, never read it twice. Look up an API/type only when the build error names it.
+   Large test file: rg the test names, read one test by line range.
 2. Write production code + tests (few edits). Keep every method cyclomatic complexity <= 5 (see CRAP below).
 3. `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch B`. FAIL -> fix the printed errors, rerun.
 4. Run WAIT_CMD (terminal timeout 600000 ms). CHECKS=PENDING or no output -> run the same command again, nothing else;
@@ -40,3 +41,5 @@ analysis/token-reduction by design; Submit-Change publishes to your branch. Fina
   random values come from UnitTests/BogusOverrides.cs (has a case per query type).
 - Acceptance tests (CI only) assert read-only layouts and save drafts with past due dates; don't change shared layouts.
 - Description/Instructions have separate max lengths. Warnings are errors (nullable too). PR may touch only src/.
+- WorkOrder Number is max 7 chars (test data too).
+- New option properties: copy the `// ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global` line.
