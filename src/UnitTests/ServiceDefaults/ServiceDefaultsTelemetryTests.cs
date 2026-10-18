@@ -144,10 +144,21 @@ public class CorrelationIdResolverTests
     }
 
     [Test]
+    public void ShouldReturnHeaderValue_WhenHeaderLengthEqualsMaxLength()
+    {
+        var expected = new string('x', CorrelationIdConstants.MaxLength);
+        var context = new DefaultHttpContext();
+        context.Request.Headers[CorrelationIdConstants.HeaderName] = expected;
+
+        CorrelationIdResolver.Resolve(context).ShouldBe(expected);
+    }
+
+    [Test]
     public void ShouldGenerateGuid_WhenHeaderTooLong()
     {
         var context = new DefaultHttpContext();
-        context.Request.Headers[CorrelationIdConstants.HeaderName] = new string('x', 129);
+        context.Request.Headers[CorrelationIdConstants.HeaderName] =
+            new string('x', CorrelationIdConstants.MaxLength + 1);
 
         Guid.TryParse(CorrelationIdResolver.Resolve(context), out _).ShouldBeTrue();
     }

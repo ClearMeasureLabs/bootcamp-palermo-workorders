@@ -4,8 +4,6 @@ namespace ChurchBulletin.ServiceDefaults;
 
 internal static class CorrelationIdResolver
 {
-    private const int MaxIncomingLength = 128;
-
     public static string Resolve(HttpContext context)
     {
         if (TryGetValidHeaderValue(context, out var id))
@@ -25,7 +23,7 @@ internal static class CorrelationIdResolver
         }
 
         var id = fromHeader.ToString().Trim();
-        if (id.Length == 0 || id.Length > MaxIncomingLength)
+        if (id.Length == 0 || id.Length > CorrelationIdConstants.MaxLength)
         {
             return false;
         }
