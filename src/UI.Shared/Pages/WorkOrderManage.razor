@@ -57,7 +57,7 @@
                 <div class="form-group">
                     <label for="Description" class="form-label">Description:</label>
                     <div>
-                        <InputTextArea data-testid="@Elements.Description" id="Description" Value="@Model.Description" ValueChanged="@(v => Model.Description = v)" ValueExpression="@(() => Model.Description)" @oninput="@((ChangeEventArgs e) => Model.Description = e.Value as string)" class="form-control input-textarea" maxlength="@WorkOrder.DescriptionMaxLength" disabled="@Model.IsReadOnly"/>
+                        <InputTextArea data-testid="@Elements.Description" id="Description" Value="@Model.Description" ValueChanged="@(v => Model.Description = v)" ValueExpression="@(() => Model.Description)" @oninput="@(e => Model.Description = e.Value as string)" class="form-control input-textarea" maxlength="@WorkOrder.DescriptionMaxLength" disabled="@Model.IsReadOnly"/>
                         <button type="button" data-testid="@Elements.SpeakDescription" class="btn btn-sm btn-outline-secondary" aria-label="Speak description" title="Speak description" @onclick="SpeakDescriptionAsync">&#x1F50A;</button>
                         @if (!Model.IsReadOnly)
                         {
