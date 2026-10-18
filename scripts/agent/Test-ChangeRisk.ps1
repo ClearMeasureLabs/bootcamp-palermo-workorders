@@ -28,7 +28,7 @@ function Test-ImplicitUsings([string]$f) { $d = Split-Path $f
 git add -A -N src 2>$null | Out-Null
 $base = if (git rev-parse -q --verify origin/analysis/token-reduction 2>$null) { 'origin/analysis/token-reduction' } else { 'origin/master' }
 $changed = @{}; $file = $null; $prevA = ''
-foreach ($l in git diff -U0 $base -- src) {
+foreach ($l in git diff -U0 $base -- src ':(exclude)src/**/Generated/**') {  # v33g: generated code is not ours (round 19 s08)
   if ($l -match '^\+\+\+ b/(.+)$') { $file = $Matches[1]; $changed[$file] = @(); $prevA = ''; continue }
   if ($l -match '^@@ .*\+(\d+)(?:,(\d+))? @@') { $s = [int]$Matches[1]; $c = if ($Matches[2]) { [int]$Matches[2] } else { 1 }; if ($c) { $changed[$file] += $s..($s + $c - 1) }; continue }
   if ($l -match '^\+(?!\+\+)(.*)$' -and $file) { $a = $Matches[1]
@@ -54,6 +54,10 @@ foreach ($l in git diff -U0 $base -- src) {
 foreach ($f in $changed.Keys) {
   if ($f -notmatch '\.cs$' -or $f -match 'Tests' -or -not (Test-Path $f)) { continue }
   $src = @(Get-Content $f); $set = [Collections.Generic.HashSet[int]]::new([int[]]$changed[$f])
+  # v33g: round 19 s04 CI RED PossibleMultipleEnumeration: an IEnumerable<T> parameter enumerated by 2+ LINQ calls
+  foreach ($pm in [regex]::Matches(($src -join "`n"), 'IEnumerable<[\w<>, ?]+>\s+(\w+)\s*[,)]')) { $pn = $pm.Groups[1].Value
+    $uses = @(for ($i = 0; $i -lt $src.Count; $i++) { if ($src[$i] -match "\b$pn\.(First|FirstOrDefault|Any|All|Where|Count|Select|Single|Last|ToList|ToArray|OrderBy)\w*\(") { $i + 1 } })
+    if ($uses.Count -ge 2 -and ($uses | Where-Object { $set.Contains($_) })) { "QODANA_RISK ${f}:$($uses[0]) : '$pn' (IEnumerable) is enumerated $($uses.Count) times; materialize once (var list = $pn.ToList();) or take IReadOnlyList (PossibleMultipleEnumeration)" } }
   if ($f -match 'Options\.cs$') { for ($i = 0; $i -lt $src.Count; $i++) {
     if ($set.Contains($i + 1) -and $src[$i] -match 'public .*\{ get; set; \}' -and ($i -eq 0 -or $src[$i - 1] -notmatch 'PropertyCanBeMadeInitOnly')) {
       "QODANA_RISK ${f}:$($i + 1) : put // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global, PropertyCanBeMadeInitOnly.Global -- required for IOptions<T> configuration binding on the line above (v31g: round 17 q02 CI RED PropertyCanBeMadeInitOnly.Global)" } } }

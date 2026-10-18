@@ -13,6 +13,8 @@ Set-Location (git rev-parse --show-toplevel)  # v16g: was $PSScriptRoot/../.. wh
 $t0 = Get-Date
 $tools = Join-Path ([IO.Path]::GetTempPath()) 'agent-scripts'
 New-Item -ItemType Directory -Force $tools | Out-Null; Copy-Item "$PSScriptRoot/*.ps1" $tools -Force
+# v33g: a changed .proto regenerates the checked-in gRPC C# first (round 19 s08 hand-edited it: 77 edits, 1.71M tokens)
+if (git status --porcelain -- 'src/**/*.proto') { & "$tools/Update-GrpcGenerated.ps1" }
 $risk = @(& "$tools/Test-ChangeRisk.ps1")
 if ($risk -and -not $IgnoreRisk) { $risk; 'RISK=FIX (fix these, rerun; -IgnoreRisk only if clearly false)'; exit 0 }
 $f = if ($Filter) { $Filter } else { 'FullyQualifiedName!~__none__' }
@@ -21,6 +23,10 @@ $b = dotnet build src/IntegrationTests/IntegrationTests.csproj -c Release -warna
 if ($LASTEXITCODE) { $b | Select-String 'error' | Select-Object -First 10; 'IT_BUILD=FAIL'; exit 0 }
 $it = @(git status --porcelain -uall -- src/IntegrationTests | ForEach-Object { $_.Substring(3) } | Where-Object { $_ -like '*.cs' } |
   ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) })
+# v33g: also run integration test classes that mention a changed production type (round 19 s02: an untouched integration
+# test asserted the old behavior and only failed in CI)
+$types = @(git status --porcelain -uall -- src | ForEach-Object { $_.Substring(3) } | Where-Object { $_ -like '*.cs' -and $_ -notmatch 'Tests[/\\]|Generated' } | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) })
+if ($types) { $it = @(@($it) + @(rg -l -w @($types | ForEach-Object { '-e'; $_ }) --glob '*Tests.cs' src/IntegrationTests 2>$null | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) }) | Where-Object { $_ } | Select-Object -Unique -First 8) }
 if ($it) {
   $db = Join-Path ([IO.Path]::GetTempPath()) 'agent-it.db'; Remove-Item $db -ErrorAction SilentlyContinue
   $env:DATABASE_ENGINE = 'SQLite'; $env:ConnectionStrings__SqlConnectionString = "Data Source=$db"

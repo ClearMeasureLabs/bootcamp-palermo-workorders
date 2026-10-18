@@ -8,6 +8,10 @@ Set-Location (git rev-parse --show-toplevel)
 $cnt = Join-Path ([IO.Path]::GetTempPath()) 'agent-getcontext-count'
 # v32g fix: parallel Get-Context calls race on this file and can leave "2`n2" -> [int](Object[]) threw and the agent replied
 # SCRIPT_FAIL (round 19 s02: -File and -Find issued in the same turn). Take the largest number; write atomically.
+# v33g: a new -Issue starts a fresh 3-call budget (multi-item sessions)
+$curf = Join-Path ([IO.Path]::GetTempPath()) 'agent-getcontext-issue'
+if ($Issue -and -not $File -and -not $PSBoundParameters.ContainsKey('Find')) { $prev = if (Test-Path $curf) { "$(Get-Content $curf -ErrorAction SilentlyContinue)".Trim() } else { '' }
+  if ($prev -and $prev -ne "$Issue") { Remove-Item $cnt -ErrorAction SilentlyContinue }; Set-Content $curf $Issue }
 $used = 0; if (Test-Path $cnt) { $used = [int](@(Get-Content $cnt -ErrorAction SilentlyContinue | ForEach-Object { if ("$_" -match '(\d+)') { [int]$Matches[1] } }) + 0 | Measure-Object -Maximum).Maximum }
 # v30g: limit 3 (issue + 2). v29g's 6 became a target (round 16: 49 calls, 6.1/run, 4 runs hit LIMIT then shell-read).
 if ($File -and $Find) { 'REJECTED: use -File or -Find, not both (this call was not counted)'; exit 0 }
@@ -65,6 +69,8 @@ if ($Issue -and -not $Find) {
   # v27g: db changes -> next DbUp script number (round 12 s07 globbed scripts/Update to find it)
   if ($keep -match '(?i)\b(DbUp|column)\b') { $last = Get-ChildItem src/Database/scripts/Update -Filter '*.sql' | Sort-Object Name | Select-Object -Last 1
     if ($last -and $last.Name -match '^(\d+)_') { "NEXT_SCRIPT=src/Database/scripts/Update/{0:D3}_<Name>.sql (last: $($last.Name))" -f ([int]$Matches[1] + 1) } }
+  # v33g: gRPC contract changes: edit only the .proto; Submit regenerates the checked-in C# (round 19 s08 hand-edited it, 1.71M tokens)
+  if ($keep -match '(?i)\.proto\b|\bgRPC\b') { "PROTO: edit src/UI/Server/Protos/*.proto only; Submit-Change regenerates src/UI/Server/Generated/Protos (never open or edit those). Generated property = PascalCase of the field (instructions -> Instructions)." }
   # v27g: backticked names that occur nowhere in src are new; say so, so the agent doesn't spend its -Find call proving it
   # (round 12: 6 of 8 second calls were -Find on the not-yet-existing name, 2.5-3.8 KB each).
   $newNames = @([regex]::Matches($keep, '`(?:[A-Z]\w+\.)?([A-Za-z]\w{3,})(?:\([^`]*\))?`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique |
