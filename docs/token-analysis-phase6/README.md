@@ -7,3 +7,4 @@ See PLAN.md and round-N.md. Estimates: bytes/4 via scripts/agent/measure_transcr
 | (ref) phase 5 | v12g | v01-v08 | 8/8 | 796k | 99.5k | 6.74k |
 | 1 | v14g | r01-r08 | 8/8 | 2,365k | 296k | 14.4k |
 | 2 | v15g (path bug) | s01-s08 | 8/8 | 3,025k | 378k | 26.4k |
+| 3 | v16g | t01-t08 | 8/8 | 576k | 72k | 6.42k |
