@@ -103,6 +103,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     }
 
     /// <summary>
+    /// Returns <c>true</c> when this work order has an assignee.
+    /// </summary>
+    public bool HasAssignee() => Assignee is not null;
+
+    /// <summary>
     /// Returns the urgency classification for this work order's due date relative to today
     /// in America/Chicago.
     /// </summary>

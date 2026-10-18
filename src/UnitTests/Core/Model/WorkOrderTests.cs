@@ -98,4 +98,18 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void HasAssignee_WhenAssigneeIsNull_ShouldReturnFalse()
+    {
+        var workOrder = new WorkOrder();
+        Assert.That(workOrder.HasAssignee(), Is.False);
+    }
+
+    [Test]
+    public void HasAssignee_WhenAssigneeIsNotNull_ShouldReturnTrue()
+    {
+        var workOrder = new WorkOrder { Assignee = new Employee() };
+        Assert.That(workOrder.HasAssignee(), Is.True);
+    }
 }
