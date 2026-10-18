@@ -33,6 +33,14 @@ public class EmployeeTests
         employee.GetFullName().ShouldBe("Joe Big Camel");
     }
 
+    [Test]
+    public void GetFullName_WithPaddedFirstAndLastNames_ShouldTrimParts()
+    {
+        var employee = new Employee("jcamel", "  Joe  ", "  Camel  ", "");
+
+        employee.GetFullName().ShouldBe("Joe Camel");
+    }
+
     [TestCase(null)]
     [TestCase("")]
     [TestCase("   ")]
