@@ -1,14 +1,29 @@
 # v15g: one-call context finder, capped. Runs from the repo root regardless of cwd. Lists files matching -Find
 # (production first, then tests). Outlines (line-numbered types/members + matching lines) only for the first -Max files of
 # each kind; the rest are listed by name. Total output is capped (~3.5 KB) so a broad regex can't flood the context.
-param([string]$Find = '', [int]$Issue = 0, [int]$Max = 3, [int]$Lines = 18, [int]$Cap = 5500)
+param([string]$Find = '', [string]$File = '', [int]$Issue = 0, [int]$Max = 3, [int]$Lines = 18, [int]$Cap = 5500)
 $ErrorActionPreference = 'Stop'
 Set-Location (git rev-parse --show-toplevel)
 # v21g: hard limit of 2 calls per workspace (round 7 y05 made 13 calls despite the skill rule).
 $cnt = Join-Path ([IO.Path]::GetTempPath()) 'agent-getcontext-count'
 $used = if (Test-Path $cnt) { [int](Get-Content $cnt) } else { 0 }
-if ($used -ge 2) { 'LIMIT: Get-Context already used twice. Read line ranges of files listed above (or copy the RECIPE), then edit.'; exit 0 }
+# v29g: all searches/reads go through Get-Context (capped), so the limit is 6 calls (round 15 u08: one built-in grep = 87 KB)
+if ($used -ge 6) { 'LIMIT: Get-Context used 6 times. Edit with what you have; Submit names what is missing.'; exit 0 }
 Set-Content $cnt ($used + 1)
+# v29g: -File path[:a-b] = capped read. Small files print whole; big files print an outline first, then ask for a range.
+if ($File) {
+  $fp, $rg = $File -split ':'; if (-not (Test-Path $fp)) { "NO_FILE $fp (use -Find to locate it)"; exit 0 }
+  $all = @(Get-Content $fp); $a = 1; $b = $all.Count
+  if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min([Math]::Min($b, $all.Count), $a + 119) }
+  elseif ($all.Count -gt 120) {
+    "== $fp OUTLINE ($($all.Count) lines; read a range with -File ${fp}:a-b, max 120 lines)"
+    $n = 0; $all | ForEach-Object { $n++; if ($_ -match '^\s*(@page|@code|\[Test|(public|private|protected|internal)\b)') { "{0,4}: {1}" -f $n, $_.Trim().Substring(0, [Math]::Min(100, $_.Trim().Length)) } } | Select-Object -First 60
+    exit 0 }
+  "== $fp $a-$b of $($all.Count)"
+  $us = @($all | Where-Object { $_ -match '^\s*using [\w.]+;' } | ForEach-Object { ($_ -replace '^\s*using\s+|;\s*$', '') }); if ($us -and $a -gt 1) { "  usings: " + ($us -join '; ') }
+  for ($i = $a; $i -le $b; $i++) { "{0,3}:{1}" -f $i, $all[$i - 1].TrimEnd() }
+  exit 0
+}
 # v17g: -Issue N prints the issue's Outcome/Acceptance criteria (boilerplate stripped) and, if -Find is not given, builds it
 # from the PascalCase identifiers named in backticks. One call replaces `gh issue view` + the first Get-Context call.
 # v18g: issue text is printed only on the first call (-Issue without -Find); round 4 reprinted it on every -Find retry.
@@ -19,8 +34,11 @@ if ($Issue -and -not $Find) {
   $keep = ($body -split "`n" | Where-Object { $_ -notmatch 'Token-reduction experiment|The PR targets master|^## Done when' }) -join "`n"
   "ISSUE #$Issue"; $keep.Trim()
   # v21g: recipes = complete exemplar of the change kind (round 7 y04/y05: 17 reads / 13 calls hunting the query+validator+test pattern)
-  foreach ($r in Get-Content (Join-Path $PSScriptRoot 'recipes.txt') | Where-Object { $_ -and $_ -notmatch '^#' }) {
-    $parts = $r -split "`t"; if ($keep -notmatch "(?i)$($parts[1])") { continue }
+  # v29g: optional 4th column = recipes that supersede this one when both match (keeps output to the most specific recipe)
+  $hits = @(Get-Content (Join-Path $PSScriptRoot 'recipes.txt') | Where-Object { $_ -and $_ -notmatch '^#' } | Where-Object { $keep -match "(?i)$(($_ -split "`t")[1])" })
+  $names = @($hits | ForEach-Object { ($_ -split "`t")[0] })
+  foreach ($r in $hits) {
+    $parts = $r -split "`t"; if ($parts.Count -gt 3 -and @($parts[3] -split ',' | Where-Object { $names -contains $_ })) { continue }
     $Max = 1; $Cap = 2500  # recipe already shows the pattern; keep the outline small
     "RECIPE $($parts[0]) (complete; copy this shape, don't re-read these):"
     foreach ($spec in $parts[2] -split '\s+') { $fp, $rg = $spec -split ':'; if (-not (Test-Path $fp)) { continue }
