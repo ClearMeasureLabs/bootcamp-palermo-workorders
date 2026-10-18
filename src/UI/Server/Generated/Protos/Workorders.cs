@@ -25,30 +25,31 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "ChB3b3Jrb3JkZXJzLnByb3RvEgp3b3Jrb3JkZXJzGh9nb29nbGUvcHJvdG9i",
-            "dWYvdGltZXN0YW1wLnByb3RvIg0KC1BpbmdSZXF1ZXN0IhwKCVBpbmdSZXBs",
-            "eRIPCgdtZXNzYWdlGAEgASgJIi0KG0dldFdvcmtPcmRlckJ5TnVtYmVyUmVx",
-            "dWVzdBIOCgZudW1iZXIYASABKAkiRgoZR2V0V29ya09yZGVyQnlOdW1iZXJS",
-            "ZXBseRIpCgp3b3JrX29yZGVyGAEgASgLMhUud29ya29yZGVycy5Xb3JrT3Jk",
-            "ZXIitwMKCVdvcmtPcmRlchIOCgZudW1iZXIYASABKAkSDQoFdGl0bGUYAiAB",
-            "KAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEwoLcm9vbV9udW1iZXIYBCABKAkS",
-            "EgoKc3RhdHVzX2tleRgFIAEoCRIYChBjcmVhdG9yX3VzZXJuYW1lGAYgASgJ",
-            "EhkKEWFzc2lnbmVlX3VzZXJuYW1lGAcgASgJEjoKEWFzc2lnbmVkX2RhdGVf",
-            "dXRjGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgAiAEBEjkK",
-            "EGNyZWF0ZWRfZGF0ZV91dGMYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGlt",
-            "ZXN0YW1wSAGIAQESOwoSY29tcGxldGVkX2RhdGVfdXRjGAogASgLMhouZ29v",
-            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcEgCiAEBEhUKCGR1ZV9kYXRlGAsgASgJ",
-            "SAOIAQFCFAoSX2Fzc2lnbmVkX2RhdGVfdXRjQhMKEV9jcmVhdGVkX2RhdGVf",
-            "dXRjQhUKE19jb21wbGV0ZWRfZGF0ZV91dGNCCwoJX2R1ZV9kYXRlMqwBCgpX",
-            "b3JrT3JkZXJzEjYKBFBpbmcSFy53b3Jrb3JkZXJzLlBpbmdSZXF1ZXN0GhUu",
-            "d29ya29yZGVycy5QaW5nUmVwbHkSZgoUR2V0V29ya09yZGVyQnlOdW1iZXIS",
-            "Jy53b3Jrb3JkZXJzLkdldFdvcmtPcmRlckJ5TnVtYmVyUmVxdWVzdBolLndv",
-            "cmtvcmRlcnMuR2V0V29ya09yZGVyQnlOdW1iZXJSZXBseUInqgIkQ2xlYXJN",
-            "ZWFzdXJlLkJvb3RjYW1wLlVJLlNlcnZlci5HcnBjYgZwcm90bzM="));
+            "dWYvdGltZXN0YW1wLnByb3RvIg0KC1BpbmdSZXF1ZXN0IjUKCVBpbmdSZXBs",
+            "eRIPCgdtZXNzYWdlGAEgASgJEhcKD3NlcnZlcl90aW1lX3V0YxgCIAEoCSIt",
+            "ChtHZXRXb3JrT3JkZXJCeU51bWJlclJlcXVlc3QSDgoGbnVtYmVyGAEgASgJ",
+            "IkYKGUdldFdvcmtPcmRlckJ5TnVtYmVyUmVwbHkSKQoKd29ya19vcmRlchgB",
+            "IAEoCzIVLndvcmtvcmRlcnMuV29ya09yZGVyIrcDCglXb3JrT3JkZXISDgoG",
+            "bnVtYmVyGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMg",
+            "ASgJEhMKC3Jvb21fbnVtYmVyGAQgASgJEhIKCnN0YXR1c19rZXkYBSABKAkS",
+            "GAoQY3JlYXRvcl91c2VybmFtZRgGIAEoCRIZChFhc3NpZ25lZV91c2VybmFt",
+            "ZRgHIAEoCRI6ChFhc3NpZ25lZF9kYXRlX3V0YxgIIAEoCzIaLmdvb2dsZS5w",
+            "cm90b2J1Zi5UaW1lc3RhbXBIAIgBARI5ChBjcmVhdGVkX2RhdGVfdXRjGAkg",
+            "ASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEgBiAEBEjsKEmNvbXBs",
+            "ZXRlZF9kYXRlX3V0YxgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3Rh",
+            "bXBIAogBARIVCghkdWVfZGF0ZRgLIAEoCUgDiAEBQhQKEl9hc3NpZ25lZF9k",
+            "YXRlX3V0Y0ITChFfY3JlYXRlZF9kYXRlX3V0Y0IVChNfY29tcGxldGVkX2Rh",
+            "dGVfdXRjQgsKCV9kdWVfZGF0ZTKsAQoKV29ya09yZGVycxI2CgRQaW5nEhcu",
+            "d29ya29yZGVycy5QaW5nUmVxdWVzdBoVLndvcmtvcmRlcnMuUGluZ1JlcGx5",
+            "EmYKFEdldFdvcmtPcmRlckJ5TnVtYmVyEicud29ya29yZGVycy5HZXRXb3Jr",
+            "T3JkZXJCeU51bWJlclJlcXVlc3QaJS53b3Jrb3JkZXJzLkdldFdvcmtPcmRl",
+            "ckJ5TnVtYmVyUmVwbHlCJ6oCJENsZWFyTWVhc3VyZS5Cb290Y2FtcC5VSS5T",
+            "ZXJ2ZXIuR3JwY2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingRequest), global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingRequest.Parser, null, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply.Parser, new[]{ "Message" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply.Parser, new[]{ "Message", "ServerTimeUtc" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest.Parser, new[]{ "Number" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply.Parser, new[]{ "WorkOrder" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate" }, null, null, null)
@@ -255,6 +256,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PingReply(PingReply other) : this() {
       message_ = other.message_;
+      serverTimeUtc_ = other.serverTimeUtc_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -276,6 +278,18 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
     }
 
+    /// <summary>Field number for the "server_time_utc" field.</summary>
+    public const int ServerTimeUtcFieldNumber = 2;
+    private string serverTimeUtc_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string ServerTimeUtc {
+      get { return serverTimeUtc_; }
+      set {
+        serverTimeUtc_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -292,6 +306,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         return true;
       }
       if (Message != other.Message) return false;
+      if (ServerTimeUtc != other.ServerTimeUtc) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -300,6 +315,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
     public override int GetHashCode() {
       int hash = 1;
       if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (ServerTimeUtc.Length != 0) hash ^= ServerTimeUtc.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -322,6 +338,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(10);
         output.WriteString(Message);
       }
+      if (ServerTimeUtc.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(ServerTimeUtc);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -336,6 +356,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(10);
         output.WriteString(Message);
       }
+      if (ServerTimeUtc.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(ServerTimeUtc);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -348,6 +372,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       int size = 0;
       if (Message.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+      }
+      if (ServerTimeUtc.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ServerTimeUtc);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -363,6 +390,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
       if (other.Message.Length != 0) {
         Message = other.Message;
+      }
+      if (other.ServerTimeUtc.Length != 0) {
+        ServerTimeUtc = other.ServerTimeUtc;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -387,6 +417,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             Message = input.ReadString();
             break;
           }
+          case 18: {
+            ServerTimeUtc = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -408,6 +442,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             break;
           case 10: {
             Message = input.ReadString();
+            break;
+          }
+          case 18: {
+            ServerTimeUtc = input.ReadString();
             break;
           }
         }

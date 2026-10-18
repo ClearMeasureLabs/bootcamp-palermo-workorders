@@ -13,7 +13,11 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
 {
     /// <inheritdoc />
     public override Task<PingReply> Ping(PingRequest request, ServerCallContext context) =>
-        Task.FromResult(new PingReply { Message = "ok" });
+        Task.FromResult(new PingReply
+        {
+            Message = "ok",
+            ServerTimeUtc = DateTime.UtcNow.ToString("O")
+        });
 
     /// <inheritdoc />
     public override async Task<GetWorkOrderByNumberReply> GetWorkOrderByNumber(

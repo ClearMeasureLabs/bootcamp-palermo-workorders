@@ -15,6 +15,7 @@ message PingRequest {}
 
 message PingReply {
   string message = 1;
+  string server_time_utc = 2;
 }
 
 message GetWorkOrderByNumberRequest {

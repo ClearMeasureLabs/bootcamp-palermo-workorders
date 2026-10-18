@@ -1,3 +1,4 @@
+using System.Globalization;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Server.Grpc;
 using Shouldly;
@@ -74,5 +75,21 @@ public class WorkOrdersGrpcServiceMappingTests
         mapped.CreatedDateUtc.ShouldBeNull();
         mapped.CompletedDateUtc.ShouldBeNull();
         mapped.HasDueDate.ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task Ping_SetsServerTimeUtc_WithinOneMinuteOfUtcNow()
+    {
+        var service = new WorkOrdersGrpcService(null!);
+        var before = DateTime.UtcNow;
+
+        var reply = await service.Ping(new PingRequest(), null!);
+
+        var after = DateTime.UtcNow;
+        var parsed = DateTime.Parse(reply.ServerTimeUtc, null, DateTimeStyles.RoundtripKind);
+        parsed.Kind.ShouldBe(DateTimeKind.Utc);
+        parsed.ShouldBeGreaterThanOrEqualTo(before.AddMinutes(-1));
+        parsed.ShouldBeLessThanOrEqualTo(after.AddMinutes(1));
+        reply.Message.ShouldBe("ok");
     }
 }
