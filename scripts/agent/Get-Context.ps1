@@ -71,6 +71,8 @@ if ($Issue -and -not $Find) {
     if ($last -and $last.Name -match '^(\d+)_') { "NEXT_SCRIPT=src/Database/scripts/Update/{0:D3}_<Name>.sql (last: $($last.Name))" -f ([int]$Matches[1] + 1) } }
   # v33g: gRPC contract changes: edit only the .proto; Submit regenerates the checked-in C# (round 19 s08 hand-edited it, 1.71M tokens)
   if ($keep -match '(?i)\.proto\b|\bgRPC\b') { "PROTO: edit src/UI/Server/Protos/*.proto only; Submit-Change regenerates src/UI/Server/Generated/Protos (never open or edit those). Generated property = PascalCase of the field (instructions -> Instructions)." }
+  # v34g: null handling on a non-nullable member fails Qodana (round 20 t04 CI RED in all 3 arms)
+  if ($keep -match '(?i)\bnull\b|empty string') { "NULLABLE: a member declared without '?' counts as never null: '?? x' or null checks on it fail Qodana; if null must be handled, make it nullable ('string? Name')." }
   # v27g: backticked names that occur nowhere in src are new; say so, so the agent doesn't spend its -Find call proving it
   # (round 12: 6 of 8 second calls were -Find on the not-yet-existing name, 2.5-3.8 KB each).
   $newNames = @([regex]::Matches($keep, '`(?:[A-Z]\w+\.)?([A-Za-z]\w{3,})(?:\([^`]*\))?`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique |

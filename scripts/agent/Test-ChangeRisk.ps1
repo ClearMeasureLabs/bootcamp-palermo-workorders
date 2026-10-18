@@ -48,6 +48,16 @@ foreach ($l in git diff -U0 $base -- src ':(exclude)src/**/Generated/**') {  # v
     if ($a -match '"[^"]*\\x[0-9A-Fa-f]') { "QODANA_RISK $file : use a fixed-length \uXXXX escape, not \x (VariableLengthStringHexEscapeSequence): $($a.Trim())" }
     if ($a -match 'Encoding\.UTF8\.GetBytes\(\s*"') { "QODANA_RISK $file : use a UTF-8 literal (`"...`"u8) (UseUtf8StringLiteral): $($a.Trim())" }
     if ($a -match '^\s*(Func|Action)(<[^=]+>)?\s+\w+\s*=\s*(async\s+)?(\([^)]*\)|\w+)\s*=>') { "QODANA_RISK $file : use a local function instead of a lambda in a Func/Action local (ConvertToLocalFunction): $($a.Trim())" }
+    # v34g: round 20 t04 CI RED in all 3 arms: `Name ?? ""` / null check on a member declared non-nullable
+    #   (NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract, ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract)
+    foreach ($nm in [regex]::Matches($a, '\b([A-Z]\w*)\s*(?:\?\?(?!=)|[!=]=\s*null\b|is\s+(?:not\s+)?null\b)')) { $pn = $nm.Groups[1].Value
+      $dre = "^\s*(public|internal|protected|private)\s+(required\s+|virtual\s+|override\s+)*[\w<>.,]+\??\s+$pn\s*(\{|=|;)"
+      $dl = @(Get-Content $file | Where-Object { $_ -match $dre })  # same file first; else every declaration in src must agree
+      if (-not $dl) { $dl = @(rg -N --glob '*.cs' --glob '!**/*Tests*/**' --glob '!**/Generated/**' -e $dre src 2>$null) }
+      if ($dl -and -not ($dl | Where-Object { $_ -match "\?\s+$pn\b" }) -and ($dl | Where-Object { $_ -match "\b(string|[A-Z]\w*(<[^>]+>)?)\s+$pn\b" })) {
+        "QODANA_RISK $file : '$pn' is declared non-nullable, so '??'/null checks on it fail Qodana (NullCoalescingConditionIsAlwaysNotNull...): drop the check, or make the declaration nullable ('string? $pn') if null must be handled: $($a.Trim())" } }
+    # v34g: round 20 C t03 CI RED x2: private positional test records -> NotAccessedPositionalProperty.Local / PropertyCanBeMadeInitOnly.Local
+    if ($file -match 'Tests' -and $a -match '^\s*(private|file)\s+(sealed\s+)?record\s+\w+\s*\(') { "QODANA_RISK $file : private positional records in tests trip NotAccessedPositionalProperty.Local; use an anonymous object (new { A = 1, B = (string?)null }) or a public record: $($a.Trim())" }
     # v28g: whole-word Number, not PhoneNumber (round 13 r07 false NUMBER_RISK)
     if ($file -match 'Tests' -and $a -match '(?<!\w)Number\s*=\s*"([^"]{8,})"') { "NUMBER_RISK $file : work order Number '$($Matches[1])' > 7 chars" }; $prevA = $a }
 }

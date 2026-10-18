@@ -52,7 +52,7 @@ while ($true) {
   }
   Start-Sleep -Seconds $PollSec
 }
-if (-not $bad) { "CHECKS=GREEN"; $(if (Test-Path (Join-Path ([IO.Path]::GetTempPath()) 'agent-multi-item')) { "NEXT: print RESULT=GREEN PR=https://github.com/$Repo/pull/$Pr on its own line, then the next item (Start-NextItem.ps1); after the last item's RESULT, stop: no tool calls" } else { "NEXT: print RESULT=GREEN PR=https://github.com/$Repo/pull/$Pr  (your final reply is exactly that line; after RESULT, stop: no tool calls)" }); Remove-Item $state -ErrorAction SilentlyContinue; exit 0 }
+if (-not $bad) { "CHECKS=GREEN"; $(if (Test-Path (Join-Path ([IO.Path]::GetTempPath()) 'agent-multi-item')) { "NEXT: print RESULT=GREEN PR=https://github.com/$Repo/pull/$Pr on its own line, then the next item (Start-NextItem.ps1); after the last item's RESULT, stop: no tool calls" } else { "DONE. Your final reply is exactly the next line; then stop (no tool calls, todos, MCP or cleanup):"; "RESULT=GREEN PR=https://github.com/$Repo/pull/$Pr" }); Remove-Item $state -ErrorAction SilentlyContinue; exit 0 }
 "HEAD=$sha FAILED=$($bad.Count)"
 foreach ($b in $bad) {
   "--- FAILED: $($b.Name) ($($b.Conclusion))"
