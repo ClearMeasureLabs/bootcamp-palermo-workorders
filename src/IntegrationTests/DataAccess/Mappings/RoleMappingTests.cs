@@ -37,6 +37,26 @@ public class RoleMappingTests
         rehydratedRole.CanFulfillWorkOrder.ShouldBeTrue();
     }
 
+    [Test]
+    public void ShouldPersistDescription()
+    {
+        EmptyDatabase();
+
+        var role = new Role("descrole", true, false) { Description = "Short role description" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(role);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Role>().Single(r => r.Id == role.Id);
+            rehydrated.Description.ShouldBe("Short role description");
+        }
+    }
+
     private void EmptyDatabase()
     {
         new DatabaseEmptier(TestHost.GetRequiredService<DbContext>().Database).DeleteAllData();
