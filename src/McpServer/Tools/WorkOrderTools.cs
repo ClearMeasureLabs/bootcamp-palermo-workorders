@@ -53,6 +53,18 @@ public class WorkOrderTools
             new JsonSerializerOptions { WriteIndented = true });
     }
 
+    [McpServerTool(Name = "list-overdue-work-orders"), Description(
+        "Lists open work orders (not Complete or Cancelled) whose due date is before today, ordered by due date oldest first.")]
+    public static async Task<string> ListOverdueWorkOrders(IBus bus)
+    {
+        var query = new WorkOrderSpecificationQuery();
+        query.MatchOverdueOnly(true);
+        var workOrders = await bus.Send(query);
+        var ordered = workOrders.OrderBy(wo => wo.DueDate);
+        return JsonSerializer.Serialize(ordered.Select(FormatWorkOrderSummary).ToArray(),
+            new JsonSerializerOptions { WriteIndented = true });
+    }
+
     [McpServerTool(Name = "get-work-order"), Description("Retrieves a single work order by its number, including full details.")]
     public static async Task<string> GetWorkOrder(
         IBus bus,
