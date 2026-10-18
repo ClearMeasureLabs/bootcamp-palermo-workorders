@@ -56,6 +56,14 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
             : $"{FirstName} {MiddleName} {LastName}";
     }
 
+    /// <summary>
+    /// Returns the employee's name as "Last, First" with trimmed parts.
+    /// </summary>
+    public string GetLastFirstName()
+    {
+        return $"{LastName?.Trim()}, {FirstName?.Trim()}";
+    }
+
     public override string ToString()
     {
         return GetFullName();

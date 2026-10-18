@@ -44,6 +44,14 @@ public class EmployeeTests
     }
 
     [Test]
+    public void GetLastFirstName_ShouldReturnLastCommaFirstTrimmed()
+    {
+        var employee = new Employee("jcamel", "  Joe  ", "  Camel  ", "");
+
+        employee.GetLastFirstName().ShouldBe("Camel, Joe");
+    }
+
+    [Test]
     public void ToString_WithMiddleName_ShouldReturnFullNameWithMiddleName()
     {
         var employee = new Employee("jcamel", "Joe", "Camel", "") { MiddleName = "Big" };
