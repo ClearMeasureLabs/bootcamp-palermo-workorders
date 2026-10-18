@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 
+using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Queries;
 using MediatR;
 
@@ -702,16 +703,17 @@ public class WorkOrderSearchTests
     [Test]
     public void ShouldRemotableRequest_RoundTrip_OverdueOnly()
     {
-        var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();
+        var query = new WorkOrderSpecificationQuery();
         query.MatchOverdueOnly(true);
 
-        var json = System.Text.Json.JsonSerializer.Serialize(query);
-        var rehydrated = System.Text.Json.JsonSerializer.Deserialize<ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery>(json);
+        var json = JsonSerializer.Serialize(query);
+        var rehydrated = JsonSerializer.Deserialize<WorkOrderSpecificationQuery>(json);
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
 
+    // ReSharper disable once ConvertToPrimaryConstructor -- base and field both need rows (CS9107)
     private sealed class StubBusThatFiltersByStatus : StubBus
     {
         private readonly WorkOrder[] _rows;
