@@ -95,6 +95,12 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
         return Code == "";
     }
 
+    /// <summary>
+    /// Whether this status is terminal (Complete or Cancelled).
+    /// </summary>
+    public bool IsTerminal() =>
+        Equals(Complete) || Equals(Cancelled);
+
     public static WorkOrderStatus FromCode(string code)
     {
         // SQL Server nchar(3) can surface trailing pads; trim before Code match.

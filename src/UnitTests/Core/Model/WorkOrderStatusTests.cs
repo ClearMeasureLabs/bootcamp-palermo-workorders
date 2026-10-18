@@ -310,6 +310,28 @@ public class WorkOrderStatusTests
         WorkOrderStatus.Draft.IsEmpty().ShouldBeFalse();
     }
 
+    [TestCase(nameof(WorkOrderStatus.None), false)]
+    [TestCase(nameof(WorkOrderStatus.Draft), false)]
+    [TestCase(nameof(WorkOrderStatus.Assigned), false)]
+    [TestCase(nameof(WorkOrderStatus.InProgress), false)]
+    [TestCase(nameof(WorkOrderStatus.Complete), true)]
+    [TestCase(nameof(WorkOrderStatus.Cancelled), true)]
+    public void IsTerminal_ShouldMatchExpected_ForEveryStatus(string statusName, bool expected)
+    {
+        var status = statusName switch
+        {
+            nameof(WorkOrderStatus.None) => WorkOrderStatus.None,
+            nameof(WorkOrderStatus.Draft) => WorkOrderStatus.Draft,
+            nameof(WorkOrderStatus.Assigned) => WorkOrderStatus.Assigned,
+            nameof(WorkOrderStatus.InProgress) => WorkOrderStatus.InProgress,
+            nameof(WorkOrderStatus.Complete) => WorkOrderStatus.Complete,
+            nameof(WorkOrderStatus.Cancelled) => WorkOrderStatus.Cancelled,
+            _ => throw new ArgumentOutOfRangeException(nameof(statusName))
+        };
+
+        status.IsTerminal().ShouldBe(expected);
+    }
+
     [Test]
     public void ToString_ShouldReturnFriendlyName()
     {
