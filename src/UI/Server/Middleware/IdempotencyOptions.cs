@@ -8,6 +8,12 @@ public sealed class IdempotencyOptions
     public const string SectionName = "Idempotency";
 
     /// <summary>
+    /// When false, every request is passed to the next middleware without reading or writing the cache.
+    /// </summary>
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>
     /// How long a successful response snapshot is retained for replay, in seconds. Default 24 hours.
     /// </summary>
     // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding

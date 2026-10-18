@@ -165,7 +165,17 @@ public sealed class IdempotencyMiddleware
 
 internal static class IdempotencyMiddlewareHandler
 {
-    internal static async Task HandleAsync(
+    internal static Task HandleAsync(
+        HttpContext context,
+        RequestDelegate next,
+        IMemoryCache cache,
+        ConcurrentDictionary<string, SemaphoreSlim> keyLocks,
+        IOptionsMonitor<IdempotencyOptions> optionsMonitor) =>
+        optionsMonitor.CurrentValue.Enabled
+            ? HandleWhenEnabledAsync(context, next, cache, keyLocks, optionsMonitor)
+            : next(context);
+
+    private static async Task HandleWhenEnabledAsync(
         HttpContext context,
         RequestDelegate next,
         IMemoryCache cache,
