@@ -45,4 +45,7 @@
 		<Content Update="appsettings.json" CopyToPublishDirectory="Never" />
 	</ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="ClearMeasure.Bootcamp.UnitTests" />
+  </ItemGroup>
 </Project>

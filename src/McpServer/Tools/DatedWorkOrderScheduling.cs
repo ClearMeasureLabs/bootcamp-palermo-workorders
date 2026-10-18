@@ -82,6 +82,11 @@ internal static class DatedWorkOrderScheduling
                 return ([], $"Invalid due date '{part}'. Use yyyy-MM-dd.");
             }
 
+            if (list.Contains(value))
+            {
+                continue;
+            }
+
             list.Add(value);
         }
 
