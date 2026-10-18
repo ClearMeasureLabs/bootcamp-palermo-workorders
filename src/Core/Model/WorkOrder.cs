@@ -97,6 +97,14 @@ public class WorkOrder : EntityBase<WorkOrder>
         return "Work Order " + Number + " is now in Status " + Status;
     }
 
+    /// <summary>
+    /// Returns the trimmed title, or <c>(untitled)</c> when Title is null or whitespace.
+    /// </summary>
+    public string GetTitleOrDefault()
+    {
+        return string.IsNullOrWhiteSpace(Title) ? "(untitled)" : Title.Trim();
+    }
+
     public bool CanReassign()
     {
         return Status == WorkOrderStatus.Draft;

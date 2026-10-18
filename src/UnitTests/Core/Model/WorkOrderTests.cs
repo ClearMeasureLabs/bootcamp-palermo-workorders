@@ -98,4 +98,18 @@ public class WorkOrderTests
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
     }
+
+    [Test]
+    public void GetTitleOrDefault_ShouldReturnTrimmedTitle()
+    {
+        var order = new WorkOrder { Title = "  Fix lights  " };
+        Assert.That(order.GetTitleOrDefault(), Is.EqualTo("Fix lights"));
+    }
+
+    [Test]
+    public void GetTitleOrDefault_ShouldReturnUntitledWhenTitleIsNullOrWhitespace()
+    {
+        Assert.That(new WorkOrder { Title = null }.GetTitleOrDefault(), Is.EqualTo("(untitled)"));
+        Assert.That(new WorkOrder { Title = "   " }.GetTitleOrDefault(), Is.EqualTo("(untitled)"));
+    }
 }
