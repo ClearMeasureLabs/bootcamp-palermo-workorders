@@ -104,6 +104,7 @@ public class EmployeeTests
         Assert.That(employee1.CompareTo(employee2), Is.EqualTo(-1));
         Assert.That(employee1.CompareTo(employee1), Is.EqualTo(0));
         Assert.That(employee2.CompareTo(employee1), Is.EqualTo(1));
+        Assert.That(employee1.CompareTo(null), Is.EqualTo(1));
     }
 
 
