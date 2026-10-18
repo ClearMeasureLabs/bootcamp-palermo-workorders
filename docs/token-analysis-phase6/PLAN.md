@@ -47,3 +47,20 @@ branch cursor/token-exp-p6-rNN-k1 (k = round), title "token-exp p6 rNN k1". PRs 
 
 ## Launch prompt (v14g; fill N, NN, K)
 > Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-rNN-kK. Do only what it says. Use `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-rNN-kK` (it also waits for CI); if it prints WAIT_CMD, run that until CHECKS=GREEN or CHECKS=RED. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED PR=<url>`.
+
+## Round 2 (v15g) items
+| Item | Issue | Kind |
+|---|---|---|
+| s01 | #10270 | domain method (GetAgeInDays) |
+| s02 | #10271 | validation rule (user name length) |
+| s03 | #10272 | Blazor page (Counter decrement) |
+| s04 | #10273 | handler ordering + integration test |
+| s05 | #10274 | DB script + mapping + integration test |
+| s06 | #10275 | LLM gateway config validation (branch in existing method) |
+| s07 | #10276 | MCP tool input handling + integration tests |
+| s08 | #10277 | REST option on existing controller (branch in existing method) |
+
+Round 2 launch prompt (v15g; Submit no longer waits): replace the round-1 prompt's middle with
+"Use `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-sNN-k2`, then run the printed WAIT_CMD until CHECKS=GREEN or CHECKS=RED." (full text in the report / below)
+
+> Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-sNN-k2. Do only what it says. Use `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-sNN-k2`, then run the printed WAIT_CMD until CHECKS=GREEN or CHECKS=RED. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED PR=<url>`.

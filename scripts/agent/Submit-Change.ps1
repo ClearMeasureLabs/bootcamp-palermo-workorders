@@ -1,4 +1,5 @@
-# v14g: one call does it all. Risk check (Test-ChangeRisk: CRAP/Qodana/Number traps that caused past CI REDs) ->
+# v15g: inline CI wait removed (round 1: Submit + wait outran the terminal cap, output was lost and agents went digging).
+# v14g: Risk check (Test-ChangeRisk: CRAP/Qodana/Number traps that caused past CI REDs) ->
 # full unit suite + IntegrationTests build -> changed integration test classes on SQLite -> publish the workspace src diff
 # (temp worktree on master; rerun pushes a follow-up commit) -> waits for CI inside the same call (~9 min budget) and
 # prints the verdict. If CI is still running it prints WAIT_CMD. -IgnoreRisk skips a RISK you judge false.
@@ -6,6 +7,7 @@
 param([int]$Issue, [string]$Branch, [switch]$VerifyOnly, [switch]$IgnoreRisk, [string]$Filter = '',
       [string]$Repo = 'ClearMeasureLabs/bootcamp-palermo-workorders')
 $ErrorActionPreference = 'Stop'
+Set-Location (Resolve-Path "$PSScriptRoot/../..")
 $t0 = Get-Date
 $tools = Join-Path ([IO.Path]::GetTempPath()) 'agent-scripts'
 New-Item -ItemType Directory -Force $tools | Out-Null; Copy-Item "$PSScriptRoot/*.ps1" $tools -Force
@@ -22,7 +24,7 @@ if ($it) {
   $env:DATABASE_ENGINE = 'SQLite'; $env:ConnectionStrings__SqlConnectionString = "Data Source=$db"
   $r = dotnet test src/IntegrationTests/IntegrationTests.csproj -c Release --no-build --nologo -v q --filter (($it | ForEach-Object { "FullyQualifiedName~$_" }) -join '|') 2>&1
   $code = $LASTEXITCODE; Remove-Item env:DATABASE_ENGINE, env:ConnectionStrings__SqlConnectionString
-  if ($code) { $r | Select-String 'Failed |Assert|Exception|error' | Select-Object -First 12; 'IT_TEST=FAIL (SQLite)'; exit 1 }
+  if ($code) { $r | Select-String 'Failed |Assert|Expected|Exception|error|Status' | Select-Object -First 20; 'IT_TEST=FAIL (SQLite)'; exit 1 }
   'IT_TEST=OK'
 }
 if ($VerifyOnly) { 'VERIFY=OK'; exit 0 }
@@ -32,9 +34,5 @@ $out = & "$tools/Publish-AgentPr.ps1" -Issue $Issue -Branch $Branch -Title $titl
 if ($out -match 'PUBLISH_FAIL') { $out; exit 2 }
 $out | Where-Object { $_ -match 'NO_CHANGE' }
 $pr = [int](($out | Select-String 'pull/(\d+)').Matches[0].Groups[1].Value)
-$wait = "pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9"
-$left = [int][Math]::Floor(9 - ((Get-Date) - $t0).TotalMinutes)
-if ($left -lt 2) { "PR=$pr CHECKS=PENDING"; "WAIT_CMD=$wait"; exit 0 }
-$w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $code = $LASTEXITCODE; $w
-if ($w -match 'CHECKS=PENDING') { "WAIT_CMD=$wait" } elseif ($code -eq 1) { "WAIT_CMD=$wait" }
-exit $code
+"PR=$pr"
+"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9"
