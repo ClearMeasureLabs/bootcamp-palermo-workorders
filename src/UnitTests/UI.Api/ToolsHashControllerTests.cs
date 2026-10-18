@@ -12,6 +12,8 @@ public class ToolsHashControllerTests
         "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
     private const string AbcMd5 = "900150983cd24fb0d6963f7d28e17f72";
     private const string AbcSha1 = "a9993e364706816aba3e25717850c26c9cd0d89d";
+    private const string AbcSha512 =
+        "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
     private const string EmptySha256 =
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
     private const string CafeSha256 =
@@ -27,6 +29,28 @@ public class ToolsHashControllerTests
         payload.Sha256.ShouldBe(AbcSha256);
         payload.Md5.ShouldBeNull();
         payload.Sha1.ShouldBeNull();
+        payload.Sha512.ShouldBeNull();
+    }
+
+    [Test]
+    public void Post_Should_IncludeSha512_When_IncludeSha512True()
+    {
+        var result = CreateController().Post(new HashRequest("abc", IncludeSha512: true));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<HashResponse>();
+        payload.Sha256.ShouldBe(AbcSha256);
+        payload.Sha512.ShouldBe(AbcSha512);
+    }
+
+    [Test]
+    public void Post_Should_OmitSha512_When_IncludeSha512False()
+    {
+        var result = CreateController().Post(new HashRequest("abc", IncludeSha512: false));
+
+        var ok = result.ShouldBeOfType<OkObjectResult>();
+        var payload = ok.Value.ShouldBeOfType<HashResponse>();
+        payload.Sha512.ShouldBeNull();
     }
 
     [Test]

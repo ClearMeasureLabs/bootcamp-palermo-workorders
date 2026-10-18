@@ -21,7 +21,7 @@ public class ToolsHashController : ControllerBase
 {
     /// <summary>
     /// Returns the SHA-256 hash of <paramref name="request"/>.Text (UTF-8),
-    /// optionally including MD5 and/or SHA-1 when requested via body or query flags.
+    /// optionally including MD5, SHA-1, and/or SHA-512 when requested via body or query flags.
     /// </summary>
     [HttpPost]
     [AllowAnonymous]
@@ -32,7 +32,8 @@ public class ToolsHashController : ControllerBase
     public IActionResult Post(
         [FromBody] HashRequest? request,
         [FromQuery] bool? includeMd5 = null,
-        [FromQuery] bool? includeSha1 = null)
+        [FromQuery] bool? includeSha1 = null,
+        [FromQuery] bool? includeSha512 = null)
     {
         if (request?.Text is null)
         {
@@ -42,14 +43,23 @@ public class ToolsHashController : ControllerBase
         }
 
         var bytes = Encoding.UTF8.GetBytes(request.Text);
-        var wantMd5 = includeMd5 ?? request.IncludeMd5;
-        var wantSha1 = includeSha1 ?? request.IncludeSha1;
+        return Ok(BuildHashResponse(
+            bytes,
+            includeMd5 ?? request.IncludeMd5,
+            includeSha1 ?? request.IncludeSha1,
+            includeSha512 ?? request.IncludeSha512));
+    }
 
-        return Ok(new HashResponse(
+    private static HashResponse BuildHashResponse(
+        byte[] bytes,
+        bool wantMd5,
+        bool wantSha1,
+        bool wantSha512) =>
+        new(
             Sha256: ToLowerHex(SHA256.HashData(bytes)),
             Md5: wantMd5 ? ToLowerHex(ComputeMd5(bytes)) : null,
-            Sha1: wantSha1 ? ToLowerHex(ComputeSha1(bytes)) : null));
-    }
+            Sha1: wantSha1 ? ToLowerHex(ComputeSha1(bytes)) : null,
+            Sha512: wantSha512 ? ToLowerHex(SHA512.HashData(bytes)) : null);
 
     private static string ToLowerHex(byte[] hash) =>
         Convert.ToHexString(hash).ToLowerInvariant();
@@ -64,7 +74,11 @@ public class ToolsHashController : ControllerBase
 /// <summary>
 /// Request body for <c>POST /api/tools/hash</c>.
 /// </summary>
-public record HashRequest(string? Text, bool IncludeMd5 = false, bool IncludeSha1 = false);
+public record HashRequest(
+    string? Text,
+    bool IncludeMd5 = false,
+    bool IncludeSha1 = false,
+    bool IncludeSha512 = false);
 
 /// <summary>
 /// JSON payload for <c>POST /api/tools/hash</c>. Optional algorithms are omitted when not requested.
@@ -72,4 +86,5 @@ public record HashRequest(string? Text, bool IncludeMd5 = false, bool IncludeSha
 public record HashResponse(
     string Sha256,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Md5 = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Sha1 = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Sha1 = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Sha512 = null);
