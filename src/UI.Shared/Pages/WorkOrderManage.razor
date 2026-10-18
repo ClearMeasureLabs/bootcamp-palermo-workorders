@@ -45,11 +45,16 @@
                 <div class="form-group">
                     <label for="Title" class="form-label">Title:</label>
                     <div>
-                        <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" disabled="@Model.IsReadOnly"/>
+                        <InputText data-testid="@Elements.Title" id="Title" @bind-Value="Model.Title" class="form-control input-text" maxlength="@WorkOrder.TitleMaxLength" disabled="@Model.IsReadOnly"/>
                         <button type="button" data-testid="@Elements.SpeakTitle" class="btn btn-sm btn-outline-secondary" aria-label="Speak title" title="Speak title" @onclick="SpeakTitleAsync">&#x1F50A;</button>
                         @if (!Model.IsReadOnly)
                         {
                             <button type="button" data-testid="@Elements.DictateTitle" class="@DictateButtonClass(DictationTarget.Title)" aria-label="Dictate title" title="Dictate title" aria-pressed="@DictateAriaPressed(DictationTarget.Title)" @onclick="DictateTitleAsync">&#x1F3A4;</button>
+                            var titleRemaining = WorkOrder.TitleMaxLength - (Model.Title?.Length ?? 0);
+                            <small data-testid="@Elements.TitleCharCount"
+                                   class="@(titleRemaining <= 20 ? "text-warning" : "text-muted")">
+                                @titleRemaining characters remaining
+                            </small>
                         }
                     </div>
                 </div>
@@ -209,6 +214,7 @@
         DictateTitle,
         DictateDescription,
         DescriptionCharCount,
+        TitleCharCount,
         RequiredFieldsNote,
         ManageHeadingTooltip
     }
