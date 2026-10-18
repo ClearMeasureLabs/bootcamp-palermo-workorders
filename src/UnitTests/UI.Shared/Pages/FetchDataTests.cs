@@ -110,6 +110,41 @@ public class FetchDataTests
         });
     }
 
+    [Test]
+    public async Task ShouldRenderForecastCount_AboveTable_WhenLoaded()
+    {
+        await using var ctx = new BunitContext();
+
+        var forecasts = new[]
+        {
+            new WeatherForecast
+            {
+                Date = new DateTime(2026, 8, 21),
+                TemperatureC = 28,
+                Summary = "Sunny"
+            },
+            new WeatherForecast
+            {
+                Date = new DateTime(2026, 8, 22),
+                TemperatureC = 18,
+                Summary = "Rainy"
+            }
+        };
+
+        ctx.Services.AddSingleton<IBus>(new StubForecastBus(forecasts));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+        ctx.Services.AddLogging();
+
+        var component = ctx.Render<FetchData>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            var caption = component.Find($"[data-testid='{nameof(FetchData.Elements.ForecastCount)}']");
+            caption.TextContent.Trim().ShouldBe("2 forecasts");
+        });
+    }
+
     private sealed class StubForecastBus(WeatherForecast[] forecasts) : IBus
     {
         public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
