@@ -50,4 +50,25 @@ public class CounterPageTests
         var button = component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']");
         button.GetAttribute("title").ShouldBe("Increase the count by one");
     }
+
+    [Test]
+    public async Task ShouldDoubleCount_WhenDoubleButtonClicked()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+
+        var component = ctx.Render<Counter>();
+
+        await component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']")
+            .ClickAsync(new());
+        await component.Find($"[data-testid='{nameof(Counter.Elements.IncrementButton)}']")
+            .ClickAsync(new());
+        await component.Find($"[data-testid='{nameof(Counter.Elements.DoubleButton)}']")
+            .ClickAsync(new());
+
+        component.Find($"[data-testid='{nameof(Counter.Elements.CounterValue)}']")
+            .TextContent
+            .ShouldBe("4");
+    }
 }
