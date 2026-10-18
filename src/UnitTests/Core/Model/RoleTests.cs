@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -20,5 +21,19 @@ public class RoleTests
         Assert.That(role2.Name, Is.EqualTo("roleName"));
         Assert.That(role2.CanCreateWorkOrder, Is.True);
         Assert.That(role2.CanFulfillWorkOrder, Is.True);
+    }
+
+    [Test]
+    public void ToString_ReturnsName_WhenNamed()
+    {
+        var role = new Role("Admin", true, false);
+
+        role.ToString().ShouldBe("Admin");
+    }
+
+    [Test]
+    public void ToString_ReturnsEmpty_WhenNameNull()
+    {
+        new Role().ToString().ShouldBe("");
     }
 }
