@@ -167,3 +167,18 @@ Each target was checked against master (rg) and is absent. The work types vary: 
 | w08 GetFullName spacing (bug fix) | #10388 | cursor/token-exp-p6-w08-k9 |
 
 Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-wNN-k9. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-wNN-k9`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
+
+## Round 10 (v23g, b54c71a5)
+Each target was checked against master (rg) and is absent. Same mix of work types as round 9. v05 is a field on an endpoint that already returns JSON, to avoid w05's format ambiguity.
+| Item | Issue | Branch |
+|---|---|---|
+| v01 WorkOrder.GetTitleOrDefault (domain) | #10397 | cursor/token-exp-p6-v01-k10 |
+| v02 Counter even/odd label (UI/bUnit) | #10398 | cursor/token-exp-p6-v02-k10 |
+| v03 list-employees lastNameStartsWith (MCP) | #10399 | cursor/token-exp-p6-v03-k10 |
+| v04 WorkOrderCountByCreatorQuery (query) | #10400 | cursor/token-exp-p6-v04-k10 |
+| v05 word-count paragraphCount (API JSON) | #10401 | cursor/token-exp-p6-v05-k10 |
+| v06 user name max 50 (validation) | #10402 | cursor/token-exp-p6-v06-k10 |
+| v07 Employee Department column (DbUp) | #10403 | cursor/token-exp-p6-v07-k10 |
+| v08 WorkOrder.ToString unnumbered (bug fix) | #10404 | cursor/token-exp-p6-v08-k10 |
+
+Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-vNN-k10. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-vNN-k10`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does (if a wait shows no output, run it again; never read terminal files). If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
