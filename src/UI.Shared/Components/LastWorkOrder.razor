@@ -5,6 +5,7 @@
 @if (WorkOrderLastChanged != null)
 {
     <a href="/workorder/manage/@(WorkOrderLastChanged?.Number)?mode=Edit"
+       class="last-work-order-link"
        title="Most recently viewed work order"
        data-testid="@nameof(Elements.LastWorkOrderTooltip)">
         @WorkOrderLastChanged?.Number

@@ -34,6 +34,24 @@ public class LastWorkOrderTests
     }
 
     [Test]
+    public async Task ShouldRenderLastWorkOrderLinkWithCssClassAfterWorkOrderChangedEvent()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+
+        var component = ctx.Render<LastWorkOrder>();
+
+        var sampleWorkOrder = new WorkOrder { Number = "WO-001" };
+        component.Instance.Handle(new WorkOrderChangedEvent(new StateCommandResult(sampleWorkOrder)));
+        component.Render();
+
+        var link = component.Find($"[data-testid='{nameof(LastWorkOrder.Elements.LastWorkOrderTooltip)}']");
+        link.ClassList.ShouldContain("last-work-order-link");
+    }
+
+    [Test]
     public async Task ShouldNotRenderTooltipHookWhenNoLastWorkOrder()
     {
         await using var ctx = new BunitContext();
