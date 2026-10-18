@@ -1,7 +1,7 @@
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.DataAccess;
 using ClearMeasure.Bootcamp.DataAccess.Mappings;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
@@ -26,6 +26,7 @@ public class CanConnectToDatabaseHealthCheckTests
     public void TearDown()
     {
         _dbContext.Dispose();
+        SqliteConnection.ClearAllPools();
         if (File.Exists(_dbPath))
         {
             File.Delete(_dbPath);
