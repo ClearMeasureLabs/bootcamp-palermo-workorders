@@ -17,7 +17,7 @@ public record InProgressToAssignedCommand(WorkOrder WorkOrder, Employee CurrentU
 
     protected override bool UserCanExecute(Employee currentUser)
     {
-        return currentUser == WorkOrder.Assignee;
+        return currentUser == WorkOrder.Assignee || currentUser == WorkOrder.Creator;
     }
 
     public override string TransitionVerbPresentTense => Name;

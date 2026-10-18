@@ -50,6 +50,35 @@ public class InProgressToAssignedCommandTests : StateCommandBaseTests
     }
 
     [Test]
+    public void ShouldBeValidWhenCurrentUserIsCreator()
+    {
+        var creator = new Employee();
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.InProgress,
+            Assignee = new Employee(),
+            Creator = creator
+        };
+
+        var command = new InProgressToAssignedCommand(order, creator);
+        Assert.That(command.IsValid(), Is.True);
+    }
+
+    [Test]
+    public void ShouldNotBeValidWhenCurrentUserIsUnrelatedEmployee()
+    {
+        var order = new WorkOrder()
+        {
+            Status = WorkOrderStatus.InProgress,
+            Assignee = new Employee(),
+            Creator = new Employee()
+        };
+
+        var command = new InProgressToAssignedCommand(order, new Employee());
+        Assert.That(command.IsValid(), Is.False);
+    }
+
+    [Test]
     public void ShouldTransitionStateProperly()
     {
         var employee = new Employee();
