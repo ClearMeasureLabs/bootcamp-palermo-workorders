@@ -21,4 +21,14 @@ public class RoleTests
         Assert.That(role2.CanCreateWorkOrder, Is.True);
         Assert.That(role2.CanFulfillWorkOrder, Is.True);
     }
+
+    [Test]
+    public void CreateReadOnly_SetsNameAndDisablesCreateAndFulfill()
+    {
+        var role = Role.CreateReadOnly("Viewer");
+
+        Assert.That(role.Name, Is.EqualTo("Viewer"));
+        Assert.That(role.CanCreateWorkOrder, Is.False);
+        Assert.That(role.CanFulfillWorkOrder, Is.False);
+    }
 }

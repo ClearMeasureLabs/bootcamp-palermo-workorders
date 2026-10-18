@@ -14,4 +14,9 @@ public class Role(string name, bool canCreate, bool canFulfill) : EntityBase<Rol
 
     public bool CanFulfillWorkOrder { get; set; } = canFulfill;
     public override Guid Id { get; set; }
+
+    /// <summary>
+    /// Creates a view-only role that can neither create nor fulfill work orders.
+    /// </summary>
+    public static Role CreateReadOnly(string name) => new(name, false, false);
 }
