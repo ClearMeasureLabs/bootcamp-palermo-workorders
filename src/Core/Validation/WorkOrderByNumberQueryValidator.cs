@@ -10,5 +10,8 @@ public sealed class WorkOrderByNumberQueryValidator : AbstractValidator<WorkOrde
     public WorkOrderByNumberQueryValidator()
     {
         RuleFor(x => x.Number).NotEmpty();
+        RuleFor(x => x.Number)
+            .Must(number => !number.Any(char.IsWhiteSpace))
+            .WithMessage("Work order number must not contain spaces.");
     }
 }
