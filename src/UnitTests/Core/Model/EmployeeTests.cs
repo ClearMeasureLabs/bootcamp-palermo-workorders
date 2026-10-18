@@ -227,4 +227,25 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void HasEmailDomain_MatchingDomain_ShouldReturnTrue()
+    {
+        var employee = new Employee("u", "a", "b", "user@example.com");
+        employee.HasEmailDomain("example.com").ShouldBeTrue();
+    }
+
+    [Test]
+    public void HasEmailDomain_DifferentCase_ShouldReturnTrue()
+    {
+        var employee = new Employee("u", "a", "b", "user@Example.COM");
+        employee.HasEmailDomain("example.com").ShouldBeTrue();
+    }
+
+    [Test]
+    public void HasEmailDomain_NonMatchingDomain_ShouldReturnFalse()
+    {
+        var employee = new Employee("u", "a", "b", "user@example.com");
+        employee.HasEmailDomain("other.org").ShouldBeFalse();
+    }
 }

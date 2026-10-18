@@ -72,4 +72,17 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     {
         Roles.Add(role);
     }
+
+    /// <summary>
+    /// Returns whether this employee's email address belongs to the given domain.
+    /// </summary>
+    public bool HasEmailDomain(string domain)
+    {
+        if (string.IsNullOrWhiteSpace(domain))
+        {
+            return false;
+        }
+
+        return EmailAddress.EndsWith("@" + domain, StringComparison.OrdinalIgnoreCase);
+    }
 }
