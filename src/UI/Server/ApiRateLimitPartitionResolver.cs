@@ -46,7 +46,7 @@ internal static class ApiRateLimitPartitionResolver
             return false;
         }
 
-        partition = "user:" + userName;
+        partition = "user:" + userName.ToLowerInvariant();
         return true;
     }
 
