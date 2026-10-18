@@ -181,6 +181,21 @@ public class EmployeeTests
     }
 
     [Test]
+    public void HasAnyRole_ShouldReturnFalse_WhenNoRoles()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.HasAnyRole().ShouldBeFalse();
+    }
+
+    [Test]
+    public void HasAnyRole_ShouldReturnTrue_WhenRolesNotEmpty()
+    {
+        var employee = new Employee("", "1", "1", "");
+        employee.AddRole(new Role("viewer", false, false));
+        employee.HasAnyRole().ShouldBeTrue();
+    }
+
+    [Test]
     public void CanFulfillWorkOrder_ShouldReturnFalse_WhenRolesLackPermission()
     {
         var employee = new Employee("", "1", "1", "");

@@ -68,6 +68,11 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// </summary>
     public bool CanFulfillWorkOrder() => Roles.Any(role => role.CanFulfillWorkOrder);
 
+    /// <summary>
+    /// Returns whether this employee has at least one role.
+    /// </summary>
+    public bool HasAnyRole() => Roles.Count > 0;
+
     public void AddRole(Role role)
     {
         Roles.Add(role);
