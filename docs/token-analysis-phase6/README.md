@@ -21,3 +21,4 @@ See PLAN.md and round-N.md. Estimates: bytes/4 via scripts/agent/measure_transcr
 | 14 | v28g | q01-q08 (k14) | 8/8 | 240k | 30.0k (max 42.0k) | 4.23k |
 | 15 (validation) | v28g frozen | u01-u08 (-v28), unseen kinds | 8/8 | 670k | 83.7k (median 47.6k; 51.5k w/o u08) | 6.13k |
 | 16 | v29g | p01-p08 (-v29), unseen kinds | 8/8 | 893k | 111.7k (median 84.0k) | 9.72k |
+| 17 | v30g | q01-q08 (-v30), unseen kinds | 8/8 | 578k | 72.3k (median 42.6k; 46.4k w/o q02) | 8.99k |
