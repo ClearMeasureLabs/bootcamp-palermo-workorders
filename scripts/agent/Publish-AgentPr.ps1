@@ -8,8 +8,9 @@ $ErrorActionPreference = 'Stop'
 function Fail($m) { "PUBLISH_FAIL: $m (do not repair by hand; reply with this line)"; exit 2 }
 $tmp = [IO.Path]::GetTempPath(); $patch = Join-Path $tmp 'agent-src.patch'; $wt = Join-Path $tmp 'agent-pub-wt'
 git fetch -q origin master
-# names experiment: the workspace starts from analysis/token-names; diff against it so the comment refactor isn't part of the agent's change
-$start = @('origin/analysis/token-names', 'origin/analysis/token-reduction', 'origin/master') | Where-Object { git rev-parse -q --verify $_ 2>$null } | Select-Object -First 1
+# names experiment: patch stays relative to analysis/token-reduction (== master src), so each PR also carries the
+# analysis/token-names comment refactor; CI then checks it too. Applying only the agent's diff to master conflicts near refactored lines.
+$start = if (git rev-parse -q --verify origin/analysis/token-reduction 2>$null) { 'origin/analysis/token-reduction' } else { 'origin/master' }
 git add -A src | Out-Null
 git diff --cached --binary --output=$patch $start -- src
 if (-not (Get-Item $patch).Length) { Fail 'no src changes' }
