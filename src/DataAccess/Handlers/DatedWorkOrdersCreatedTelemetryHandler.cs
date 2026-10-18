@@ -5,9 +5,6 @@ using System.Diagnostics.Metrics;
 
 namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 
-/// <summary>
-/// Records a metric when dated work orders are created in a batch.
-/// </summary>
 public class DatedWorkOrdersCreatedTelemetryHandler(ILogger<DatedWorkOrdersCreatedTelemetryHandler> logger)
     : INotificationHandler<DatedWorkOrdersCreatedEvent>
 {

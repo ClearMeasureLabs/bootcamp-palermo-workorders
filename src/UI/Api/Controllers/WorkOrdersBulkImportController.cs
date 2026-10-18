@@ -9,9 +9,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Accepts CSV uploads to create multiple draft work orders in one request.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/work-orders/bulk-import")]
@@ -21,10 +18,8 @@ public sealed class WorkOrdersBulkImportController(
     IBus bus,
     IWorkOrderNumberGenerator numberGenerator) : ControllerBase
 {
-    /// <summary>
-    /// Imports work orders from a CSV file. Form field name: <c>file</c>.
-    /// Header row required: Title, Description, CreatorUsername, RoomNumber (optional).
-    /// </summary>
+    // Imports work orders from a CSV file. Form field name: <c>file</c>.
+    // Header row required: Title, Description, CreatorUsername, RoomNumber (optional).
     [HttpPost]
     [RequestSizeLimit(10 * 1024 * 1024)]
     [Consumes("multipart/form-data")]

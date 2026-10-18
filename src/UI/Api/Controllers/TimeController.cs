@@ -6,9 +6,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Exposes the current UTC instant for operators and integrations.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/time")]
@@ -16,9 +13,6 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class TimeController(TimeProvider timeProvider) : ControllerBase
 {
-    /// <summary>
-    /// Returns the current UTC time as ISO 8601 plain text.
-    /// </summary>
     [HttpGet]
     [AllowAnonymous]
     public IActionResult Get()

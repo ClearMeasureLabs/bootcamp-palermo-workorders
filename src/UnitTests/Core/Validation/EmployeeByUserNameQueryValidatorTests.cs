@@ -19,7 +19,7 @@ public class EmployeeByUserNameQueryValidatorTests
     [Test]
     public void ShouldPass_WhenUsernameIsNotEmpty()
     {
-        var query = new EmployeeByUserNameQuery("jsmith");
+        var query = new EmployeeByUserNameQuery("jdoe");
 
         var result = _validator.TestValidate(query);
 
@@ -40,6 +40,16 @@ public class EmployeeByUserNameQueryValidatorTests
     public void ShouldFail_WhenUsernameIsWhitespace()
     {
         var query = new EmployeeByUserNameQuery("   ");
+
+        var result = _validator.TestValidate(query);
+
+        result.ShouldHaveValidationErrorFor(x => x.Username);
+    }
+
+    [Test]
+    public void ShouldFail_WhenUsernameContainsWhitespace()
+    {
+        var query = new EmployeeByUserNameQuery("j doe");
 
         var result = _validator.TestValidate(query);
 

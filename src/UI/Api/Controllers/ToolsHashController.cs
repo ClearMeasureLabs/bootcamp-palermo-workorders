@@ -9,9 +9,6 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Computes cryptographic hashes of text input for operators and integrations.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/tools/hash")]
@@ -19,10 +16,6 @@ namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 [EnableRateLimiting(ApiRateLimiting.PolicyName)]
 public class ToolsHashController : ControllerBase
 {
-    /// <summary>
-    /// Returns the SHA-256 hash of <paramref name="request"/>.Text (UTF-8),
-    /// optionally including MD5 and/or SHA-1 when requested via body or query flags.
-    /// </summary>
     [HttpPost]
     [AllowAnonymous]
     [Consumes(MediaTypeNames.Application.Json)]
@@ -61,14 +54,8 @@ public class ToolsHashController : ControllerBase
 #pragma warning restore CA5351
 }
 
-/// <summary>
-/// Request body for <c>POST /api/tools/hash</c>.
-/// </summary>
 public record HashRequest(string? Text, bool IncludeMd5 = false, bool IncludeSha1 = false);
 
-/// <summary>
-/// JSON payload for <c>POST /api/tools/hash</c>. Optional algorithms are omitted when not requested.
-/// </summary>
 public record HashResponse(
     string Sha256,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Md5 = null,

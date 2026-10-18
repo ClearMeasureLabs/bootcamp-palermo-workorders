@@ -5,9 +5,6 @@ using Microsoft.Extensions.Options;
 
 namespace ClearMeasure.Bootcamp.UI.Api.Controllers;
 
-/// <summary>
-/// Exposes runtime diagnostics (environment, uptime, feature flags) for operations and support.
-/// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/diagnostics")]
@@ -18,9 +15,6 @@ public class DiagnosticsController(
     TimeProvider timeProvider,
     IOptions<DiagnosticsFeatureFlagsOptions> featureFlagsOptions) : ControllerBase
 {
-    /// <summary>
-    /// Returns environment name, process uptime (same semantics as <see cref="SimpleHealthResponseBuilder"/>), and configured feature flags.
-    /// </summary>
     [HttpGet]
     public IActionResult Get()
     {
