@@ -37,7 +37,7 @@ Per run: **82.4k**. Six of the eight runs came in at 20-67k (mean 40.6k); w04 an
 | Submit output | 11.7k | 1.8% |
 
 ## Inline CI wait: worked
-Every run made exactly **1** separate wait call, compared with 2 per run in round 3 and 18 calls across 8 runs in round 4. The successful Submit calls took 7.2-8.1 min, which is under the terminal cap; every one ended PENDING and was then followed by one WAIT_CMD that returned GREEN. Wait-call turns replayed 59.1k (9.0%), down from 120.4k in round 3 (21%) and 167.7k in round 4 (13.5%).
+Every run made exactly **1** separate wait call, compared with 2 per run in round 3 and 18 calls across 8 runs in round 4. The successful Submit calls took 6.8-8.1 min, which is under the terminal cap; every one ended PENDING and was then followed by one WAIT_CMD that returned GREEN. Wait-call turns replayed 59.1k (9.0%), down from 120.4k in round 3 (21%) and 167.7k in round 4 (13.5%).
 Bug: in w02, the inline wait after a fix push read the **previous** head's RED (the PR head had not updated yet). The agent then fought a correct `PUBLISH=NO_CHANGE`, making 4 submits.
 
 ## EXISTING= / ALREADY_DONE: behaved

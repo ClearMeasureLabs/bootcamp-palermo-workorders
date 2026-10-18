@@ -107,3 +107,18 @@ All targets were checked against master and do not exist yet.
 | w08 Role.HasFullAccess | #10324 | cursor/token-exp-p6-w08-k5 |
 
 Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-wNN-k5. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-wNN-k5`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
+
+## Round 6 (v19g, 2529c7ce)
+Each target was checked against master (rg) and is absent.
+| Item | Issue | Branch |
+|---|---|---|
+| x01 WorkOrder.HasAssignee | #10333 | cursor/token-exp-p6-x01-k6 |
+| x02 WorkOrderStatus.IsDraft | #10334 | cursor/token-exp-p6-x02-k6 |
+| x03 Counter +5 button | #10335 | cursor/token-exp-p6-x03-k6 |
+| x04 list-employees roleName (MCP) | #10336 | cursor/token-exp-p6-x04-k6 |
+| x05 EmployeeByEmailQuery | #10337 | cursor/token-exp-p6-x05-k6 |
+| x06 word-count characterCountNoSpaces | #10338 | cursor/token-exp-p6-x06-k6 |
+| x07 WorkOrder.GetDaysUntilDue | #10339 | cursor/token-exp-p6-x07-k6 |
+| x08 Employee.HasAnyRole | #10340 | cursor/token-exp-p6-x08-k6 |
+
+Launch prompt: Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-xNN-k6. Do only what it says. Start with `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Issue N`. Submit with `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-xNN-k6`; it waits for CI itself. Only if it printed no CHECKS=GREEN/RED, run the printed WAIT_CMD until it does. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED|ALREADY_DONE PR=<url or evidence>`.
