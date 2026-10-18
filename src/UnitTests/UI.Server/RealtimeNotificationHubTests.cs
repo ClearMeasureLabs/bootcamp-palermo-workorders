@@ -1,4 +1,5 @@
 using System.Net.WebSockets;
+using System.Text.Json;
 using ClearMeasure.Bootcamp.Core.Model.Events;
 using ClearMeasure.Bootcamp.UI.Server.Notifications;
 using Shouldly;
@@ -30,6 +31,14 @@ public class RealtimeNotificationHubTests
         await hub.BroadcastRemotableEventAsync(new UserLoggedInEvent("user1"));
 
         hub.ConnectionCount.ShouldBe(0);
+    }
+
+    [Test]
+    public void Options_OmitsNullPropertiesWhenSerializing()
+    {
+        var json = JsonSerializer.Serialize(new { Kind = "test", MessageJson = (string?)null }, RealtimeNotificationHubJson.Options);
+        json.ShouldNotContain("messageJson");
+        json.ShouldContain("kind");
     }
 
     private sealed class RecordingWebSocket : WebSocket
