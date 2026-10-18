@@ -64,3 +64,17 @@ Round 2 launch prompt (v15g; Submit no longer waits): replace the round-1 prompt
 "Use `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-sNN-k2`, then run the printed WAIT_CMD until CHECKS=GREEN or CHECKS=RED." (full text in the report / below)
 
 > Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-sNN-k2. Do only what it says. Use `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-sNN-k2`, then run the printed WAIT_CMD until CHECKS=GREEN or CHECKS=RED. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED PR=<url>`.
+
+## Round 3 (v16g) items
+| Item | Issue | Kind |
+|---|---|---|
+| t01 | #10286 | domain (WorkOrderStatus.IsTerminal) |
+| t02 | #10287 | domain (Employee.IsInRole) |
+| t03 | #10288 | Blazor page empty state (FetchData) |
+| t04 | #10289 | REST option on existing endpoint (time ?format=unix) |
+| t05 | #10290 | handler change + integration test (case-insensitive lookup) |
+| t06 | #10291 | DB script + mapping + integration test |
+| t07 | #10292 | MCP tool parameter + integration test |
+| t08 | #10293 | UI bug from symptom (tooltip wording) |
+
+> Follow `.claude/skills/feature-loop-lean/GENERAL.md` for issue #N on branch cursor/token-exp-p6-tNN-k3. Do only what it says. Use `pwsh -NoProfile scripts/agent/Submit-Change.ps1 -Issue N -Branch cursor/token-exp-p6-tNN-k3`, then run the printed WAIT_CMD until CHECKS=GREEN or CHECKS=RED. If a script fails for a reason outside your code, reply SCRIPT_FAIL with its last line and stop. Never call get_mcp_tools. No narration, subagents, MCP, git, board or journal. Do NOT merge. Reply with only the RESULT line: `RESULT=GREEN|RED PR=<url>`.

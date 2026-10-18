@@ -1,5 +1,5 @@
-# Lean loop (v15g). Small change, no template.
-Never: narration, subagents, get_mcp_tools/MCP, git, gh run/api, reading scripts/terminal files, editing unrelated tests, merging. Workspace branch is meant to stay as is. If a command's output is missing, rerun it once as is; never inspect scripts, terminal files, git or the PR to find out. Reply: the RESULT line only.
+# Lean loop (v16g). Small change, no template.
+Never: narration, subagents, get_mcp_tools/MCP, git, gh run/api, reading scripts/terminal files, editing unrelated tests, merging. Workspace branch is meant to stay as is. If a command's output is missing, rerun it once as is. If a script fails for a reason not in your code (path, git ref, MSBuild project not found), reply `SCRIPT_FAIL: <its last line>` and stop; never debug scripts, git refs, terminal files or the PR. Reply: the RESULT line only.
 1. `gh issue view N --json body -q .body`
 2. `pwsh -NoProfile scripts/agent/Get-Context.ps1 -Find 'ExactTypeName|OtherType'` (exact class names of the code to change or the closest existing feature; at most 2 calls) prints capped line-numbered outlines. Then read only the line ranges you edit plus ONE sibling test (by range). No other searching/reading; never read a file twice.
 3. Change only what the acceptance criteria need; don't refactor or extend callers. Edit code + tests in few writes. New logic in an existing method with 4+ branches goes in a private helper.

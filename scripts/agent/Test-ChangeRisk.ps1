@@ -4,7 +4,7 @@
 #  QODANA_RISK: added `new[] {`/`new List<..> {` (use [a, b]); new options { get; set; } without the ReSharper line.
 #  NUMBER_RISK: string literal > 7 chars assigned to a work order Number in tests.
 $ErrorActionPreference = 'Stop'
-Set-Location (Resolve-Path "$PSScriptRoot/../..")
+Set-Location (git rev-parse --show-toplevel)  # v16g: was $PSScriptRoot/../.. which is "/" when run from the temp copy (round 2: every run broke)
 function Get-MethodCc([string[]]$src) {
   for ($i = 0; $i -lt $src.Count; $i++) {
     if ($src[$i] -notmatch '^\s*(public|private|protected|internal)\b[^=;]*\(' -or $src[$i] -match '\b(class|record|struct|interface)\b') { continue }

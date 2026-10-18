@@ -1,9 +1,9 @@
 # v15g: one-call context finder, capped. Runs from the repo root regardless of cwd. Lists files matching -Find
 # (production first, then tests). Outlines (line-numbered types/members + matching lines) only for the first -Max files of
 # each kind; the rest are listed by name. Total output is capped (~3.5 KB) so a broad regex can't flood the context.
-param([Parameter(Mandatory)][string]$Find, [int]$Max = 3, [int]$Lines = 18, [int]$Cap = 3500)
+param([Parameter(Mandatory)][string]$Find, [int]$Max = 3, [int]$Lines = 18, [int]$Cap = 2500)
 $ErrorActionPreference = 'Stop'
-Set-Location (Resolve-Path "$PSScriptRoot/../..")
+Set-Location (git rev-parse --show-toplevel)  # v16g: was $PSScriptRoot/../.. which is "/" when run from the temp copy (round 2: every run broke)
 $files = @(rg -l --glob '*.cs' --glob '*.razor' --glob '*.sql' -e $Find src 2>$null | Sort-Object { $_.Length })
 $prod = @($files | Where-Object { $_ -notmatch 'Tests[/\\]' }); $test = @($files | Where-Object { $_ -match 'Tests[/\\]' })
 $decl = '^\s*(@page|@code|@inject|@implements|@inherits|(public|private|protected|internal)\b.*(class|record|interface|enum|struct)\b|(public|private|protected|internal)\b[^=;]*\(|(public|internal|protected)\b[^(]*\{\s*get|CREATE |ALTER )'
