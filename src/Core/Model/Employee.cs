@@ -34,6 +34,11 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string EmailAddress { get; set; }
 
+    /// <summary>
+    /// Optional phone number. Null when not provided.
+    /// </summary>
+    public string? PhoneNumber { get; set; }
+
     public string PreferredLanguage { get; set; } = "en-US";
 
     public ISet<Role> Roles { get; init; } = new HashSet<Role>();
