@@ -121,6 +121,14 @@ public class LlmHealthEvaluatorTests
 
         LlmHealthEvaluator.FromChatResponse(response).Status.ShouldBe(HealthStatus.Degraded);
     }
+
+    [Test]
+    public void Annotate_RoundsCacheAgeSecondsToOneDecimalPlace()
+    {
+        var result = HealthCheckResult.Healthy("ok");
+        var annotated = LlmHealthEvaluator.Annotate(result, true, 12.3456);
+        annotated.Data["cache_age_seconds"].ShouldBe(12.3);
+    }
 }
 
 [TestFixture]

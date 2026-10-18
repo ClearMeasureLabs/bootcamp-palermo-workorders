@@ -32,7 +32,7 @@ internal static class LlmHealthEvaluator
             ? new Dictionary<string, object>(result.Data)
             : new Dictionary<string, object>();
         data["cached"] = cached;
-        data["cache_age_seconds"] = ageSeconds;
+        data["cache_age_seconds"] = Math.Round(ageSeconds, 1);
         return new HealthCheckResult(result.Status, result.Description, result.Exception, data);
     }
 }
