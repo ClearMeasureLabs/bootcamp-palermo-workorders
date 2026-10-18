@@ -92,6 +92,20 @@ public class DatabaseConnectionStringBuilderTests
             .ParamName.ShouldBe(nameof(DatabaseOptions.DatabasePassword));
     }
 
+    [Test]
+    public void Should_SetApplicationName_OnBuiltConnectionString()
+    {
+        var options = new DatabaseOptions
+        {
+            DatabaseServer = "localhost",
+            DatabaseName = "ChurchBulletin"
+        };
+
+        var connectionString = DatabaseConnectionStringBuilder.Build(options);
+
+        connectionString.ShouldContain("Application Name=ChurchBulletin.Database");
+    }
+
     [TestCase("localhost", true)]
     [TestCase("127.0.0.1", true)]
     [TestCase(@"(localdb)\MSSQLLocalDB", true)]

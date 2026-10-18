@@ -29,7 +29,8 @@ public static class DatabaseConnectionStringBuilder
         {
             DataSource = dataSource,
             InitialCatalog = options.DatabaseName,
-            ConnectTimeout = 60
+            ConnectTimeout = 60,
+            ApplicationName = "ChurchBulletin.Database"
         };
 
         ApplySecuritySettings(builder, isLocalServer);
