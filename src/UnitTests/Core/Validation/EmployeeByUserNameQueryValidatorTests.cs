@@ -45,4 +45,24 @@ public class EmployeeByUserNameQueryValidatorTests
 
         result.ShouldHaveValidationErrorFor(x => x.Username);
     }
+
+    [Test]
+    public void ShouldPass_WhenUsernameIsExactly100Characters()
+    {
+        var query = new EmployeeByUserNameQuery(new string('a', 100));
+
+        var result = _validator.TestValidate(query);
+
+        result.IsValid.ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldFail_WhenUsernameIs101Characters()
+    {
+        var query = new EmployeeByUserNameQuery(new string('a', 101));
+
+        var result = _validator.TestValidate(query);
+
+        result.ShouldHaveValidationErrorFor(x => x.Username);
+    }
 }
