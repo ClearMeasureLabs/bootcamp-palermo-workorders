@@ -23,7 +23,7 @@ public class EmployeeTools
         IBus bus,
         [Description("The employee's username")] string username)
     {
-        var trimmed = username?.Trim() ?? string.Empty;
+        var trimmed = username.Trim();
         if (string.IsNullOrEmpty(trimmed))
         {
             return "Username is required.";
