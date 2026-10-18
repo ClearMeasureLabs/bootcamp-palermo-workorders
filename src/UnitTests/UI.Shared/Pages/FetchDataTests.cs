@@ -56,6 +56,27 @@ public class FetchDataTests
     }
 
     [Test]
+    public async Task ShouldShowNoForecastsAvailable_WhenForecastListIsEmpty()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubForecastBus([]));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+        ctx.Services.AddLogging();
+
+        var component = ctx.Render<FetchData>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            component.Instance.Model.ShouldNotBeNull();
+            component.Instance.Model!.Length.ShouldBe(0);
+            component.Markup.ShouldContain("No forecasts available.");
+            component.FindAll("table.weather-table").Count.ShouldBe(0);
+        });
+    }
+
+    [Test]
     public void ShouldRenderForecastSourceNote_WithExactSampleDataText()
     {
         using var ctx = new BunitContext();
