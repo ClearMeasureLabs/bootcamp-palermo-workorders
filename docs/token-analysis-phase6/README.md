@@ -20,3 +20,4 @@ See PLAN.md and round-N.md. Estimates: bytes/4 via scripts/agent/measure_transcr
 | 13 | v27g | r01-r08 (k13) | 8/8 | 267k | 33.3k | 4.92k |
 | 14 | v28g | q01-q08 (k14) | 8/8 | 240k | 30.0k (max 42.0k) | 4.23k |
 | 15 (validation) | v28g frozen | u01-u08 (-v28), unseen kinds | 8/8 | 670k | 83.7k (median 47.6k; 51.5k w/o u08) | 6.13k |
+| 16 | v29g | p01-p08 (-v29), unseen kinds | 8/8 | 893k | 111.7k (median 84.0k) | 9.72k |
