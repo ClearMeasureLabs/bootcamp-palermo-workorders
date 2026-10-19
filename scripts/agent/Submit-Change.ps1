@@ -45,6 +45,8 @@ if ($it) {
   if ($code) { $r | Select-String 'Failed |Assert|Expected|Exception|error|Status' | Select-Object -First 20; 'IT_TEST=FAIL (SQLite)'; exit 0 }
   'IT_TEST=OK'
 }
+  # v41g: AcceptanceTests build + affected acceptance classes on SQLite/Playwright (round 27 c41-c43: acceptance REDs only in CI)
+  $acc = @(& "$tools/Invoke-LocalAcceptance.ps1"); if ($acc -match '^ACC_(BUILD=FAIL|TEST=FIX)') { $acc; 'SUBMIT=FIX (fix the FIX lines, rerun Submit)'; exit 0 }; $acc
   # v40g: local InspectCode on changed lines (Qodana REDs were found only in CI: round 26 c40 x2, c34, c25, c26)
   if (-not $IgnoreRisk) { $ins = @(& "$tools/Invoke-LocalInspect.ps1"); if ($ins -match '^INSPECT=FIX') { $ins; 'SUBMIT=FIX (fix the FIX lines, rerun Submit; -IgnoreRisk only if clearly false)'; exit 0 }; $ins | Where-Object { $_ -match '^INSPECT=SKIPPED' } }
 }
@@ -67,7 +69,8 @@ $want = $out | Select-String 'HEAD=(\w+)' | ForEach-Object { $_.Matches[0].Group
 if ($want) { foreach ($i in 1..12) { if ((gh api "repos/$Repo/pulls/$pr" --jq .head.sha) -eq $want) { break }; Start-Sleep 5 } }
 # v18g: wait inline for what is left of an 8-minute budget (Submit itself takes ~1 min), so Submit + first wait is one turn
 # instead of two (round 4: wait turns replayed 13.5% of input). v14g's inline wait broke because it used the full 9 min on top.
-$left = [int][Math]::Floor(8 - ((Get-Date) - $t0).TotalMinutes)
-if ($left -ge 2) { $w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $w; if ($w -contains 'CHECKS=GREEN') { exit 0 } }  # v31g: no WAIT_CMD after GREEN
-"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9  (only if no CHECKS=GREEN/RED above)"
+# v41g: wait inline up to 9 min total; a short (<4 min) inline wait only produced a PENDING turn, so skip it then (round 27)
+$left = [int][Math]::Floor(9 - ((Get-Date) - $t0).TotalMinutes)
+if ($left -ge 4) { $w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $w; if ($w -contains 'CHECKS=GREEN') { exit 0 } }  # v31g: no WAIT_CMD after GREEN
+"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9  (only if no CHECKS=GREEN/RED above; it stays silent until a verdict or 9 min)"
 exit 0
