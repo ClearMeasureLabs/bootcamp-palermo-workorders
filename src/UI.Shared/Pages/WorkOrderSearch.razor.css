@@ -2,6 +2,7 @@
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     min-height: 100vh;
     padding: 2rem;
+    font-size: 1.25rem;
 }
 
 .search-header {
@@ -10,7 +11,7 @@
 }
 
 .search-header h2 {
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: 700;
     color: #2d3748;
     font-family: 'Georgia', serif;
@@ -19,7 +20,7 @@
 }
 
 .search-subtitle {
-    font-size: 1.1rem;
+    font-size: 1.35rem;
     color: #718096;
     font-style: italic;
 }
@@ -54,14 +55,14 @@
     font-weight: 600;
     color: #4a5568;
     margin-bottom: 0.75rem;
-    font-size: 1rem;
+    font-size: 1.25rem;
 }
 
 .form-control {
     border: 2px solid #e2e8f0;
     border-radius: 12px;
     padding: 1rem 1.25rem;
-    font-size: 1rem;
+    font-size: 1.25rem;
     transition: all 0.3s ease;
     background: #f8fafc;
     color: #2d3748;
