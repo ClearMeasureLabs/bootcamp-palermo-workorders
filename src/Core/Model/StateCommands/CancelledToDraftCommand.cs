@@ -5,7 +5,7 @@ namespace ClearMeasure.Bootcamp.Core.Model.StateCommands;
 public record CancelledToDraftCommand(WorkOrder WorkOrder, Employee CurrentUser) : StateCommandBase(WorkOrder,
     CurrentUser)
 {
-    public const string Name = "Restore";
+    private const string Name = "Restore";
     public override string TransitionVerbPresentTense => Name;
 
     public override string TransitionVerbPastTense => "Restored";
