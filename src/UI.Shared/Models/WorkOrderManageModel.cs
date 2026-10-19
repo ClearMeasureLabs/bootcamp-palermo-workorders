@@ -2,6 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using ClearMeasure.Bootcamp.Core.Model;
+// WorkOrderPriority used for Priority default
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Models;
 
@@ -37,6 +38,11 @@ public class WorkOrderManageModel
     /// Optional due date bound to the native date picker. Null when unset.
     /// </summary>
     public DateOnly? DueDateInput { get; set; }
+
+    /// <summary>
+    /// Work order priority (Low, Normal, High).
+    /// </summary>
+    public string Priority { get; set; } = WorkOrderPriority.Normal;
 
     /// <summary>
     /// Display text for due date (MMM d, yyyy) when set.

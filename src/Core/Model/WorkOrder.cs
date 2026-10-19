@@ -59,6 +59,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public DateOnly? DueDate { get; set; }
 
+    /// <summary>
+    /// Urgency classification independent of due date. Valid values: Low, Normal, High.
+    /// </summary>
+    public string Priority { get; set; } = WorkOrderPriority.Normal;
+
     private string GetTruncatedString(string? value)
     {
         if (value == null)

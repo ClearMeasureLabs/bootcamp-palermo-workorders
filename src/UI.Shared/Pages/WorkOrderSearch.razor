@@ -110,6 +110,7 @@
                                    Room @if (_sortColumn == "Room") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                                </button>
                            </th>
+                           <th>Priority</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -152,6 +153,7 @@
                                     }
                                 </td>
                                 <td>@order.WorkOrder.RoomNumber</td>
+                                <td data-testid="@(Elements.PriorityCell + order.Number)">@order.WorkOrder.Priority</td>
                             </tr>
                         }
                     }
@@ -166,6 +168,7 @@
 
     public enum Elements
     {
+        PriorityCell,
         CreatorSelect,
         AssigneeSelect,
         StatusSelect,

@@ -84,6 +84,26 @@
                         <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="Priority" class="form-label">Priority:</label>
+                    <div>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <InputSelect data-testid="@Elements.Priority" id="Priority"
+                                         @bind-Value="Model.Priority"
+                                         class="form-control input-select">
+                                <option value="@WorkOrderPriority.Low">@WorkOrderPriority.Low</option>
+                                <option value="@WorkOrderPriority.Normal">@WorkOrderPriority.Normal</option>
+                                <option value="@WorkOrderPriority.High">@WorkOrderPriority.High</option>
+                            </InputSelect>
+                        }
+                        else
+                        {
+                            <span data-testid="@Elements.PriorityDisplay" class="value">@Model.Priority</span>
+                        }
+                    </div>
+                </div>
             </div>
 
             <div class="readonly-info">
@@ -182,6 +202,8 @@
 
     public enum Elements
     {
+        Priority,
+        PriorityDisplay,
         Assignee,
         Title,
         AssigneeFullName,

@@ -68,7 +68,7 @@ public class WorkOrderTools
             new JsonSerializerOptions { WriteIndented = true });
     }
 
-    [McpServerTool(Name = "create-work-order"), Description("Creates a new draft work order. Requires a title, description, and the username of the creator. Optionally accepts a room number, due date (yyyy-MM-dd), and instructions.")]
+    [McpServerTool(Name = "create-work-order"), Description("Creates a new draft work order. Requires a title, description, and the username of the creator. Optionally accepts a room number, due date (yyyy-MM-dd), instructions, and priority (Low, Normal, High).")]
     public static async Task<string> CreateWorkOrder(
         IBus bus,
         IWorkOrderNumberGenerator numberGenerator,
@@ -77,7 +77,8 @@ public class WorkOrderTools
         [Description("Username of the employee creating the work order")] string creatorUsername,
         [Description("Optional room number or location for the work order")] string? roomNumber = null,
         [Description("Optional due date as yyyy-MM-dd")] string? dueDate = null,
-        [Description("Optional instructions for the work order")] string? instructions = null)
+        [Description("Optional instructions for the work order")] string? instructions = null,
+        [Description("Optional priority (Low, Normal, High); defaults to Normal")] string? priority = null)
     {
         try
         {
@@ -92,6 +93,11 @@ public class WorkOrderTools
                 return dueDateError!;
             }
 
+            if (!TryResolvePriority(priority, out var resolvedPriority, out var priorityError))
+            {
+                return priorityError!;
+            }
+
             var workOrder = new WorkOrder
             {
                 Title = title,
@@ -101,7 +107,8 @@ public class WorkOrderTools
                 Status = WorkOrderStatus.Draft,
                 Number = numberGenerator.GenerateNumber(),
                 RoomNumber = roomNumber,
-                DueDate = parsedDueDate
+                DueDate = parsedDueDate,
+                Priority = resolvedPriority
             };
 
             var command = new SaveDraftCommand(workOrder, creator);
@@ -234,6 +241,26 @@ public class WorkOrderTools
             UploadedByUsername = a.UploadedBy?.UserName,
             a.UploadedDate
         }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static bool TryResolvePriority(string? priority, out string resolvedPriority, out string? error)
+    {
+        resolvedPriority = WorkOrderPriority.Normal;
+        error = null;
+        if (string.IsNullOrWhiteSpace(priority))
+        {
+            return true;
+        }
+
+        var parsed = WorkOrderPriority.TryParse(priority);
+        if (parsed == null)
+        {
+            error = $"Invalid priority '{priority}'. Valid values: Low, Normal, High.";
+            return false;
+        }
+
+        resolvedPriority = parsed;
+        return true;
     }
 
     private static string? ValidateSave(
