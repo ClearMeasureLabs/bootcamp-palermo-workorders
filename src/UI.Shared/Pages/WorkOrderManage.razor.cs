@@ -143,6 +143,27 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         UserOptions = items;
     }
 
+    private bool CanDuplicate => _workOrder != null && _workOrder.Id != Guid.Empty;
+
+    private async Task DuplicateWorkOrder()
+    {
+        var currentUser = (await UserSession!.GetCurrentUserAsync())!;
+        var source = _workOrder!;
+        var workOrder = WorkOrderBuilder!.CreateNewWorkOrder(currentUser);
+        workOrder.Title = "Copy of " + (source.Title ?? "");
+        workOrder.Description = source.Description;
+        workOrder.Instructions = source.Instructions;
+        workOrder.RoomNumber = source.RoomNumber;
+
+        Model = CreateViewModel(EditMode.New, workOrder);
+        var commandList = new StateCommandList();
+        Model.IsReadOnly = !commandList.GetValidStateCommands(workOrder, currentUser).Any();
+        ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
+        _workOrder = workOrder;
+        _attachments = [];
+        _lastNotifiedWorkOrder = null;
+    }
+
     private async Task HandleSubmit()
     {
         var currentUser = (await UserSession!.GetCurrentUserAsync())!;

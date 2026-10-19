@@ -156,6 +156,12 @@
         </div>
 
         <div class="action-section">
+            @if (CanDuplicate)
+            {
+                <button type="button" data-testid="@Elements.Duplicate" class="btn btn-secondary" @onclick="DuplicateWorkOrder">
+                    Duplicate
+                </button>
+            }
             @if (Model.IsReadOnly)
             {
                 <div data-testid="@Elements.ReadOnlyMessage" class="readonly-message">This work order is read-only for you at this time.</div>
@@ -210,6 +216,7 @@
         DictateDescription,
         DescriptionCharCount,
         RequiredFieldsNote,
-        ManageHeadingTooltip
+        ManageHeadingTooltip,
+        Duplicate
     }
 }
