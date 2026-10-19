@@ -1,0 +1,11 @@
+<button type="button"
+        data-testid="work-order-summarize"
+        class="btn btn-sm btn-outline-primary"
+        disabled="@_isSummarizing"
+        @onclick="SummarizeAsync">
+    Summarize
+</button>
+@if (_summary != null)
+{
+    <p data-testid="work-order-summary" class="work-order-summary">@_summary</p>
+}
