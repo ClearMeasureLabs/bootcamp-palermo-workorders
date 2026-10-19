@@ -33,6 +33,8 @@ public class WorkOrderManageModel
 
     public string? CreatedDate { get; set; }
 
+    public string? LastUpdatedDate { get; set; }
+
     /// <summary>
     /// Optional due date bound to the native date picker. Null when unset.
     /// </summary>

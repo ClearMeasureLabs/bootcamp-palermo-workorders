@@ -428,4 +428,35 @@ public class WorkOrderMappingTests
 
         rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
     }
+
+    [Test]
+    public void ShouldPersistLastUpdatedDate()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creatorlud", "First", "Last", "lud@example.com");
+        var lastUpdated = new DateTime(2024, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-LUD",
+            Title = "Last updated persistence",
+            Description = "Verify LastUpdatedDate round-trips",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft,
+            LastUpdatedDate = lastUpdated
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+            rehydrated.LastUpdatedDate.ShouldBe(lastUpdated);
+        }
+    }
 }

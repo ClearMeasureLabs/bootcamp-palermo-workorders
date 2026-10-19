@@ -55,6 +55,12 @@ public class WorkOrder : EntityBase<WorkOrder>
     public DateTime? CompletedDate { get; set; }
 
     /// <summary>
+    /// UTC timestamp of the most recent state-command change. Null until first command.
+    /// </summary>
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global
+    public DateTime? LastUpdatedDate { get; set; }
+
+    /// <summary>
     /// Optional calendar due date (date-only, no time). Null when unset.
     /// </summary>
     public DateOnly? DueDate { get; set; }
@@ -90,6 +96,7 @@ public class WorkOrder : EntityBase<WorkOrder>
     public void ChangeStatus(Employee employee, DateTime date, WorkOrderStatus status)
     {
         Status = status;
+        LastUpdatedDate = date;
     }
 
     public string GetMessage()

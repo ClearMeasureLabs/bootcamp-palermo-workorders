@@ -96,6 +96,9 @@
                 <span class="label">Completed Date:</span>
                 <span data-testid="@Elements.CompletedDate" class="value">@Model.CompletedDate</span>
 
+                <span class="label">Last Updated:</span>
+                <span data-testid="@Elements.LastUpdatedDate" class="value">@Model.LastUpdatedDate</span>
+
                 <div class="due-date-field">
                     @if (!Model.IsReadOnly)
                     {
@@ -182,6 +185,7 @@
 
     public enum Elements
     {
+        LastUpdatedDate,
         Assignee,
         Title,
         AssigneeFullName,

@@ -127,6 +127,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
+            LastUpdatedDate = workOrder.LastUpdatedDate?.ToString("G", CultureInfo.CurrentCulture),
             DueDateInput = workOrder.DueDate,
             DueDateDisplay = FormatDueDateDisplay(workOrder.DueDate)
         };
