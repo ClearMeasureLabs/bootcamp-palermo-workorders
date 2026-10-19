@@ -55,12 +55,12 @@ Categories, matching the catalog's recommended sets:
 | c30 | Trap | MCP list-work-orders cap via a new options class (McpServer:MaxListResults, default 100, truncated flag). The natural options class trips Qodana AutoPropertyCanBeMadeGetOnly; the static MCP tool needs options injection. Replaced the room-sort trap, which moved to c24 | options/Qodana trap in MCP |
 | c31 | Vague | "The work order screen feels slow and cluttered on a phone." | vague UI/CSS |
 | c32 | CI | build.ps1: per-step "took mm:ss" timings (the total already exists) | ps1 change |
-| c33 | UI | Nav: active-page highlight plus aria-current="page" on the current link (bUnit) | a11y UI |
-| c34 | ML | gRPC: GetWorkOrder returns due_date and urgency fields (proto, service, mapper, unit test) | gRPC round 2 with the regen script |
-| c35 | Bug | "Work order numbers sometimes clash when two people create work orders at the same moment" (re-check at prep) | symptom→generator, concurrency reasoning |
-| c36 | CI | Docs: update docs/environments.md and quickstart.md with the SQLite-only local run path | docs-only, 2 files |
-| c37 | Test | Stabilize the slowest/flakiest acceptance test from the last 30 days of CI (chosen at prep from failed runs) | stabilization |
-| c38 | Trap | Worker: add a retry-count header to the outgoing message; the natural object setup trips UseObjectOrCollectionInitializer | v35 risk rule on a new area |
+| c33 | UI | Nav badge: count of my Assigned/In Progress work orders, refreshed on the change event (bUnit). Replaced: NavLink already renders the active class and aria-current | component + event |
+| c34 | ML | gRPC WorkOrder gets due_date_urgency = 12 from GetDueDateUrgency(). Re-scoped: due_date already exists as field 11 | gRPC round 2 with the regen script |
+| c35 | Bug | "My Work Orders briefly shows other people's work orders" (verified: MyWorkOrders.Handle adds every changed order with no creator check). Replaced the number-clash item: a 7-char GUID prefix clash is not reproducible | symptom→event handler |
+| c36 | CI | Docs: SQLite local section in docs/environments.md plus a quickstart pointer (README has the source notes; environments.md has none) | docs-only (NON_CODE) |
+| c37 | Test | Make the login blink-pulse acceptance test deterministic (it samples opacity with 30 fixed 100 ms sleeps); use the Web Animations API instead. Chosen from code: recent build failures are all agent branches, so CI history gives no flake signal | stabilization |
+| c38 | Trap | Worker RemotableBus: X-Correlation-Id header on every POST. The natural `var req = new HttpRequestMessage(...); req.Content = ...;` trips UseObjectOrCollectionInitializer (the v35 risk rule should warn). Re-scoped: the Worker has no message headers; it posts over HTTP | v35 rule in a new area |
 | c39 | Vague | "Facilities asked for a weekly summary of what got done." | vague, may span LLM, Worker or UI |
 | c40 | ML | Employee PreferredLanguage editable on Settings, persisted (EF, handler, UI, tests), used as the speech-voice default | multi-layer UI and persistence |
 
@@ -84,3 +84,4 @@ Categories, matching the catalog's recommended sets:
 Round 23 prep (2026-10-18): issues #10636-10643, v36g, branches cursor/token-exp-p6-cNN-v36.
 Round 24 prep (2026-10-18): issues #10653-10660, v37g, branches cursor/token-exp-p6-cNN-v37. c20 is docs-only and exercises the NON_CODE path.
 Round 25 prep (2026-10-18): issues #10669-10676, v38g, branches cursor/token-exp-p6-cNN-v38.
+Round 26 prep (2026-10-18): issues #10685-10692, v39g, branches cursor/token-exp-p6-cNN-v39. Prep lesson from c25: check every later migration, not just the CREATE script.
