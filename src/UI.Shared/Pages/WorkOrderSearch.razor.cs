@@ -28,9 +28,6 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Status { get; set; }
     [SupplyParameterFromQuery] public bool OverdueOnly { get; set; }
 
-    /// <summary>Success message shown after a work-order command redirect.</summary>
-    public string? FlashMessage => _flashMessage;
-
     protected override async Task OnParametersSetAsync()
     {
         await InitializeAsync();
