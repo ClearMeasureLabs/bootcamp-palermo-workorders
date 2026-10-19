@@ -59,6 +59,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
         await LoadUserOptions();
         await LoadWorkOrder();
+        await LoadUserOptions();
 
     }
 
@@ -141,10 +142,9 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         return employees.Where(e => e.IsActive || e.UserName == currentAssigneeUserName);
     }
 
-    private async Task LoadUserOptions()
-    {
+    private async Task LoadUserOptions()    {
         var employees = await Bus.Send(new EmployeeGetAllQuery());
-        var assigneeUserName = _workOrder?.Assignee?.UserName;
+        var assigneeUserName = Model.WorkOrder?.Assignee?.UserName;
         var items = FilterAssigneeEmployees(employees, assigneeUserName)
             .Select(e => new SelectListItem(e.UserName, e.GetFullName()))
             .ToList();

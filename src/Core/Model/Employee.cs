@@ -36,7 +36,7 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string PreferredLanguage { get; set; } = "en-US";
 
-    // ReSharper disable once PropertyCanBeMadeInitOnly.Global
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global -- domain entity mutated after load
     public bool IsActive { get; set; } = true;
 
     public ISet<Role> Roles { get; init; } = new HashSet<Role>();
