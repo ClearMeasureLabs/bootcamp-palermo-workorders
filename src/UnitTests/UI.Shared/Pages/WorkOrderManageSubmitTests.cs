@@ -5,6 +5,7 @@ using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using MediatR;
 using Microsoft.AspNetCore.Components;
@@ -25,10 +26,12 @@ public class WorkOrderManageSubmitTests
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         user.AddRole(new Role("creator", true, false));
         var bus = new StubSubmitBus();
+        var searchState = new WorkOrderSearchState { AssignedToMe = true };
 
         ctx.Services.AddSingleton<IBus>(bus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(searchState);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
@@ -56,6 +59,7 @@ public class WorkOrderManageSubmitTests
             bus.LastCommand.ShouldNotBeNull();
             bus.LastCommand.ShouldBeOfType<SaveDraftCommand>();
             navigationManager.Uri.ShouldContain("/workorder/search");
+            searchState.AssignedToMe.ShouldBeFalse();
         });
     }
 
@@ -79,6 +83,7 @@ public class WorkOrderManageSubmitTests
         ctx.Services.AddSingleton<IBus>(bus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());

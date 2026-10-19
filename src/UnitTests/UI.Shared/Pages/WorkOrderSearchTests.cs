@@ -522,6 +522,42 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task AssignedToMe_WhenCreatorQueryPresent_DoesNotApplyAssignedToMe()
+    {
+        var state = new WorkOrderSearchState { AssignedToMe = true };
+        await using var ctx = CreateContext(searchState: state);
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        var uri = navigationManager.GetUriWithQueryParameter("Creator", "somename");
+        navigationManager.NavigateTo(uri);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        checkbox.HasAttribute("checked").ShouldBeFalse();
+
+        var assigneeSelect = component.Find($"#{WorkOrderSearch.Elements.AssigneeSelect}");
+        assigneeSelect.HasAttribute("disabled").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task ShowAllQuery_WhenPresent_ClearsAssignedToMeSessionState()
+    {
+        var state = new WorkOrderSearchState { AssignedToMe = true };
+        await using var ctx = CreateContext(searchState: state);
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        var uri = navigationManager.GetUriWithQueryParameter("showAll", "true");
+        navigationManager.NavigateTo(uri);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        checkbox.HasAttribute("checked").ShouldBeFalse();
+        state.AssignedToMe.ShouldBeFalse();
+    }
+
+    [Test]
     public async Task AssignedToMeCheckbox_ShouldBeRendered()
     {
         await using var ctx = CreateContext();

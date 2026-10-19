@@ -12,11 +12,17 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await LoginAsCurrentUser();
     }
 
-    [Test, Retry(2)]
-    public async Task Should_PreserveMixedCaseNames_InWorkOrderSearchDropdowns()
+    private async Task GoToSearchWithAssignedToMeOffAsync()
     {
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await ClearAssignedToMeFilterIfNeededAsync();
+    }
+
+    [Test, Retry(2)]
+    public async Task Should_PreserveMixedCaseNames_InWorkOrderSearchDropdowns()
+    {
+        await GoToSearchWithAssignedToMeOffAsync();
 
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
@@ -34,8 +40,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task ShouldAssociateFilterLabelsWithSelectIds()
     {
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
 
         await Expect(Page.Locator($"label[for='{WorkOrderSearch.Elements.CreatorSelect}']")).ToBeAttachedAsync();
         await Expect(Page.Locator($"label[for='{WorkOrderSearch.Elements.AssigneeSelect}']")).ToBeAttachedAsync();
@@ -50,8 +55,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     public async Task ShouldLoadDropDownsInitiallyOnLoad()
     {
         // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
         await TakeScreenshotAsync(1, "PageLoaded");
 
         // Assert
@@ -107,8 +111,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await context.SaveChangesAsync();
 
         // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
         await TakeScreenshotAsync(1, "InitialLoad");
 
         // Assert
@@ -237,8 +240,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await context.SaveChangesAsync();
 
         // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
         await TakeScreenshotAsync(1, "BeforeFiltering");
 
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
@@ -280,8 +282,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await context.SaveChangesAsync();
 
         // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
         await TakeScreenshotAsync(1, "SearchPageLoaded");
 
         var workOrderTable = Page.Locator(".grid-data");
@@ -315,8 +316,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await context.SaveChangesAsync();
 
         // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
 
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
@@ -359,8 +359,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await context.SaveChangesAsync();
 
         // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
 
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
@@ -396,8 +395,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await context.SaveChangesAsync();
 
         // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
 
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         var assigneeSelect = Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}");
@@ -428,9 +426,8 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     [Test, Retry(2)]
     public async Task ClearFiltersButton_ShouldBeDisabled_WhenNoFiltersAreActive()
     {
-        // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        // Act — Setup already cleared AssignedToMe; reopen search with no filters active
+        await GoToSearchWithAssignedToMeOffAsync();
         await TakeScreenshotAsync(1, "PageLoaded");
 
         // Assert
@@ -457,8 +454,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await context.SaveChangesAsync();
 
         // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
 
         // Assert
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
@@ -499,8 +495,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         context.Add(order2);
         await context.SaveChangesAsync();
 
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
         await TakeScreenshotAsync(1, "Loaded");
 
         // Filter by creator so only these two work orders are in the result set
@@ -544,8 +539,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         context.Add(order2);
         await context.SaveChangesAsync();
 
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
 
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         await creatorSelect.SelectOptionAsync(creator.UserName);
@@ -586,8 +580,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         context.Add(order2);
         await context.SaveChangesAsync();
 
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
 
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");
         await creatorSelect.SelectOptionAsync(creator.UserName);
@@ -756,8 +749,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         context.Add(order2);
         await context.SaveChangesAsync();
 
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
         await TakeScreenshotAsync(1, "Loaded");
 
         // Filter by creator so only these two work orders are in the result set
@@ -805,8 +797,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await context.SaveChangesAsync();
 
         // Act
-        await Click(nameof(NavMenu.Elements.Search));
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GoToSearchWithAssignedToMeOffAsync();
 
         // Filter to this creator so only our two orders appear
         var creatorSelect = Page.Locator($"#{WorkOrderSearch.Elements.CreatorSelect}");

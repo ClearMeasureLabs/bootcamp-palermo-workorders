@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using MediatR;
 using Microsoft.AspNetCore.Components;
@@ -43,6 +44,7 @@ public class WorkOrderManageAttachmentsTests
         ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus(attachments));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(uploader));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());

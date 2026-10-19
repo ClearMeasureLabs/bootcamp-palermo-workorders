@@ -26,6 +26,7 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
     [SupplyParameterFromQuery] public bool OverdueOnly { get; set; }
+    [SupplyParameterFromQuery] public bool ShowAll { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -50,14 +51,33 @@ public partial class WorkOrderSearch : AppComponentBase
 
     private async Task RestoreAssignedToMeStateAsync()
     {
+        // Nav links / post-save redirects with query filters own the filter set.
+        if (HasQueryFilterOverrides())
+        {
+            _assignedToMe = false;
+            if (ShowAll)
+            {
+                SearchState.AssignedToMe = false;
+            }
+
+            return;
+        }
+
         // Restore session-persistent "Assigned to me" state
         _assignedToMe = SearchState.AssignedToMe;
-        if (_assignedToMe)
+        if (!_assignedToMe)
         {
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            Model.Filters.Assignee = authState.User.Identity?.Name ?? string.Empty;
+            return;
         }
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var identity = authState.User.Identity;
+        Model.Filters.Assignee = identity is null ? string.Empty : identity.Name;
     }
+
+    private bool HasQueryFilterOverrides() =>
+        !string.IsNullOrEmpty(Creator) || !string.IsNullOrEmpty(Assignee) ||
+        !string.IsNullOrEmpty(Status) || OverdueOnly || ShowAll;
 
     private void ApplyQueryParameterOverrides()
     {

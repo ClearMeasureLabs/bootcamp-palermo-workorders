@@ -392,6 +392,32 @@ public abstract class AcceptanceTestBase
         return rehyratedOrder;
     }
 
+    /// <summary>
+    /// Clears the default "Assigned to me" filter so drafts and unassigned orders stay visible.
+    /// </summary>
+    protected async Task ClearAssignedToMeFilterIfNeededAsync()
+    {
+        var assignedToMe = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        if (await assignedToMe.CountAsync() == 0)
+        {
+            return;
+        }
+
+        await assignedToMe.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000
+        });
+        if (!await assignedToMe.IsCheckedAsync())
+        {
+            return;
+        }
+
+        await assignedToMe.SetCheckedAsync(false);
+        await Expect(assignedToMe).Not.ToBeCheckedAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+    }
+
     protected async Task<WorkOrder> ClickWorkOrderNumberFromSearchPage(WorkOrder order)
     {
         // Status commands NavigateTo /workorder/search; wait for that URL and row link
@@ -402,13 +428,7 @@ public abstract class AcceptanceTestBase
         }
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        // Default "Assigned to me" hides drafts/unassigned orders; clear it before locating.
-        var assignedToMe = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
-        if (await assignedToMe.IsCheckedAsync())
-        {
-            await assignedToMe.UncheckAsync();
-            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        }
+        await ClearAssignedToMeFilterIfNeededAsync();
 
         var linkTestId = nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number;
         await Page.GetByTestId(linkTestId).WaitForAsync(new LocatorWaitForOptions
