@@ -34,3 +34,4 @@ See PLAN.md and round-N.md. Estimates: bytes/4 via scripts/agent/measure_transcr
 | 27 (expensive types c41-c48) | v40g | c41-c48 (-v40): 3 UI+PW, 3 big multi-layer, vague, symptom bug | 8/8 GREEN | 11,943k | 1,492.9k (median 619.8k; 852.7k w/o c44) | - |
 | 28 (wait-mode A/B c49-c56) | v41g | c49-c56 (-v41): 2 UI+PW, 2 multi-layer, vague, symptom bug, test-only, trap; keep-warm vs long wait | 8/8 GREEN | 13,515k | 1,689.4k (median 727.3k; 851.9k w/o c53) | - |
 | 29 (c57-c64) | v42g | c57-c64 (-v42): 2 UI+PW, 2 multi-layer, vague, symptom bug, test-only, trap | 8/8 real GREEN, 0 CI RED (c61/c62 no product change: hook-only PRs; c60 deletes 403 test lines) | 6,947k | 868.4k (median 465.4k; 494.1k w/o c60) | - |
+| 30 (c65-c72) | v43g | c65-c72 (-v43): 2 UI+PW, 2 multi-layer, vague, symptom bug, test-only, trap | 8/8 real GREEN, 1 CI RED (c68); **correctly delivered 8/8** (r29: 5/8) | 5,475k | 684.4k (median 588.3k) | - |
