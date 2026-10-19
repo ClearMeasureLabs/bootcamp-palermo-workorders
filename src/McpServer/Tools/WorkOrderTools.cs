@@ -392,7 +392,8 @@ public class WorkOrderTools
         Status = wo.Status.FriendlyName,
         Creator = wo.Creator?.GetFullName(),
         Assignee = wo.Assignee?.GetFullName(),
-        DueDate = wo.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        DueDate = wo.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        wo.Priority
     };
 
     internal static object FormatWorkOrderDetail(WorkOrder wo) => new
@@ -410,6 +411,7 @@ public class WorkOrderTools
         wo.CreatedDate,
         wo.AssignedDate,
         wo.CompletedDate,
-        DueDate = wo.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+        DueDate = wo.DueDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        wo.Priority
     };
 }

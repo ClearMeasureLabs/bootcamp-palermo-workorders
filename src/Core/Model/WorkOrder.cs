@@ -62,7 +62,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// <summary>
     /// Urgency classification independent of due date. Valid values: Low, Normal, High.
     /// </summary>
-    public string Priority { get; set; } = WorkOrderPriority.Normal;
+    public string Priority
+    {
+        get;
+        set => field = WorkOrderPriority.TryParse(value) ?? WorkOrderPriority.Normal;
+    } = WorkOrderPriority.Normal;
 
     private string GetTruncatedString(string? value)
     {

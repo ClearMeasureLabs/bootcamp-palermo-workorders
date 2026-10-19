@@ -681,4 +681,25 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task ShouldRenderPriorityColumnWithWorkOrderPriority()
+    {
+        var rows = new[]
+        {
+            new WorkOrder
+            {
+                Number = "WO-PRI",
+                Title = "Priority row",
+                Status = WorkOrderStatus.Draft,
+                Priority = WorkOrderPriority.High
+            }
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var cell = component.Find($"[data-testid='{WorkOrderSearch.Elements.PriorityCell}WO-PRI']");
+        cell.TextContent.Trim().ShouldBe(WorkOrderPriority.High);
+    }
 }

@@ -2,7 +2,6 @@
 
 using System.ComponentModel.DataAnnotations;
 using ClearMeasure.Bootcamp.Core.Model;
-// WorkOrderPriority used for Priority default
 
 namespace ClearMeasure.Bootcamp.UI.Shared.Models;
 

@@ -25,6 +25,8 @@ internal class BogusOverrides : AutoGeneratorOverride
                 order.DueDate = context.Faker.Random.Bool()
                     ? DateOnly.FromDateTime(context.Faker.Date.Past())
                     : null;
+                order.Priority = context.Faker.PickRandom(
+                    WorkOrderPriority.Low, WorkOrderPriority.Normal, WorkOrderPriority.High);
                 break;
             case WorkOrderStatus:
                 context.Instance = context.Faker.PickRandom(WorkOrderStatus.GetAllItems());

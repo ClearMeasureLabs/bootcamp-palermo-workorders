@@ -291,11 +291,55 @@ public class McpWorkOrderToolTests
     public void ShouldKeepWorkOrderToolArgumentListsUnchanged()
     {
         ParameterNames(nameof(WorkOrderTools.CreateWorkOrder)).ShouldBe(
-            ["bus", "numberGenerator", "title", "description", "creatorUsername", "roomNumber", "dueDate", "instructions"]);
+            ["bus", "numberGenerator", "title", "description", "creatorUsername", "roomNumber", "dueDate", "instructions", "priority"]);
         ParameterNames(nameof(WorkOrderTools.SaveWorkOrder)).ShouldBe(
             ["bus", "workOrderNumber", "executingUsername", "title", "description", "instructions", "roomNumber", "dueDate"]);
         ParameterNames(nameof(WorkOrderTools.CreateDatedWorkOrders)).ShouldBe(
             ["bus", "timeProvider", "creatorUsername", "assigneeUsername", "title", "description", "dueDates", "saturdayCount"]);
+    }
+
+    [Test]
+    public async Task ShouldCreateWorkOrderWithPriorityArgument()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@test.com");
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var result = await WorkOrderTools.CreateWorkOrder(
+            bus, numberGenerator, "Priority WO", "Desc", "creator1",
+            priority: "high");
+
+        result.ShouldContain("\"Priority\": \"High\"");
+        result.ShouldNotContain("Invalid priority");
+    }
+
+    [Test]
+    public async Task ShouldRejectInvalidPriorityOnCreateWorkOrder()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@test.com");
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var numberGenerator = new WorkOrderNumberGenerator();
+        var result = await WorkOrderTools.CreateWorkOrder(
+            bus, numberGenerator, "Priority WO", "Desc", "creator1",
+            priority: "urgent");
+
+        result.ShouldContain("Invalid priority 'urgent'");
+        result.ShouldContain("Low, Normal, High");
     }
 
     [Test]

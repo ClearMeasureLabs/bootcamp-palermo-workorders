@@ -428,4 +428,45 @@ public class WorkOrderMappingTests
 
         rehydratedWorkOrder.Instructions!.Length.ShouldBe(4000);
     }
+
+    [Test]
+    public void ShouldPersistPriorityAndDefaultToNormal()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var defaultOrder = new WorkOrder
+        {
+            Number = "WO-09",
+            Title = "Default priority",
+            Description = "Defaults to Normal",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+        var highOrder = new WorkOrder
+        {
+            Number = "WO-10",
+            Title = "High priority",
+            Description = "Explicit High",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft,
+            Priority = WorkOrderPriority.High
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(defaultOrder);
+            context.Add(highOrder);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydratedDefault = context.Set<WorkOrder>().Single(wo => wo.Id == defaultOrder.Id);
+            var rehydratedHigh = context.Set<WorkOrder>().Single(wo => wo.Id == highOrder.Id);
+            rehydratedDefault.Priority.ShouldBe(WorkOrderPriority.Normal);
+            rehydratedHigh.Priority.ShouldBe(WorkOrderPriority.High);
+        }
+    }
 }
