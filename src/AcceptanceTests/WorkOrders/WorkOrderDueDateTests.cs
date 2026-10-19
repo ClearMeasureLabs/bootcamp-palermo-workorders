@@ -44,6 +44,8 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         await Click(saveButtonTestId);
         await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
 
+        await ClearAssignedToMeFilterIfNeededAsync();
+
         // Empty <span> has no layout box; Playwright treats that as not visible. Assert attached + blank.
         var dueDateCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + order.Number);
         await Expect(dueDateCell).ToBeAttachedAsync();
@@ -81,6 +83,8 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         await Click(saveButtonTestId);
         await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
 
+        await ClearAssignedToMeFilterIfNeededAsync();
+
         var expectedDisplay = dueDate.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
         var dueDateCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + order.Number);
         await Expect(dueDateCell).ToContainTextAsync(expectedDisplay);
@@ -104,6 +108,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var overdueOrder = await CreateDraftWithDueDateAsync($"[{TestTag}] overdue", overdue);
 
         await Page.WaitForURLAsync("**/workorder/search");
+        await ClearAssignedToMeFilterIfNeededAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var todayCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + todayOrder.Number);
@@ -122,6 +127,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
+        await ClearAssignedToMeFilterIfNeededAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         todayCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + todayOrder.Number);
@@ -148,6 +154,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var futureOrder = await CreateDraftWithDueDateAsync($"[{TestTag}] badge on track", future);
 
         await Page.WaitForURLAsync("**/workorder/search");
+        await ClearAssignedToMeFilterIfNeededAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var overdueLocator = Page.GetByTestId(nameof(WorkOrderSearch.Elements.UrgencyBadge) + overdueOrder.Number);
@@ -171,6 +178,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var order = await CreateDraftNoDueDateAsync($"[{TestTag}] badge no due date");
 
         await Page.WaitForURLAsync("**/workorder/search");
+        await ClearAssignedToMeFilterIfNeededAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var badgeLocator = Page.GetByTestId(nameof(WorkOrderSearch.Elements.UrgencyBadge) + order.Number);
@@ -208,6 +216,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
 
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
+        await ClearAssignedToMeFilterIfNeededAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
     }
 
@@ -250,6 +259,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
         await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        await ClearAssignedToMeFilterIfNeededAsync();
         return order;
     }
 
@@ -275,6 +285,7 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         var saveButtonTestId = nameof(WorkOrderManage.Elements.CommandButton) + SaveDraftCommand.Name;
         await Click(saveButtonTestId);
         await Page.WaitForURLAsync("**/workorder/search", new PageWaitForURLOptions { Timeout = 90_000 });
+        await ClearAssignedToMeFilterIfNeededAsync();
         return order;
     }
 

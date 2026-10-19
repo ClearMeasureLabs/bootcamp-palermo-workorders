@@ -398,23 +398,26 @@ public abstract class AcceptanceTestBase
     protected async Task ClearAssignedToMeFilterIfNeededAsync()
     {
         var assignedToMe = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
-        if (await assignedToMe.CountAsync() == 0)
-        {
-            return;
-        }
-
         await assignedToMe.WaitForAsync(new LocatorWaitForOptions
         {
             State = WaitForSelectorState.Visible,
             Timeout = 30_000
         });
+
+        // Wait briefly for InitializeAsync to apply the AssignedToMe default.
+        for (var attempt = 0; attempt < 15 && !await assignedToMe.IsCheckedAsync(); attempt++)
+        {
+            await Task.Delay(100);
+        }
+
         if (!await assignedToMe.IsCheckedAsync())
         {
             return;
         }
 
-        await assignedToMe.SetCheckedAsync(false);
+        await Click(nameof(WorkOrderSearch.Elements.ClearFiltersButton));
         await Expect(assignedToMe).Not.ToBeCheckedAsync();
+        await Expect(Page.Locator($"#{WorkOrderSearch.Elements.AssigneeSelect}")).ToHaveValueAsync("");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
     }
 

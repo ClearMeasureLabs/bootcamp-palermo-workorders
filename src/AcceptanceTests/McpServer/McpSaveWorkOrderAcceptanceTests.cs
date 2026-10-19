@@ -280,6 +280,7 @@ public class McpSaveWorkOrderAcceptanceTests : AcceptanceTestBase
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await ClearAssignedToMeFilterIfNeededAsync();
     }
 
     private ILocator SearchRowForWorkOrder(string workOrderNumber)
