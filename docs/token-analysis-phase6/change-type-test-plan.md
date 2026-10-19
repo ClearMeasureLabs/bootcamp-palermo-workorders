@@ -111,3 +111,16 @@ Round 26 prep (2026-10-18): issues #10685-10692, v39g, branches cursor/token-exp
 | c78 | Bug | 10770 | pick an assignee, then blank, then Save: nothing happens. **Reproduced** with a temp Playwright test on the v44 tip (30 s timeout, no navigation); the cause is that `HandleSubmit` checks `AssignedToUserName != null`, so "" sends `EmployeeByUserNameQuery("")`, which fails validation. A one-line `IsNullOrWhiteSpace` fix makes it pass. Local acceptance covers it. |
 | c79 | Test-only | 10771 | DiagnosticController (0 tests) + WorkOrderSearchSpecification (0 direct tests) |
 | c80 | Trap | 10772 | `VendorTicketNumber` max 20 (DbUp 033): SQL Server CI truncates Bogus values unless the WorkOrder case in BogusOverrides clamps it (round 28 c51 failed this way at 20); LENGTH_RISK must fire |
+
+## Round 32 (v45g, c81-c88, issues #10781-10788, branches cursor/token-exp-p6-cNN-v45)
+
+| id | cat | issue | what it proves / validated against code |
+|---|---|---|---|
+| c81 | UI | 10781 | Today / Next Saturday due-date buttons on the manage form (bUnit with fixed clock + Playwright save/reopen); uses ChurchTimeZone; recipes ui-bunit-manage + ui-playwright-data |
+| c82 | UI | 10782 | search title cell truncated at 60 + tooltip, sort on full title (bUnit + seeded Playwright); the cell is plain `@order.Title` today |
+| c83 | ML (state command) | 10783 | new Discard (Draft -> Cancelled, creator only) + StateCommandList + MCP executor; **touches StateCommands/StateCommandList, so v44's wide WorkOrders local acceptance must run** |
+| c84 | ML | 10784 | WorkOrdersDueSoonQuery + validator + handler (Chicago today via TimeProvider) + MCP tool list-due-soon-work-orders |
+| c85 | Vague | 10785 | "can't tell who to contact": nothing shows creator/assignee contact info today; tests v45 UNUSED_RISK + the visible-change clause |
+| c86 | Bug | 10786 | MCP execute-work-order-command role failure prints the status-mismatch message. **Reproduced** on the v45 tip with a temp integration test: "Command 'AssignedToInProgressCommand' cannot be executed. Work order is in 'Assigned' status but the command requires 'Assigned' status." |
+| c87 | Test-only | 10787 | DatedWorkOrderScheduling.TryParseOptionalDueDate (internal, visible only to IntegrationTests; Get-Context prints ACCESS) has no tests |
+| c88 | Trap | 10788 | Employee.Initials max 3 (DbUp 033). The issue never mentions test data; AutoBogus fills it with long strings, which SQL Server CI rejects. **LENGTH_RISK fires** on the mapping line unless the `case Employee` block clamps it (checked locally: fires, then silent after the clamp) |
