@@ -103,6 +103,61 @@ public class WorkOrder : EntityBase<WorkOrder>
     }
 
     /// <summary>
+    /// Human-readable age of this work order relative to <paramref name="nowUtc"/>,
+    /// based on <see cref="CreatedDate"/>.
+    /// </summary>
+    public string GetAgeLabel(DateTime nowUtc)
+    {
+        if (CreatedDate is null)
+        {
+            return string.Empty;
+        }
+
+        var days = (int)(nowUtc - CreatedDate.Value).TotalDays;
+        return FormatAgeLabel(days);
+    }
+
+    private static string FormatAgeLabel(int days)
+    {
+        if (days < 7)
+        {
+            return FormatDaysLabel(days);
+        }
+
+        return FormatWeeksLabel(days / 7);
+    }
+
+    private static string FormatDaysLabel(int days)
+    {
+        if (days < 1)
+        {
+            return "today";
+        }
+
+        if (days == 1)
+        {
+            return "1 day";
+        }
+
+        return $"{days} days";
+    }
+
+    private static string FormatWeeksLabel(int weeks)
+    {
+        if (weeks == 1)
+        {
+            return "1 week";
+        }
+
+        if (weeks <= 4)
+        {
+            return $"{weeks} weeks";
+        }
+
+        return "over a month";
+    }
+
+    /// <summary>
     /// Returns the urgency classification for this work order's due date relative to today
     /// in America/Chicago.
     /// </summary>

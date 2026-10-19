@@ -189,7 +189,8 @@ public partial class WorkOrderSearch : AppComponentBase
             DueDateDisplay = workOrder.DueDate?.ToString("MMM d, yyyy", CultureInfo.InvariantCulture),
             DueDateCssClass = DueDateUrgencyCalculator.CssClass(urgency),
             DueDateUrgencyText = DueDateUrgencyCalculator.ScreenReaderText(urgency),
-            Urgency = urgency
+            Urgency = urgency,
+            AgeLabel = workOrder.GetAgeLabel(Clock.GetUtcNow().UtcDateTime)
         };
     }
 

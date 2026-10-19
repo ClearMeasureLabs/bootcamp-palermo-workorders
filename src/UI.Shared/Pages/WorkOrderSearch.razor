@@ -110,6 +110,7 @@
                                    Room @if (_sortColumn == "Room") { <span>@(_sortAscending ? "▲" : "▼")</span> }
                                </button>
                            </th>
+                           <th>Age</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -152,6 +153,9 @@
                                     }
                                 </td>
                                 <td>@order.WorkOrder.RoomNumber</td>
+                                <td>
+                                    <span data-testid="@(Elements.AgeCell + order.Number)">@order.AgeLabel</span>
+                                </td>
                             </tr>
                         }
                     }
@@ -174,6 +178,7 @@
         ClearFiltersButton,
         WorkOrderLink,
         DueDateCell,
+        AgeCell,
         UrgencyBadge,
         SortByStatusButton,
         SortByDueDateButton,

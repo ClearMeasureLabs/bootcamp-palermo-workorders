@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -97,5 +98,84 @@ public class WorkOrderTests
         var order = new WorkOrder() { Status = WorkOrderStatus.Draft };
         order.ChangeStatus(WorkOrderStatus.Assigned);
         Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenCreatedDateIsNull_ReturnsEmpty()
+    {
+        var order = new WorkOrder { CreatedDate = null };
+        order.GetAgeLabel(DateTime.UtcNow).ShouldBe(string.Empty);
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenSameDay_ReturnsToday()
+    {
+        var now = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = now.AddHours(-3) };
+        order.GetAgeLabel(now).ShouldBe("today");
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenOneDay_Returns1Day()
+    {
+        var now = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = now.AddDays(-1) };
+        order.GetAgeLabel(now).ShouldBe("1 day");
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenTwoDays_Returns2Days()
+    {
+        var now = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = now.AddDays(-2) };
+        order.GetAgeLabel(now).ShouldBe("2 days");
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenSixDays_Returns6Days()
+    {
+        var now = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = now.AddDays(-6) };
+        order.GetAgeLabel(now).ShouldBe("6 days");
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenSevenDays_Returns1Week()
+    {
+        var now = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = now.AddDays(-7) };
+        order.GetAgeLabel(now).ShouldBe("1 week");
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenThirteenDays_Returns1Week()
+    {
+        var now = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = now.AddDays(-13) };
+        order.GetAgeLabel(now).ShouldBe("1 week");
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenFourteenDays_Returns2Weeks()
+    {
+        var now = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = now.AddDays(-14) };
+        order.GetAgeLabel(now).ShouldBe("2 weeks");
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenTwentyEightDays_Returns4Weeks()
+    {
+        var now = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = now.AddDays(-28) };
+        order.GetAgeLabel(now).ShouldBe("4 weeks");
+    }
+
+    [Test]
+    public void GetAgeLabel_WhenThirtyFiveDays_ReturnsOverAMonth()
+    {
+        var now = new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc);
+        var order = new WorkOrder { CreatedDate = now.AddDays(-35) };
+        order.GetAgeLabel(now).ShouldBe("over a month");
     }
 }

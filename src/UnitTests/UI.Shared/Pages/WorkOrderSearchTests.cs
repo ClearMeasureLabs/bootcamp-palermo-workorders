@@ -681,4 +681,24 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task ShouldRenderAgeColumnWithAgeLabel()
+    {
+        var order = new WorkOrder
+        {
+            Number = "WO-AGE",
+            Title = "Aged",
+            Status = WorkOrderStatus.InProgress,
+            CreatedDate = DateTime.UtcNow.AddDays(-3)
+        };
+
+        await using var ctx = CreateContext(new StubBus([order]));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.Find("th:last-child").TextContent.Trim().ShouldBe("Age");
+        var ageCell = component.Find($"[data-testid='{WorkOrderSearch.Elements.AgeCell}{order.Number}']");
+        ageCell.TextContent.Trim().ShouldBe("3 days");
+    }
 }
