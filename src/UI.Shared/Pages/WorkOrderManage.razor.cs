@@ -19,6 +19,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private WorkOrder? _workOrder;
     private WorkOrder? _lastNotifiedWorkOrder;
     private WorkOrderAttachment[] _attachments = [];
+    private WorkOrder[] _openWorkOrdersInRoom = [];
     private string _preferredLanguage = "en-US";
     private DictationTarget _dictationTarget = DictationTarget.None;
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
@@ -108,6 +109,20 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         {
             _attachments = await Bus.Send(new WorkOrderAttachmentsQuery(workOrder.Id));
         }
+
+        await LoadOpenWorkOrdersInRoom(workOrder);
+    }
+
+    private async Task LoadOpenWorkOrdersInRoom(WorkOrder workOrder)
+    {
+        _openWorkOrdersInRoom = [];
+        if (CurrentMode != EditMode.Edit || string.IsNullOrWhiteSpace(workOrder.RoomNumber))
+        {
+            return;
+        }
+
+        _openWorkOrdersInRoom = await Bus.Send(
+            new OpenWorkOrdersInRoomQuery(workOrder.RoomNumber, workOrder.Number));
     }
 
     private WorkOrderManageModel CreateViewModel(EditMode mode, WorkOrder workOrder)

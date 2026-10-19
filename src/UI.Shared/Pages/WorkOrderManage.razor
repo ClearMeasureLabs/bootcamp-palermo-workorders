@@ -84,6 +84,24 @@
                         <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                @if (_openWorkOrdersInRoom.Length > 0)
+                {
+                    <div class="form-group" data-testid="@Elements.OpenWorkOrdersInRoom">
+                        <span>Other open work orders in this room:</span>
+                        <ul>
+                            @foreach (var openOrder in _openWorkOrdersInRoom)
+                            {
+                                <li>
+                                    <a data-testid="@(Elements.OpenWorkOrderLink + openOrder.Number)"
+                                       href="/workorder/manage/@openOrder.Number?Mode=Edit">
+                                        @openOrder.Number — @openOrder.Title
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
             </div>
 
             <div class="readonly-info">
@@ -210,6 +228,8 @@
         DictateDescription,
         DescriptionCharCount,
         RequiredFieldsNote,
-        ManageHeadingTooltip
+        ManageHeadingTooltip,
+        OpenWorkOrdersInRoom,
+        OpenWorkOrderLink
     }
 }

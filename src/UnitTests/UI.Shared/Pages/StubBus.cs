@@ -56,6 +56,11 @@ public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
             return Task.FromResult<TResponse>((TResponse)(object)counts);
         }
 
+        if (request is OpenWorkOrdersInRoomQuery)
+        {
+            return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrder>());
+        }
+
         throw new NotImplementedException();
     }
 
