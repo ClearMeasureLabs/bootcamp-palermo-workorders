@@ -4,7 +4,7 @@
 # Infra flakes (a job cancelled or timed out, or running >= 25 min with no test report) are re-run ONCE automatically
 # with `gh run rerun --failed` instead of reported. That avoids empty-commit retriggers and log spelunking.
 # The aggregator "Build result" is not reported as a root cause.
-param([Parameter(Mandatory)][int]$Pr, [switch]$ForceRerun, [int]$MaxCallMin = 9, [int]$PollSec = 45, [int]$SettleSec = 60,
+param([Parameter(Mandatory)][int]$Pr, [switch]$ForceRerun, [int]$MaxCallMin = 8, [int]$PollSec = 45, [int]$SettleSec = 60,
       [string]$Repo = 'ClearMeasureLabs/bootcamp-palermo-workorders')
 $ErrorActionPreference = 'Stop'
 $deadline = (Get-Date).AddMinutes($MaxCallMin)

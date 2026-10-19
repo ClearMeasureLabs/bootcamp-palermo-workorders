@@ -13,7 +13,10 @@ try {
 $b = dotnet build $proj -c Release -p:NuGetAudit=false -v q -nologo -clp:NoSummary 2>&1
 if ($LASTEXITCODE) { $b | Select-String ': error ' | ForEach-Object { "FIX: $($_.Line.Trim() -replace '\s*\[.*\]$')" } | Select-Object -Unique -First 10; 'ACC_BUILD=FAIL'; return }
 $ui = @($chg | Where-Object { $_ -match '^src/(UI|UI\.Shared|UI\.Client|AcceptanceTests)/' -and $_ -match '\.(razor|cs|css)$' })
-if (-not $ui) { 'ACC_TEST=SKIPPED no UI/acceptance change'; return }
+# v44g: a state-command change (new/changed transition or StateCommandList) changes which buttons and read-only state every
+# work order page shows (round 30 c68: Core+MCP-only Reopen -> ACC_TEST=SKIPPED, then 4 CI acceptance failures + a 12-min rerun)
+$stateCmd = @($chg | Where-Object { $_ -match '^src/Core/(Model/StateCommands/|Services/Impl/StateCommandList\.cs$)' }).Count -gt 0
+if (-not $ui -and -not $stateCmd) { 'ACC_TEST=SKIPPED no UI/acceptance change'; return }
 $cls = @($chg | Where-Object { $_ -match '^src/AcceptanceTests/.*Tests\.cs$' -and (Test-Path $_) } | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) })
 $pages = @($ui | Where-Object { $_ -notmatch '^src/AcceptanceTests/' -and $_ -match '\.razor(\.cs)?$' } | ForEach-Object { (Split-Path $_ -Leaf).Split('.')[0] } | Select-Object -Unique)
 # v42g: a changed non-page UI .cs (state, service, model) maps to the pages that use it (round 28 c53: WorkOrderSearchState.cs -> SKIPPED)
@@ -23,7 +26,7 @@ if ($pages) { $cls += @(rg -l -w @($pages | ForEach-Object { '-e'; $_ }) --glob 
 $cls = @($cls | Where-Object { $_ } | Select-Object -Unique -First 6)
 # v42g: the shared test base, or a search/manage default (state class, or an added initializer/OnInitialized line in those pages),
 # reaches every flow that lands on those pages: run all WorkOrders + McpServer classes (round 28 c53: 3 CI REDs across 5 classes)
-$wide = @($chg | Where-Object { $_ -match 'AcceptanceTestBase\.cs$|^src/UI\.Shared/.*(State|Defaults)\w*\.cs$' }).Count -gt 0
+$wide = $stateCmd -or @($chg | Where-Object { $_ -match 'AcceptanceTestBase\.cs$|^src/UI\.Shared/.*(State|Defaults)\w*\.cs$' }).Count -gt 0
 if (-not $wide) { foreach ($p in $ui | Where-Object { $_ -match '/WorkOrder(Search|Manage)\.razor(\.cs)?$' }) {
   if (git diff -U0 -- $p | Where-Object { $_ -match '^\+.*(\{ get; set; \} = |OnInitialized|OnParametersSet)' }) { $wide = $true } } }
 if (-not $cls -and -not $wide) { 'ACC_TEST=SKIPPED no acceptance class covers the changed files'; return }

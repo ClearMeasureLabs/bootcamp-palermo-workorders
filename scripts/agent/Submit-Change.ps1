@@ -1,7 +1,7 @@
 # v15g: inline CI wait removed (round 1: Submit + wait outran the terminal cap, output was lost and agents went digging).
 # v14g: Risk check (Test-ChangeRisk: CRAP/Qodana/Number traps that caused past CI REDs) ->
 # full unit suite + IntegrationTests build -> changed integration test classes on SQLite -> publish the workspace src diff
-# (temp worktree on master; rerun pushes a follow-up commit) -> waits for CI inside the same call (~9 min budget) and
+# (temp worktree on master; rerun pushes a follow-up commit) -> waits for CI inside the same call (~8 min budget) and
 # prints the verdict. If CI is still running it prints WAIT_CMD. -IgnoreRisk skips a RISK you judge false.
 # -VerifyOnly = local checks only. (v9g-v11g history: WAIT_CMD 9-min calls, PENDING exits 0.)
 param([int]$Issue, [string]$Branch, [switch]$VerifyOnly, [switch]$IgnoreRisk, [string]$Filter = '',
@@ -70,10 +70,10 @@ $want = $out | Select-String 'HEAD=(\w+)' | ForEach-Object { $_.Matches[0].Group
 if ($want) { foreach ($i in 1..12) { if ((gh api "repos/$Repo/pulls/$pr" --jq .head.sha) -eq $want) { break }; Start-Sleep 5 } }
 # v18g: wait inline for what is left of an 8-minute budget (Submit itself takes ~1 min), so Submit + first wait is one turn
 # instead of two (round 4: wait turns replayed 13.5% of input). v14g's inline wait broke because it used the full 9 min on top.
-# v43g: every terminal call must end under the ~10-min tool cap (round 29: 9/12 long Submits cut at exactly 10.0 min with empty
-# output; agents then awaited the background shell and read terminal files). Inline wait only for what is left of 9 min, and
-# none once Submit's own work passed 7 min.
-$el = ((Get-Date) - $t0).TotalMinutes; $left = [int][Math]::Floor(9 - $el)
-if ($el -le 7 -and $left -ge 2) { $w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $w; if ($w -contains 'CHECKS=GREEN') { exit 0 } }  # v31g: no WAIT_CMD after GREEN
-"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9  (only if no CHECKS=GREEN/RED above)"
+# v44g: 8-min total (round 30 c67 lost a Submit result at 8.7 min); v43g: every terminal call must end under the ~10-min tool cap (round 29: 9/12 long Submits cut at exactly 10.0 min with empty
+# output; agents then awaited the background shell and read terminal files). Inline wait only for what is left of 8 min, and
+# none once Submit's own work passed 6 min.
+$el = ((Get-Date) - $t0).TotalMinutes; $left = [int][Math]::Floor(8 - $el)
+if ($el -le 6 -and $left -ge 2) { $w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $w; if ($w -contains 'CHECKS=GREEN') { exit 0 } }  # v31g: no WAIT_CMD after GREEN
+"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 8  (only if no CHECKS=GREEN/RED above)"
 exit 0

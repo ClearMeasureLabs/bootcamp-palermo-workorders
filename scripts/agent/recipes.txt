@@ -8,5 +8,7 @@ api-new-endpoint	\bnew\b[^.\n]*\bendpoint\b|\bnew\b[^.\n]*\bcontroller\b	src/UI/
 new-validator	validator\b	src/Core/Validation/WorkOrderCountByStatusQueryValidator.cs:1-6 src/Core/Validation/EmployeeByUserNameQueryValidator.cs src/UnitTests/Core/Validation/EmployeeByUserNameQueryValidatorTests.cs:1-38	new-query
 
 # v40g: UI recipe (round 22-26: UI items averaged 930k; agents read 10-25 files hunting bUnit stubs/listener/Elements patterns)
-ui-bunit	(?i)\b(bUnit|razor|Blazor|component|nav menu|side panel|settings page|search page|manage page|work order (page|screen))\b	src/UI.Shared/Components/LastWorkOrder.razor src/UnitTests/UI.Shared/Components/LastWorkOrderTests.cs:15-34 src/UnitTests/UI.Shared/Components/MyWorkOrdersTests.cs:181-190 src/UnitTests/UI.Shared/Pages/StubBus.cs:8-30
+ui-bunit	(?i)\b(bUnit|razor|Blazor|component|nav menu|side panel|settings page|search page|manage page|work order (page|screen))\b	src/UI.Shared/Components/LastWorkOrder.razor src/UnitTests/UI.Shared/Components/LastWorkOrderTests.cs:15-34 src/UnitTests/UI.Shared/Components/MyWorkOrdersTests.cs:181-190 src/UnitTests/UI.Shared/Pages/StubBus.cs:8-30	ui-bunit-manage
+# v44g: WorkOrderManage bUnit setup (round 30 c65: 13 local Submit fails rediscovering its services; c67 stubbed 12 files)
+ui-bunit-manage	(?i)\b(manage page|work order (page|screen|form|edit)|edit (page|screen)|WorkOrderManage|(cancel|save|assign|complete|reopen|shelve)\w* (button|dialog|confirmation))\b	src/UnitTests/UI.Shared/Pages/WorkOrderManageSubmitTests.cs:21-45 src/UnitTests/UI.Shared/Pages/WorkOrderManageSubmitTests.cs:111-152 src/UnitTests/UI.Shared/Pages/WorkOrderManageSubmitTests.cs:154-179
 ui-playwright	(?i)\b(Playwright|acceptance test)\b	src/AcceptanceTests/App/CopyrightFooterTests.cs:6-27
