@@ -44,6 +44,17 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private List<SelectListItem> UserOptions { get; set; } = new();
     private IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     private string? SelectedCommand { get; set; }
+    private string _selectedInstructionTemplate = string.Empty;
+
+    /// <summary>
+    /// Common safety instruction templates offered on the work-order manage form.
+    /// </summary>
+    public static readonly string[] InstructionTemplates =
+    [
+        "Turn off the breaker before starting.",
+        "Wear gloves and eye protection.",
+        "Notify the office when finished."
+    ];
 
     [Parameter] public string? Id { get; set; }
 
@@ -300,6 +311,33 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private static string AppendTranscript(string? existingText, string transcript)
     {
         return string.IsNullOrEmpty(existingText) ? transcript : $"{existingText} {transcript}";
+    }
+
+    private void OnInstructionTemplateSelected(ChangeEventArgs e)
+    {
+        var template = e.Value?.ToString();
+        if (string.IsNullOrEmpty(template))
+        {
+            return;
+        }
+
+        Model.Instructions = AppendInstructionTemplate(Model.Instructions, template);
+        _selectedInstructionTemplate = string.Empty;
+    }
+
+    /// <summary>
+    /// Appends a template line to instructions without a leading blank line when empty,
+    /// truncated to <see cref="WorkOrder.InstructionsMaxLength"/>.
+    /// </summary>
+    public static string AppendInstructionTemplate(string? existingInstructions, string template)
+    {
+        var combined = string.IsNullOrEmpty(existingInstructions)
+            ? template
+            : $"{existingInstructions}\n{template}";
+
+        return combined.Length <= WorkOrder.InstructionsMaxLength
+            ? combined
+            : combined[..WorkOrder.InstructionsMaxLength];
     }
 
     private string DictateButtonClass(DictationTarget target)

@@ -75,6 +75,20 @@
                     <label for="Instructions" class="form-label">Instructions:</label>
                     <div>
                         <InputTextArea data-testid="@Elements.Instructions" id="Instructions" @bind-Value="Model.Instructions" class="form-control input-textarea" maxlength="@WorkOrder.InstructionsMaxLength" disabled="@Model.IsReadOnly"/>
+                        @if (!Model.IsReadOnly)
+                        {
+                            <label for="InstructionTemplate" class="form-label">Insert template</label>
+                            <select data-testid="@Elements.InstructionTemplate" id="InstructionTemplate"
+                                    class="form-control input-select"
+                                    value="@_selectedInstructionTemplate"
+                                    @onchange="OnInstructionTemplateSelected">
+                                <option value=""></option>
+                                @foreach (var template in InstructionTemplates)
+                                {
+                                    <option value="@template">@template</option>
+                                }
+                            </select>
+                        }
                     </div>
                 </div>
 
@@ -188,6 +202,7 @@
         RoomNumber,
         Description,
         Instructions,
+        InstructionTemplate,
         AssignedDate,
         CompletedDate,
         CreatedDate,
