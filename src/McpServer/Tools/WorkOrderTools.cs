@@ -53,6 +53,16 @@ public class WorkOrderTools
             new JsonSerializerOptions { WriteIndented = true });
     }
 
+    [McpServerTool(Name = "list-recent-work-orders"), Description("Lists work orders created within the last N days (1-30), newest first. Same summary shape as list-work-orders.")]
+    public static async Task<string> ListRecentWorkOrders(
+        IBus bus,
+        [Description("Number of days to look back (1-30), default 7")] int days = 7)
+    {
+        var workOrders = await bus.Send(new WorkOrdersCreatedInLastDaysQuery(days));
+        return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
+            new JsonSerializerOptions { WriteIndented = true });
+    }
+
     [McpServerTool(Name = "get-work-order"), Description("Retrieves a single work order by its number, including full details.")]
     public static async Task<string> GetWorkOrder(
         IBus bus,
