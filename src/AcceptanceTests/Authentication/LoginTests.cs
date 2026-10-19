@@ -142,22 +142,47 @@ public class LoginTests : AcceptanceTestBase
 
         var loginLink = Page.GetByTestId(nameof(LoginLink.Elements.LoginLink));
         await Expect(loginLink).ToBeVisibleAsync();
+        await Expect(loginLink).ToHaveCSSAsync("animation-name", new Regex("login-link-blink-pulse"));
 
-        var animationName = await loginLink.EvaluateAsync<string>(
-            "element => getComputedStyle(element).animationName");
-        animationName.ShouldStartWith("login-link-blink-pulse");
+        var probe = await loginLink.EvaluateAsync<BlinkAnimationProbe>(
+            """
+            element => {
+                const anim = element.getAnimations().find(a =>
+                    String(a.animationName || '').startsWith('login-link-blink-pulse'));
+                if (!anim || !anim.effect) {
+                    return null;
+                }
+                const timing = anim.effect.getTiming();
+                const duration = Number(timing.duration);
+                const keyframeOpacities = anim.effect.getKeyframes()
+                    .map(kf => kf.opacity)
+                    .filter(o => o != null && o !== '')
+                    .map(o => parseFloat(String(o)));
+                anim.pause();
+                const opacities = [0, 0.25, 0.5, 0.75, 0.999].map(progress => {
+                    anim.currentTime = duration * progress;
+                    return parseFloat(getComputedStyle(element).opacity);
+                });
+                return {
+                    name: anim.animationName,
+                    duration,
+                    infinite: timing.iterations === Infinity,
+                    keyframeOpacities,
+                    opacities
+                };
+            }
+            """);
 
-        var observedOpacities = new List<double>();
-        for (var sample = 0; sample < 30; sample++)
-        {
-            observedOpacities.Add(await loginLink.EvaluateAsync<double>(
-                "element => parseFloat(getComputedStyle(element).opacity)"));
-            await Task.Delay(100);
-        }
-
-        observedOpacities.Min().ShouldBeLessThan(0.75);
-        observedOpacities.Max().ShouldBeGreaterThan(0.9);
-        observedOpacities.Min().ShouldBeGreaterThanOrEqualTo(0.5);
+        probe.ShouldNotBeNull();
+        probe.Name.ShouldStartWith("login-link-blink-pulse");
+        probe.Duration.ShouldBe(1500);
+        probe.Infinite.ShouldBeTrue();
+        probe.KeyframeOpacities.Min().ShouldBeGreaterThanOrEqualTo(0.5);
+        probe.KeyframeOpacities.Min().ShouldBeLessThan(0.75);
+        probe.KeyframeOpacities.Max().ShouldBeGreaterThan(0.9);
+        probe.Opacities.Min().ShouldBeLessThan(0.75);
+        probe.Opacities.Max().ShouldBeGreaterThan(0.9);
+        probe.Opacities.Min().ShouldBeGreaterThanOrEqualTo(0.5);
     }
 
     [Test, Retry(2)]
@@ -503,5 +528,19 @@ public class LoginTests : AcceptanceTestBase
         await Expect(welcomeTextLocator).ToHaveTextAsync(
             "Welcome tlovejoy!",
             new LocatorAssertionsToHaveTextOptions { Timeout = 60_000 });
+    }
+
+    private sealed class BlinkAnimationProbe
+    {
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
+        public string Name { get; set; } = "";
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
+        public double Duration { get; set; }
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
+        public bool Infinite { get; set; }
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
+        public double[] KeyframeOpacities { get; set; } = [];
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
+        public double[] Opacities { get; set; } = [];
     }
 }
