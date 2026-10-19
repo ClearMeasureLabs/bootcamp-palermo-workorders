@@ -17,6 +17,8 @@ public partial class WorkOrderSearch : AppComponentBase
     private string? _sortColumn;
     private bool _sortAscending = true;
     private bool _assignedToMe;
+    private int _currentPage = 1;
+    private const int PageSize = 25;
 
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
@@ -32,9 +34,67 @@ public partial class WorkOrderSearch : AppComponentBase
         await InitializeAsync();
     }
 
+    private int TotalPages =>
+        Model.Results.Length == 0
+            ? 1
+            : (int)Math.Ceiling(Model.Results.Length / (double)PageSize);
+
+    private async Task SearchAndResetPage()
+    {
+        _currentPage = 1;
+        await HandleSearch();
+    }
+
+    private void SortByColumn(string column)
+    {
+        _currentPage = 1;
+        SortBy(column);
+    }
+
+    private async Task AssignedToMeChangedAndResetPage()
+    {
+        _currentPage = 1;
+        await HandleAssignedToMeChanged();
+    }
+
+    private async Task ClearFiltersAndResetPage()
+    {
+        _currentPage = 1;
+        await HandleClearFilters();
+    }
+
+    private void GoToPreviousPage()
+    {
+        if (_currentPage > 1)
+        {
+            _currentPage--;
+        }
+    }
+
+    private void GoToNextPage()
+    {
+        if (_currentPage < TotalPages)
+        {
+            _currentPage++;
+        }
+    }
+
+    private void ClampCurrentPage()
+    {
+        if (_currentPage > TotalPages)
+        {
+            _currentPage = TotalPages;
+        }
+
+        if (_currentPage < 1)
+        {
+            _currentPage = 1;
+        }
+    }
+
     private async Task InitializeAsync()
     {
-        OnSearch = HandleSearch;
+        OnSearch = SearchAndResetPage;
 
         var employees = await Bus.Send(new EmployeeGetAllQuery());
         UserOptions = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
@@ -143,7 +203,12 @@ public partial class WorkOrderSearch : AppComponentBase
 
     private void ApplySort()
     {
-        if (_sortColumn == null) return;
+        if (_sortColumn == null)
+        {
+            Model.Results = Model.Results.OrderByDescending(r => r.WorkOrder.CreatedDate).ToArray();
+            return;
+        }
+
         if (_sortColumn == "Status") ApplySortByStatus();
         else if (_sortColumn == "DueDate") ApplySortByDueDate();
         else if (_sortColumn == "Title") ApplySortByTitle();

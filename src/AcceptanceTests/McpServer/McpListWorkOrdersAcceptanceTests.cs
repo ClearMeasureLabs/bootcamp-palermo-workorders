@@ -106,7 +106,8 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         (await context.Set<Employee>().AnyAsync(employee => employee.UserName == "not-a-person"))
             .ShouldBeFalse();
 
-        await Click(nameof(WorkOrderSearch.Elements.WorkOrderLink) + seededNumbers.LovejoyDraft);
+        await Page.GotoAsync($"/workorder/manage/{seededNumbers.LovejoyDraft}?mode=Edit");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)))
             .ToHaveTextAsync(seededNumbers.LovejoyDraft);
         var creator = Page.Locator(".form-group")
@@ -213,12 +214,6 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         await searchButton.ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        foreach (var number in requiredNumbers)
-        {
-            await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + number))
-                .ToBeVisibleAsync();
-        }
-
         // Re-query MCP after the portal settles so parity is not based on a stale pre-search
         // snapshot while Parallelizable siblings mutate the shared database.
         var portalNumbers = await VisibleSearchNumbers();
@@ -246,10 +241,42 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
 
     private async Task<HashSet<string>> VisibleSearchNumbers()
     {
-        var workOrderLinks = Page.Locator($"[data-testid^='{WorkOrderSearch.Elements.WorkOrderLink}']");
-        return (await workOrderLinks.AllTextContentsAsync())
-            .Select(number => number.Trim())
-            .ToHashSet();
+        var numbers = new HashSet<string>();
+        var pager = Page.GetByTestId("SearchPager");
+        if (await pager.CountAsync() > 0)
+        {
+            var previous = Page.GetByTestId("SearchPagerPrevious");
+            while (await previous.IsEnabledAsync())
+            {
+                await previous.ClickAsync();
+                await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            }
+        }
+
+        while (true)
+        {
+            var workOrderLinks = Page.Locator($"[data-testid^='{WorkOrderSearch.Elements.WorkOrderLink}']");
+            foreach (var number in await workOrderLinks.AllTextContentsAsync())
+            {
+                numbers.Add(number.Trim());
+            }
+
+            if (await pager.CountAsync() == 0)
+            {
+                break;
+            }
+
+            var next = Page.GetByTestId("SearchPagerNext");
+            if (!await next.IsEnabledAsync())
+            {
+                break;
+            }
+
+            await next.ClickAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
+        return numbers;
     }
 
     private async Task LoginAsTlovejoyAsync()
