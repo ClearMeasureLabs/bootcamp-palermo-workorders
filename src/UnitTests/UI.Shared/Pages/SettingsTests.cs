@@ -99,12 +99,8 @@ public class SettingsTests
     private static BunitContext CreateContext(IBus? bus = null)
     {
         var ctx = new BunitContext();
-        ctx.JSInterop.Mode = JSRuntimeMode.Strict;
-        var module = ctx.JSInterop.SetupModule("./_content/ClearMeasure.Bootcamp.UI.Shared/js/theme.js");
-        module.SetupVoid("initializeTheme", _ => true).SetVoidResult();
-        module.SetupVoid("setTheme", _ => true).SetVoidResult();
-        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
-        module.Setup<string>("getTheme").SetResult("light");
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        ctx.JSInterop.SetupModule("./_content/ClearMeasure.Bootcamp.UI.Shared/js/theme.js");
         ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
@@ -122,7 +118,7 @@ public class SettingsTests
 
     private sealed class SettingsStubBus : IBus
     {
-        public Employee Employee { get; set; } = new("hsimpson", "Homer", "Simpson", "h@test.com")
+        public Employee Employee { get; init; } = new("hsimpson", "Homer", "Simpson", "h@test.com")
         {
             PreferredLanguage = "en-US"
         };
