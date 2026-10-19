@@ -13,6 +13,30 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldTruncateLongWorkOrderTitleInSearchResults()
+    {
+        var creator = CurrentUser;
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Title = new string('T', 80);
+        await using var context = TestHost.NewDbContext();
+        context.Attach(creator);
+        context.Add(order);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.MyWorkOrders));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
+        var titleCell = workOrderLink.Locator("xpath=ancestor::tr/td[5]");
+        var expectedDisplay = order.Title![..60] + "…";
+        await Expect(titleCell).ToHaveTextAsync(expectedDisplay);
+        await Expect(titleCell).ToHaveAttributeAsync("title", order.Title);
+    }
+
+    [Test, Retry(2)]
     public async Task Should_PreserveMixedCaseNames_InWorkOrderSearchDropdowns()
     {
         await Click(nameof(NavMenu.Elements.Search));

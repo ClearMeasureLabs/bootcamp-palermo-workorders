@@ -169,8 +169,26 @@ public partial class WorkOrderSearch : AppComponentBase
     private void ApplySortByTitle()
     {
         Model.Results = _sortAscending
-            ? Model.Results.OrderBy(r => r.Title, StringComparer.CurrentCultureIgnoreCase).ToArray()
-            : Model.Results.OrderByDescending(r => r.Title, StringComparer.CurrentCultureIgnoreCase).ToArray();
+            ? Model.Results.OrderBy(r => r.WorkOrder.Title, StringComparer.CurrentCultureIgnoreCase).ToArray()
+            : Model.Results.OrderByDescending(r => r.WorkOrder.Title, StringComparer.CurrentCultureIgnoreCase).ToArray();
+    }
+
+    private const int TitleDisplayMaxLength = 60;
+
+    private static string FormatTitleForDisplay(string? title)
+    {
+        if (string.IsNullOrEmpty(title) || title.Length <= TitleDisplayMaxLength)
+            return title ?? string.Empty;
+
+        return string.Concat(title.AsSpan(0, TitleDisplayMaxLength), "…");
+    }
+
+    private static string? TitleCellTooltip(string? title)
+    {
+        if (string.IsNullOrEmpty(title) || title.Length <= TitleDisplayMaxLength)
+            return null;
+
+        return title;
     }
 
     private void ApplySortByRoom()
