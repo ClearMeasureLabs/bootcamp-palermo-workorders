@@ -56,6 +56,11 @@
                     </div>
 
                     <div class="filter-group">
+                        <label class="filter-label" for="@Elements.TitleContainsInput">Title contains</label>
+                        <InputText id="@Elements.TitleContainsInput" @bind-Value="Model.Filters.TitleContains" class="form-control" />
+                    </div>
+
+                    <div class="filter-group">
                         <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
@@ -170,6 +175,7 @@
         AssigneeSelect,
         StatusSelect,
         OverdueOnlyToggle,
+        TitleContainsInput,
         SearchButton,
         ClearFiltersButton,
         WorkOrderLink,

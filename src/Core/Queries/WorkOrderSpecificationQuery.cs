@@ -25,6 +25,11 @@ public record WorkOrderSpecificationQuery : IRequest<WorkOrder[]>, IRemotableReq
         OverdueOnly = overdueOnly;
     }
 
+    public void MatchTitle(string? title)
+    {
+        TitleContains = string.IsNullOrWhiteSpace(title) ? null : title;
+    }
+
     public string? StatusKey { get; set; }
 
     // ReSharper disable once MemberCanBePrivate.Global -- required for System.Text.Json round-trip serialization (remoting protocol)
@@ -35,6 +40,9 @@ public record WorkOrderSpecificationQuery : IRequest<WorkOrder[]>, IRemotableReq
 
     // ReSharper disable once MemberCanBePrivate.Global -- required for System.Text.Json round-trip serialization (remoting protocol)
     public bool OverdueOnly { get; set; }
+
+    // ReSharper disable once MemberCanBePrivate.Global -- required for System.Text.Json round-trip serialization (remoting protocol)
+    public string? TitleContains { get; set; }
 
     public WorkOrderStatus? Status => StatusKey != null ? WorkOrderStatus.FromKey(StatusKey) : null;
 }

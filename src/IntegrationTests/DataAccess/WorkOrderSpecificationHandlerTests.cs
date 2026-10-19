@@ -290,4 +290,100 @@ public class WorkOrderSpecificationHandlerTests
         orders.Length.ShouldBe(1);
         orders[0].Number.ShouldBe("OVR-001");
     }
+
+    [Test]
+    public async Task ShouldReturnMatchingWorkOrders_WhenTitleContainsFilterMatches()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var matching = new WorkOrder
+        {
+            Creator = employee,
+            Number = "TTL-001",
+            Title = "Fix the Kitchen Sink"
+        };
+        var other = new WorkOrder
+        {
+            Creator = employee,
+            Number = "TTL-002",
+            Title = "Paint the hallway"
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(matching);
+            context.Add(other);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchTitle("kitchen");
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Number.ShouldBe("TTL-001");
+    }
+
+    [Test]
+    public async Task ShouldReturnNoWorkOrders_WhenTitleContainsFilterDoesNotMatch()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var order = new WorkOrder
+        {
+            Creator = employee,
+            Number = "TTL-003",
+            Title = "Paint the hallway"
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchTitle("kitchen");
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task ShouldMatchTitleContains_CaseInsensitively()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("1", "1", "1", "1");
+        var order = new WorkOrder
+        {
+            Creator = employee,
+            Number = "TTL-004",
+            Title = "Fix the Kitchen Sink"
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchTitle("KITCHEN");
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Number.ShouldBe("TTL-004");
+    }
 }

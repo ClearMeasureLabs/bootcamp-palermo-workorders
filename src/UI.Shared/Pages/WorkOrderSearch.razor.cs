@@ -120,6 +120,7 @@ public partial class WorkOrderSearch : AppComponentBase
         specification.MatchAssignee(assignee);
         specification.MatchStatus(status);
         specification.MatchOverdueOnly(Model.Filters.OverdueOnly);
+        specification.MatchTitle(Model.Filters.TitleContains);
 
         var workOrders = await Bus.Send(specification);
         Model.Results = workOrders.Select(MapSearchRow).ToArray();
@@ -203,6 +204,7 @@ public partial class WorkOrderSearch : AppComponentBase
         !string.IsNullOrEmpty(Model.Filters.Assignee) ||
         !string.IsNullOrEmpty(Model.Filters.Status) ||
         Model.Filters.OverdueOnly ||
+        !string.IsNullOrEmpty(Model.Filters.TitleContains) ||
         _assignedToMe;
 
     private async Task HandleClearFilters()
@@ -213,6 +215,7 @@ public partial class WorkOrderSearch : AppComponentBase
         Model.Filters.Assignee = string.Empty;
         Model.Filters.Status = string.Empty;
         Model.Filters.OverdueOnly = false;
+        Model.Filters.TitleContains = string.Empty;
         await SearchWorkOrders();
     }
 }

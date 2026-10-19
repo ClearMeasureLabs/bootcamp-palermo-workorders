@@ -9,6 +9,8 @@ public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
 {
     public int SendCallCount { get; private set; }
 
+    public WorkOrderSpecificationQuery? LastWorkOrderSpecificationQuery { get; private set; }
+
     public override Task Publish(INotification notification)
     {
         return Task.CompletedTask;
@@ -27,8 +29,9 @@ public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
             return (Task<TResponse>)EmployeeByUserNameQueryResponse<TResponse>();
         }
 
-        if (request is WorkOrderSpecificationQuery)
+        if (request is WorkOrderSpecificationQuery specificationQuery)
         {
+            LastWorkOrderSpecificationQuery = specificationQuery;
             return Task.FromResult<TResponse>((TResponse)(object)(workOrderResults ?? WorkOrderSpecificationQueryResponse()));
         }
 

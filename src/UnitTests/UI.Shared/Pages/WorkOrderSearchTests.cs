@@ -681,4 +681,65 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task ShouldRender_TitleContainsInput()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var input = component.Find($"#{WorkOrderSearch.Elements.TitleContainsInput}");
+        input.ShouldNotBeNull();
+        var label = component.Find($"label[for='{WorkOrderSearch.Elements.TitleContainsInput}']");
+        label.TextContent.ShouldBe("Title contains");
+    }
+
+    [Test]
+    public async Task ShouldApply_TitleContains_OnSearch()
+    {
+        var bus = new StubBus();
+        await using var ctx = CreateContext(bus);
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var input = component.Find($"#{WorkOrderSearch.Elements.TitleContainsInput}");
+        await input.ChangeAsync(new() { Value = "kitchen" });
+
+        var searchButton = component.Find($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync(new());
+
+        bus.LastWorkOrderSpecificationQuery.ShouldNotBeNull();
+        bus.LastWorkOrderSpecificationQuery!.TitleContains.ShouldBe("kitchen");
+    }
+
+    [Test]
+    public async Task ShouldReport_HasActiveFilters_True_WhenTitleContainsIsSet()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var input = component.Find($"#{WorkOrderSearch.Elements.TitleContainsInput}");
+        await input.ChangeAsync(new() { Value = "kitchen" });
+
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        clearButton.HasAttribute("disabled").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task ShouldReset_TitleContains_OnClearFilters()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var instance = component.Instance;
+
+        var input = component.Find($"#{WorkOrderSearch.Elements.TitleContainsInput}");
+        await input.ChangeAsync(new() { Value = "kitchen" });
+        instance.Model.Filters.TitleContains.ShouldBe("kitchen");
+
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        await clearButton.ClickAsync(new());
+
+        instance.Model.Filters.TitleContains.ShouldBe(string.Empty);
+    }
 }

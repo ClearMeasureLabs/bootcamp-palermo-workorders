@@ -13,12 +13,13 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class WorkOrderTools
 {
-    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, and assignee username. Valid statuses: Draft, Assigned, InProgress, Complete.")]
+    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, assignee username, and title text. Valid statuses: Draft, Assigned, InProgress, Complete.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
         [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null,
         [Description("Optional creator username filter")] string? creatorUsername = null,
-        [Description("Optional assignee username filter")] string? assigneeUsername = null)
+        [Description("Optional assignee username filter")] string? assigneeUsername = null,
+        [Description("Optional title contains filter (case-insensitive)")] string? titleContains = null)
     {
         var query = new WorkOrderSpecificationQuery();
         if (!string.IsNullOrWhiteSpace(status))
@@ -47,6 +48,8 @@ public class WorkOrderTools
 
             query.MatchAssignee(assignee);
         }
+
+        query.MatchTitle(titleContains);
 
         var workOrders = await bus.Send(query);
         return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),

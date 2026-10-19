@@ -13,6 +13,7 @@ public class WorkOrderSearchModel
         public string? Assignee { get; set; }
         public string? Status { get; set; }
         public bool OverdueOnly { get; set; }
+        public string? TitleContains { get; set; }
     }
 }
 
