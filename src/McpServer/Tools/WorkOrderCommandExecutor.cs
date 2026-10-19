@@ -3,6 +3,7 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.Core.Services;
 
 namespace ClearMeasure.Bootcamp.McpServer.Tools;
 
@@ -78,7 +79,7 @@ internal static class WorkOrderCommandExecutor
         $"Unknown command '{commandName}'. Available commands: {AvailableCommandsList}.";
 
     private static string FormatInvalidCommand(string commandName, WorkOrder workOrder, StateCommandBase command) =>
-        $"Command '{commandName}' cannot be executed. Work order is in '{workOrder.Status.FriendlyName}' status but the command requires '{command.GetBeginStatus().FriendlyName}' status.";
+        StateCommandValidationMessages.FormatInvalid(commandName, workOrder, command.GetBeginStatus());
 
     internal static async Task<string> ExecuteCommandAsync(
         IBus bus,
