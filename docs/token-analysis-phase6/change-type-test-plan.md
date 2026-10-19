@@ -141,3 +141,20 @@ Branches `cursor/token-exp-p6-c89..c96-v46` at the round 33 plan commit. Avoid c
 | c96 | #10804 | CI trap | mcp-tool, db-column, ui-bunit-manage, NEXT_SCRIPT 033 | WorkOrder.BudgetCode max 12: SQL Server truncation unless BogusOverrides clamps in case WorkOrder (LENGTH_RISK) |
 
 Check next round: Submits on c89/c94 (search recipe), `UNIT=CACHED`/`ACC_TEST=CACHED` stage resumes after any lost result, Get-Context directory listing use, wide acceptance on c92, LENGTH_RISK on c96.
+
+## Final confirmation round (vFinal a14cfc57, f01-f08)
+
+Branches `cursor/token-exp-p6-f01..f08-final` at the commit that adds this section. Do not touch the control (cx*) branches.
+
+| id | issue | category | recipe(s) | exercises |
+|---|---|---|---|---|
+| f01 | #10829 | UI search (bUnit + Playwright) | new-query, ui-bunit-search, ui-playwright-data | status option counts via WorkOrderCountByStatusQuery; search custom-results example |
+| f02 | #10830 | UI manage (bUnit + Playwright) | ui-bunit-manage, ui-bunit-search, ui-playwright-data | "Save and add another" on new work orders |
+| f03 | #10831 | multi-layer | new-query, mcp-tool | stale work orders query (1-90 days) + `list-stale-work-orders` |
+| f04 | #10832 | multi-layer state command | mcp-tool, ui-bunit-manage, **state-command** | Abandon (InProgress → Cancelled, `InProgressToCancelledCommand`); private Name; wide acceptance |
+| f05 | #10833 | vague | none | how old a work order is (visible-change clause; rescue -File if budget runs out) |
+| f06 | #10834 | symptom bug | none | MCP list-work-orders throws on unknown status (`WorkOrderStatus.FromKey`), help text omits Cancelled |
+| f07 | #10835 | test-only | ui-bunit | NavMenu bUnit tests, no production change |
+| f08 | #10836 | CI trap | mcp-tool, db-column, ui-bunit-manage, NEXT_SCRIPT 033 | Employee.Department max 20 (BogusOverrides case Employee clamp) |
+
+Measure as phase 6 plus `measure_exploration.py`. Check: rescue -File use / no probe edits, RedundantNameQualifier catches, Submits on f01/f04, get_mcp_tools count.
