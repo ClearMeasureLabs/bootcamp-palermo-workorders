@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
@@ -5,42 +6,46 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 [TestFixture]
 public class WorkOrderSearchMyWorkOrderTests : AcceptanceTestBase
 {
-    [Test, Retry(3)]
+    [SetUp]
+    public async Task Setup()
+    {
+        await LoginAsCurrentUser();
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldShowYouMarker_InSearchRow_WhenWorkOrderAssignedToCurrentUser()
     {
-        Page.SetDefaultTimeout(120000);
-        await LoginAsCurrentUser();
+        var myOrder = Faker<WorkOrder>();
+        var otherOrder = Faker<WorkOrder>();
+        var otherEmployee = Faker<Employee>();
+        myOrder.Creator = CurrentUser;
+        myOrder.Assignee = CurrentUser;
+        myOrder.Title = $"[{TestTag}] my you-marker order";
+        otherOrder.Creator = otherEmployee;
+        otherOrder.Assignee = otherEmployee;
+        otherOrder.Title = $"[{TestTag}] other you-marker order";
 
-        await Page.GotoAsync(new Uri(new Uri(Page.Url), "/workorder/manage").ToString());
+        await using var context = TestHost.NewDbContext();
+        context.Attach(CurrentUser);
+        context.Add(otherEmployee);
+        context.Add(myOrder);
+        context.Add(otherOrder);
+        await context.SaveChangesAsync();
+
+        await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var title = "MyYouMarker " + Guid.NewGuid().ToString("N")[..8];
-        await Input(nameof(WorkOrderManage.Elements.Title), title);
-        await Input(nameof(WorkOrderManage.Elements.Description), "Assigned to current user for search highlight");
-        await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
+        var myRow = Page.Locator("tbody tr").Filter(new() { HasText = myOrder.Title });
+        await Expect(myRow).ToBeVisibleAsync();
+        await Expect(myRow).ToContainTextAsync("(you)");
+        var myRowClass = await myRow.GetAttributeAsync("class");
+        myRowClass.ShouldNotBeNull();
+        myRowClass.ShouldContain("my-work-order");
 
-        await Page.GetByRole(AriaRole.Button, new() { Name = "Save" }).ClickAsync();
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-        if (!Page.Url.Contains("/workorder/search", StringComparison.OrdinalIgnoreCase))
-        {
-            await Page.GotoAsync(new Uri(new Uri(Page.Url), "/workorder/search").ToString());
-            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        }
-
-        var assignedToMe = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
-        await assignedToMe.WaitForAsync();
-        if (!await assignedToMe.IsCheckedAsync())
-        {
-            await assignedToMe.CheckAsync();
-            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        }
-
-        var row = Page.Locator("tbody tr", new() { HasTextString = title });
-        await row.WaitForAsync();
-        await Expect(row).ToContainTextAsync("(you)");
-        var rowClass = await row.GetAttributeAsync("class");
-        rowClass.ShouldNotBeNull();
-        rowClass.ShouldContain("my-work-order");
+        var otherRow = Page.Locator("tbody tr").Filter(new() { HasText = otherOrder.Title });
+        await Expect(otherRow).ToBeVisibleAsync();
+        await Expect(otherRow).Not.ToContainTextAsync("(you)");
+        var otherRowClass = await otherRow.GetAttributeAsync("class") ?? "";
+        otherRowClass.ShouldNotContain("my-work-order");
     }
 }
