@@ -232,12 +232,14 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public async Task SortByStatus_Ascending_SortsResultsByStatusFriendlyName()
+    public async Task SortByStatus_Ascending_SortsResultsByWorkflowOrder()
     {
         var rows = new[]
         {
+            new WorkOrder { Number = "WO-005", Title = "E", Status = WorkOrderStatus.Cancelled },
             new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress },
             new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned },
+            new WorkOrder { Number = "WO-004", Title = "D", Status = WorkOrderStatus.Complete },
             new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
         };
         await using var ctx = CreateContext(new StubBus(rows));
@@ -248,9 +250,11 @@ public class WorkOrderSearchTests
         await sortBtn.ClickAsync(new());
 
         var cells = component.FindAll("tbody tr td:nth-child(4)");
-        cells[0].TextContent.Trim().ShouldBe(WorkOrderStatus.Assigned.FriendlyName);
-        cells[1].TextContent.Trim().ShouldBe(WorkOrderStatus.Draft.FriendlyName);
+        cells[0].TextContent.Trim().ShouldBe(WorkOrderStatus.Draft.FriendlyName);
+        cells[1].TextContent.Trim().ShouldBe(WorkOrderStatus.Assigned.FriendlyName);
         cells[2].TextContent.Trim().ShouldBe(WorkOrderStatus.InProgress.FriendlyName);
+        cells[3].TextContent.Trim().ShouldBe(WorkOrderStatus.Complete.FriendlyName);
+        cells[4].TextContent.Trim().ShouldBe(WorkOrderStatus.Cancelled.FriendlyName);
     }
 
     [Test]
@@ -258,8 +262,10 @@ public class WorkOrderSearchTests
     {
         var rows = new[]
         {
+            new WorkOrder { Number = "WO-005", Title = "E", Status = WorkOrderStatus.Cancelled },
             new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress },
             new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Assigned },
+            new WorkOrder { Number = "WO-004", Title = "D", Status = WorkOrderStatus.Complete },
             new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
         };
         await using var ctx = CreateContext(new StubBus(rows));
@@ -271,9 +277,11 @@ public class WorkOrderSearchTests
         await sortBtn.ClickAsync(new());
 
         var cells = component.FindAll("tbody tr td:nth-child(4)");
-        cells[0].TextContent.Trim().ShouldBe(WorkOrderStatus.InProgress.FriendlyName);
-        cells[1].TextContent.Trim().ShouldBe(WorkOrderStatus.Draft.FriendlyName);
-        cells[2].TextContent.Trim().ShouldBe(WorkOrderStatus.Assigned.FriendlyName);
+        cells[0].TextContent.Trim().ShouldBe(WorkOrderStatus.Cancelled.FriendlyName);
+        cells[1].TextContent.Trim().ShouldBe(WorkOrderStatus.Complete.FriendlyName);
+        cells[2].TextContent.Trim().ShouldBe(WorkOrderStatus.InProgress.FriendlyName);
+        cells[3].TextContent.Trim().ShouldBe(WorkOrderStatus.Assigned.FriendlyName);
+        cells[4].TextContent.Trim().ShouldBe(WorkOrderStatus.Draft.FriendlyName);
     }
 
     [Test]

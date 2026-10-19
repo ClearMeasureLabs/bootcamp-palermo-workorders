@@ -153,8 +153,8 @@ public partial class WorkOrderSearch : AppComponentBase
     private void ApplySortByStatus()
     {
         Model.Results = _sortAscending
-            ? Model.Results.OrderBy(r => r.Status.FriendlyName).ToArray()
-            : Model.Results.OrderByDescending(r => r.Status.FriendlyName).ToArray();
+            ? Model.Results.OrderBy(r => r.Status.SortBy).ToArray()
+            : Model.Results.OrderByDescending(r => r.Status.SortBy).ToArray();
     }
 
     private void ApplySortByDueDate()
