@@ -21,6 +21,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public const int InstructionsMaxLength = 4000;
 
+    /// <summary>
+    /// Maximum length of <see cref="VendorTicketNumber"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int VendorTicketNumberMaxLength = 20;
+
     public string? Title { get; set; } = "";
 
     public string? Description
@@ -36,6 +41,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     } = "";
 
     public string? RoomNumber { get; set; }
+
+    /// <summary>
+    /// Optional vendor ticket number when a vendor is fixing the work order.
+    /// </summary>
+    public string? VendorTicketNumber { get; set; }
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 

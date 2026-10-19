@@ -84,6 +84,13 @@
                         <InputTextArea data-testid="@Elements.RoomNumber" id="RoomNumber" @bind-Value="Model.RoomNumber" class="form-control input-textarea input-room" maxlength="@WorkOrder.RoomNumberMaxLength" disabled="@Model.IsReadOnly"/>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="VendorTicketNumber" class="form-label">Vendor ticket #:</label>
+                    <div>
+                        <InputText data-testid="@Elements.VendorTicketNumber" id="VendorTicketNumber" @bind-Value="Model.VendorTicketNumber" class="form-control input-text" maxlength="@WorkOrder.VendorTicketNumberMaxLength" disabled="@Model.IsReadOnly"/>
+                    </div>
+                </div>
             </div>
 
             <div class="readonly-info">
@@ -186,6 +193,7 @@
         Title,
         AssigneeFullName,
         RoomNumber,
+        VendorTicketNumber,
         Description,
         Instructions,
         AssignedDate,

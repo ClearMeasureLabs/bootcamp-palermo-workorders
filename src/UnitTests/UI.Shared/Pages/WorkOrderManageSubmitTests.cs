@@ -19,6 +19,36 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 public class WorkOrderManageSubmitTests
 {
     [Test]
+    public async Task ShouldShowVendorTicketNumberField_WithMaxLength20()
+    {
+        await using var ctx = new BunitContext();
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        user.AddRole(new Role("creator", true, false));
+        var bus = new StubSubmitBus();
+
+        ctx.Services.AddSingleton<IBus>(bus);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            var field = component.Find($"[data-testid='{WorkOrderManage.Elements.VendorTicketNumber}']");
+            field.ShouldNotBeNull();
+            field.GetAttribute("maxlength").ShouldBe(WorkOrder.VendorTicketNumberMaxLength.ToString());
+        });
+    }
+
+    [Test]
     public async Task ShouldNavigateToSearch_WhenSaveCommandSubmittedForNewWorkOrder()
     {
         await using var ctx = new BunitContext();
