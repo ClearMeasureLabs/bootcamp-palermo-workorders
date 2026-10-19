@@ -1,0 +1,49 @@
+@implements Palermo.BlazorMvc.IListener<WorkOrderChangedEvent>
+@using ClearMeasure.Bootcamp.Core.Queries
+@using ClearMeasure.Bootcamp.UI.Shared.Pages
+@inherits AppComponentBase
+@inject IUserSession UserSession
+
+@if (_count > 0)
+{
+    <span data-testid="@Elements.Badge" class="badge rounded-pill text-bg-secondary ms-1">@_count</span>
+}
+
+@code {
+    public enum Elements
+    {
+        Badge
+    }
+
+    private int _count;
+    private Employee? _currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SetCurrentUser();
+        await LoadCountAsync();
+    }
+
+    public void Handle(WorkOrderChangedEvent theEvent)
+    {
+        InvokeAsync(LoadCountAsync);
+    }
+
+    private async Task SetCurrentUser()
+    {
+        _currentUser = await UserSession.GetCurrentUserAsync();
+    }
+
+    private async Task LoadCountAsync()
+    {
+        if (_currentUser == null)
+        {
+            _count = 0;
+            StateHasChanged();
+            return;
+        }
+
+        _count = await Bus.Send(new AssignedOpenWorkOrderCountQuery(_currentUser.UserName));
+        StateHasChanged();
+    }
+}
