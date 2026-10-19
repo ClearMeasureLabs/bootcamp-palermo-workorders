@@ -45,6 +45,8 @@ if ($it) {
   if ($code) { $r | Select-String 'Failed |Assert|Expected|Exception|error|Status' | Select-Object -First 20; 'IT_TEST=FAIL (SQLite)'; exit 0 }
   'IT_TEST=OK'
 }
+  # v40g: local InspectCode on changed lines (Qodana REDs were found only in CI: round 26 c40 x2, c34, c25, c26)
+  if (-not $IgnoreRisk) { $ins = @(& "$tools/Invoke-LocalInspect.ps1"); if ($ins -match '^INSPECT=FIX') { $ins; 'SUBMIT=FIX (fix the FIX lines, rerun Submit; -IgnoreRisk only if clearly false)'; exit 0 }; $ins | Where-Object { $_ -match '^INSPECT=SKIPPED' } }
 }
 if ($VerifyOnly) { 'VERIFY=OK'; exit 0 }
 if (-not $Issue -or -not $Branch) { 'need -Issue and -Branch to publish'; exit 1 }

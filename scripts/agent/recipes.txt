@@ -5,5 +5,8 @@ mcp-tool	\bMCP\b	src/McpServer/Tools/WorkOrderTools.cs:14-40 src/IntegrationTest
 db-column	\b(DbUp|column)\b	src/Database/scripts/Update/032_AddMiddleNameToEmployee.sql src/DataAccess/Mappings/EmployeeMap.cs src/IntegrationTests/DataAccess/Mappings/EmployeeMappingTests.cs:58-78
 api-json-field	\b(endpoint|controller)\b.*\b(response|field)\b|\bresponse gains\b	src/UI/Api/Controllers/ToolsWordCountController.cs:20-57 src/UnitTests/UI.Api/ToolsWordCountControllerTests.cs:1-40	api-new-endpoint
 api-new-endpoint	\bnew\b[^.\n]*\bendpoint\b|\bnew\b[^.\n]*\bcontroller\b	src/UI/Api/Controllers/ToolsDueDateCheckController.cs:15-60 src/UnitTests/UI.Api/ToolsDueDateCheckControllerTests.cs:1-30 src/UI/Server/ApiKeyAuthenticationMiddleware.cs:85-102
-blazor-page	\b(page|razor|Blazor)\b[^\n]*\b(bUnit|acceptance|data-testid)\b|\bdata-testid\b	src/UnitTests/UI.Shared/Pages/SettingsTests.cs:1-45 src/AcceptanceTests/App/CounterTests.cs:1-34
 new-validator	validator\b	src/Core/Validation/WorkOrderCountByStatusQueryValidator.cs:1-6 src/Core/Validation/EmployeeByUserNameQueryValidator.cs src/UnitTests/Core/Validation/EmployeeByUserNameQueryValidatorTests.cs:1-38	new-query
+
+# v40g: UI recipe (round 22-26: UI items averaged 930k; agents read 10-25 files hunting bUnit stubs/listener/Elements patterns)
+ui-bunit	(?i)\b(bUnit|razor|Blazor|component|nav menu|side panel|settings page|search page|manage page|work order (page|screen))\b	src/UI.Shared/Components/LastWorkOrder.razor src/UnitTests/UI.Shared/Components/LastWorkOrderTests.cs:15-34 src/UnitTests/UI.Shared/Components/MyWorkOrdersTests.cs:181-190 src/UnitTests/UI.Shared/Pages/StubBus.cs:8-30
+ui-playwright	(?i)\b(Playwright|acceptance test)\b	src/AcceptanceTests/App/CopyrightFooterTests.cs:6-27
