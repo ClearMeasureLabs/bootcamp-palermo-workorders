@@ -206,6 +206,14 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
         var filterArguments = BuildListWorkOrdersArguments(creatorUsername, assigneeUsername, status);
 
+        // Default "Assigned to me" locks assignee; clear so creator/assignee selects apply.
+        var assignedToMe = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        if (await assignedToMe.IsCheckedAsync())
+        {
+            await assignedToMe.UncheckAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
         await creatorSelect.SelectOptionAsync(creatorUsername ?? string.Empty);
         await assigneeSelect.SelectOptionAsync(assigneeUsername ?? string.Empty);
         await statusSelect.SelectOptionAsync(status ?? string.Empty);

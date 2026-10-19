@@ -402,6 +402,14 @@ public abstract class AcceptanceTestBase
         }
 
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        // Default "Assigned to me" hides drafts/unassigned orders; clear it before locating.
+        var assignedToMe = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        if (await assignedToMe.IsCheckedAsync())
+        {
+            await assignedToMe.UncheckAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
         var linkTestId = nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number;
         await Page.GetByTestId(linkTestId).WaitForAsync(new LocatorWaitForOptions
         {
