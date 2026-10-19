@@ -21,6 +21,7 @@ public partial class WorkOrderSearch : AppComponentBase
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
     [Inject] private WorkOrderSearchState SearchState { get; set; } = null!;
+    [Inject] private NavigationManager Navigation { get; set; } = null!;
 
     [SupplyParameterFromQuery] public string? Creator { get; set; }
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
@@ -204,6 +205,30 @@ public partial class WorkOrderSearch : AppComponentBase
         !string.IsNullOrEmpty(Model.Filters.Status) ||
         Model.Filters.OverdueOnly ||
         _assignedToMe;
+
+    private string ShareSearchUrl => BuildShareSearchUrl();
+
+    private string BuildShareSearchUrl()
+    {
+        var parameters = new Dictionary<string, object?>();
+        AddShareParameter(parameters, nameof(Creator), Model.Filters.Creator);
+        AddShareParameter(parameters, nameof(Assignee), Model.Filters.Assignee);
+        AddShareParameter(parameters, nameof(Status), Model.Filters.Status);
+        if (Model.Filters.OverdueOnly)
+        {
+            parameters[nameof(OverdueOnly)] = true;
+        }
+
+        return Navigation.GetUriWithQueryParameters("/workorder/search", parameters);
+    }
+
+    private static void AddShareParameter(Dictionary<string, object?> parameters, string name, string? value)
+    {
+        if (!string.IsNullOrEmpty(value))
+        {
+            parameters[name] = value;
+        }
+    }
 
     private async Task HandleClearFilters()
     {

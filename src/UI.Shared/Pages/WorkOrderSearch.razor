@@ -65,6 +65,10 @@
                     </div>
                 </div>
             </EditForm>
+            <div class="share-search" data-testid="@Elements.ShareThisSearch">
+                <span class="share-search-label">Share this search</span>
+                <a href="@ShareSearchUrl">@ShareSearchUrl</a>
+            </div>
         </div>
 
         <div class="results-card">
@@ -181,7 +185,8 @@
         SortByRoomButton,
         AssignedToMeCheckbox,
         SearchHint,
-        SearchHeadingTooltip
+        SearchHeadingTooltip,
+        ShareThisSearch
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();
