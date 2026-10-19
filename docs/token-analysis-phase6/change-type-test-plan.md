@@ -98,3 +98,16 @@ Round 26 prep (2026-10-18): issues #10685-10692, v39g, branches cursor/token-exp
 | c46 | ML | GET /api/workorders/export CSV plus a search "Export CSV" link | no export endpoint (only bulk import) |
 | c47 | Vague | "Technicians say it's hard to know what to work on next." | — |
 | c48 | Bug | "A search link with an unknown status shows the error screen" | ApplyQueryParameterOverrides copies ?status into Filters.Status; SearchWorkOrders calls WorkOrderStatus.FromKey, which throws ArgumentOutOfRangeException |
+
+## Round 31 (v44g, c73-c80, issues #10765-10772, branches cursor/token-exp-p6-cNN-v44)
+
+| id | cat | issue | what it proves / validated against code |
+|---|---|---|---|
+| c73 | UI | 10765 | search rows get `my-work-order` + "(you)" for the current user (bUnit + Playwright); search page has no current-user marker |
+| c74 | UI | 10766 | "Assign to me" on the manage form (bUnit + Playwright); exercises the new ui-bunit-manage recipe; no such button exists |
+| c75 | ML | 10767 | title-contains filter: query, handler (case-insensitive on SQLite and SQL Server), search box, MCP `titleContains` arg; no title filter exists |
+| c76 | ML | 10768 | new query + validator + handler + manage-page section loaded on open; **every existing WorkOrderManage stub bus must answer the new query** (v44 trap line + recipe) |
+| c77 | Vague | 10769 | "what do the statuses mean": no status legend or help in UI.Shared |
+| c78 | Bug | 10770 | pick an assignee, then blank, then Save: nothing happens. **Reproduced** with a temp Playwright test on the v44 tip (30 s timeout, no navigation); the cause is that `HandleSubmit` checks `AssignedToUserName != null`, so "" sends `EmployeeByUserNameQuery("")`, which fails validation. A one-line `IsNullOrWhiteSpace` fix makes it pass. Local acceptance covers it. |
+| c79 | Test-only | 10771 | DiagnosticController (0 tests) + WorkOrderSearchSpecification (0 direct tests) |
+| c80 | Trap | 10772 | `VendorTicketNumber` max 20 (DbUp 033): SQL Server CI truncates Bogus values unless the WorkOrder case in BogusOverrides clamps it (round 28 c51 failed this way at 20); LENGTH_RISK must fire |
