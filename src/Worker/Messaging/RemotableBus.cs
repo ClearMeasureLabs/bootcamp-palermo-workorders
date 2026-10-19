@@ -1,5 +1,7 @@
-﻿using System.Net.Http.Json;
+﻿using System.Diagnostics;
+using System.Net.Http.Json;
 using System.Text.Json;
+using ChurchBulletin.ServiceDefaults;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Messaging;
 using MediatR;
@@ -47,7 +49,14 @@ public class RemotableBus(HttpClient httpClient, string apiUrl) : IBus
     private async Task<WebServiceMessage?> PostMessage(object payload)
     {
         var message = new WebServiceMessage(payload);
-        var result = await httpClient.PostAsJsonAsync(apiUrl, message);
+        using var request = new HttpRequestMessage(HttpMethod.Post, apiUrl)
+        {
+            Content = JsonContent.Create(message)
+        };
+        request.Headers.TryAddWithoutValidation(
+            CorrelationIdConstants.HeaderName,
+            Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString());
+        var result = await httpClient.SendAsync(request);
         var json = await result.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<WebServiceMessage>(json);
     }
