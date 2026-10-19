@@ -21,11 +21,22 @@ public class WorkOrderSearchMyWorkOrderTests : AcceptanceTestBase
         await Page.GetByRole(AriaRole.Button, new() { Name = "Save" }).ClickAsync();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Page.GotoAsync(new Uri(new Uri(Page.Url), "/workorder/search").ToString());
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        if (!Page.Url.Contains("/workorder/search", StringComparison.OrdinalIgnoreCase))
+        {
+            await Page.GotoAsync(new Uri(new Uri(Page.Url), "/workorder/search").ToString());
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
+        var assignedToMe = Page.Locator($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
+        await assignedToMe.WaitForAsync();
+        if (!await assignedToMe.IsCheckedAsync())
+        {
+            await assignedToMe.CheckAsync();
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
 
         var row = Page.Locator("tbody tr", new() { HasTextString = title });
-        await row.WaitForAsync();
+        await row.WaitForAsync(new() { Timeout = 120000 });
         await Expect(row).ToContainTextAsync("(you)");
         var rowClass = await row.GetAttributeAsync("class");
         rowClass.ShouldNotBeNull();
