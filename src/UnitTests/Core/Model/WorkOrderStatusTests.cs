@@ -315,4 +315,10 @@ public class WorkOrderStatusTests
     {
         WorkOrderStatus.InProgress.ToString().ShouldBe("In Progress");
     }
+
+    [Test]
+    public void FromKey_ShouldMatchFriendlyName()
+    {
+        WorkOrderStatus.FromKey("In Progress").ShouldBe(WorkOrderStatus.InProgress);
+    }
 }

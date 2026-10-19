@@ -113,7 +113,8 @@ public class WorkOrderStatus : IEquatable<WorkOrderStatus>
         ArgumentNullException.ThrowIfNull(key);
 
         var match = Array.Find(GetAllItems(),
-            instance => instance.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase));
+            instance => instance.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase)
+                || instance.FriendlyName.Equals(key, StringComparison.InvariantCultureIgnoreCase));
 
         return match ?? throw new ArgumentOutOfRangeException(
             nameof(key),
