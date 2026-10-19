@@ -6,6 +6,7 @@ using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using MediatR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,10 +26,12 @@ public class WorkOrderManageSubmitTests
         var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
         user.AddRole(new Role("creator", true, false));
         var bus = new StubSubmitBus();
+        var searchState = new WorkOrderSearchState();
 
         ctx.Services.AddSingleton<IBus>(bus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(searchState);
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
@@ -56,6 +59,9 @@ public class WorkOrderManageSubmitTests
             bus.LastCommand.ShouldNotBeNull();
             bus.LastCommand.ShouldBeOfType<SaveDraftCommand>();
             navigationManager.Uri.ShouldContain("/workorder/search");
+            searchState.FlashMessage.ShouldNotBeNullOrWhiteSpace();
+            searchState.FlashMessage.ShouldContain("WO-TEST");
+            searchState.FlashMessage!.ToLowerInvariant().ShouldContain("saved");
         });
     }
 
@@ -79,6 +85,7 @@ public class WorkOrderManageSubmitTests
         ctx.Services.AddSingleton<IBus>(bus);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
@@ -143,7 +150,7 @@ public class WorkOrderManageSubmitTests
             {
                 LastCommand = request;
                 var wo = existing ?? new WorkOrder { Number = "WO-TEST", Status = WorkOrderStatus.Draft };
-                var result = new StateCommandResult(wo);
+                var result = new StateCommandResult(wo, "Save", $"Jeffrey Palermo has saved work order {wo.Number}");
                 return Task.FromResult((TResponse)(object)result);
             }
 

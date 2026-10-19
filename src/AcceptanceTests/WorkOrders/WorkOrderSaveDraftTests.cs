@@ -32,6 +32,11 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         order.Number.ShouldNotBeNullOrWhiteSpace();
         string orderNumber = order.Number;
 
+        var saveNotice = Page.GetByTestId(nameof(WorkOrderSearch.Elements.SaveSuccessNotice));
+        await Expect(saveNotice).ToBeVisibleAsync();
+        await Expect(saveNotice).ToContainTextAsync("saved");
+        await Expect(saveNotice).ToContainTextAsync(orderNumber);
+
         var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + orderNumber);
         await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await TakeScreenshotAsync(4, "WorkOrderLinkVisible");

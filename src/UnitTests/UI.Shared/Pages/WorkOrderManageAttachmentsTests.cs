@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -43,6 +44,7 @@ public class WorkOrderManageAttachmentsTests
         ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus(attachments));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(uploader));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());

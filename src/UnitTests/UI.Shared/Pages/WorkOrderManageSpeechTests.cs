@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -31,6 +32,7 @@ public class WorkOrderManageSpeechTests
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
@@ -61,6 +63,7 @@ public class WorkOrderManageSpeechTests
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
@@ -97,6 +100,7 @@ public class WorkOrderManageSpeechTests
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(translationService);
@@ -144,6 +148,7 @@ public class WorkOrderManageSpeechTests
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(translationService);
@@ -186,6 +191,7 @@ public class WorkOrderManageSpeechTests
         ctx.Services.AddSingleton<IBus>(new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilderEmptyTitle());
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
         ctx.Services.AddSingleton<ITranslationService>(translationService);

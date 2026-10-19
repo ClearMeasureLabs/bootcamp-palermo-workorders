@@ -46,6 +46,34 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ShouldShowSaveSuccessNotice_WhenFlashMessageIsStaged()
+    {
+        var state = new WorkOrderSearchState
+        {
+            FlashMessage = "Jeffrey Palermo has saved work order WO-123"
+        };
+        await using var ctx = CreateContext(searchState: state);
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var notice = component.Find($"[data-testid='{WorkOrderSearch.Elements.SaveSuccessNotice}']");
+        notice.TextContent.ShouldContain("saved work order WO-123");
+        notice.GetAttribute("role").ShouldBe("status");
+        state.FlashMessage.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task ShouldOmitSaveSuccessNotice_WhenNoFlashMessageIsStaged()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.FindAll($"[data-testid='{WorkOrderSearch.Elements.SaveSuccessNotice}']")
+            .ShouldBeEmpty();
+    }
+
+    [Test]
     public async Task ShouldRenderTooltipWithExactTitleOnSearchHeading()
     {
         await using var ctx = CreateContext();

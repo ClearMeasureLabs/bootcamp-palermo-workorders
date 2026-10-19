@@ -6,6 +6,11 @@
             <div class="search-subtitle">Find and manage church maintenance requests</div>
         </div>
 
+        @if (!string.IsNullOrEmpty(_flashMessage))
+        {
+            <div class="alert alert-success" role="status" data-testid="@Elements.SaveSuccessNotice">@_flashMessage</div>
+        }
+
         <div class="search-filters-card">
             <EditForm Model="@Model" OnValidSubmit="OnSearch!">
                 <div class="filters-grid">
@@ -181,7 +186,8 @@
         SortByRoomButton,
         AssignedToMeCheckbox,
         SearchHint,
-        SearchHeadingTooltip
+        SearchHeadingTooltip,
+        SaveSuccessNotice
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();

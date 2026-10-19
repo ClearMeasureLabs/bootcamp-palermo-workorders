@@ -9,4 +9,10 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Services;
 public class WorkOrderSearchState
 {
     public bool AssignedToMe { get; set; }
+
+    /// <summary>
+    /// One-shot success message shown after a work-order command completes and the
+    /// user is redirected to search. Cleared when the search page consumes it.
+    /// </summary>
+    public string? FlashMessage { get; set; }
 }

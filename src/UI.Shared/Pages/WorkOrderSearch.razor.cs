@@ -17,6 +17,7 @@ public partial class WorkOrderSearch : AppComponentBase
     private string? _sortColumn;
     private bool _sortAscending = true;
     private bool _assignedToMe;
+    private string? _flashMessage;
 
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
@@ -26,6 +27,9 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
     [SupplyParameterFromQuery] public bool OverdueOnly { get; set; }
+
+    /// <summary>Success message shown after a work-order command redirect.</summary>
+    public string? FlashMessage => _flashMessage;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -41,11 +45,25 @@ public partial class WorkOrderSearch : AppComponentBase
         StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
         Model = new WorkOrderSearchModel();
 
+        ConsumeFlashMessage();
         await RestoreAssignedToMeStateAsync();
         ApplyQueryParameterOverrides();
 
         // Perform initial search
         await SearchWorkOrders();
+    }
+
+    private void ConsumeFlashMessage()
+    {
+        // Only overwrite when a new message was staged; OnParametersSetAsync can run
+        // again after the one-shot was already consumed.
+        if (string.IsNullOrEmpty(SearchState.FlashMessage))
+        {
+            return;
+        }
+
+        _flashMessage = SearchState.FlashMessage;
+        SearchState.FlashMessage = null;
     }
 
     private async Task RestoreAssignedToMeStateAsync()

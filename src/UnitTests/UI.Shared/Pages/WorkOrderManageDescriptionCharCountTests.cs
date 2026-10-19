@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -76,6 +77,7 @@ public class WorkOrderManageDescriptionCharCountTests
         ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus(completedWorkOrder));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(Guid.NewGuid(), creator, description: null));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(viewer));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
@@ -115,6 +117,7 @@ public class WorkOrderManageDescriptionCharCountTests
         ctx.Services.AddSingleton<IBus>(new StubWorkOrderManageBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
         ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(new WorkOrderSearchState());
         ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(workOrderId, creator, description));
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(creator));
         ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());

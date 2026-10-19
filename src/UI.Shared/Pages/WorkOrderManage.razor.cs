@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.UI.Shared.Models;
+using ClearMeasure.Bootcamp.UI.Shared.Services;
 using Microsoft.AspNetCore.Components;
 using Palermo.BlazorMvc;
 using Microsoft.JSInterop;
@@ -28,6 +29,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     [Inject] public SpeechSynthesis? SpeechSynthesis { get; set; }
     [Inject] public SpeechRecognition? SpeechRecognition { get; set; }
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
+    [Inject] private WorkOrderSearchState SearchState { get; set; } = null!;
 
     private DueDateUrgency CurrentDueDateUrgency =>
         _workOrder == null
@@ -177,7 +179,19 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         var result = await Bus.Send(matchingCommand);
         EventBus.Notify(new WorkOrderChangedEvent(result));
 
+        SearchState.FlashMessage = BuildSuccessMessage(result);
         NavigationManager!.NavigateTo("/workorder/search");
+    }
+
+    private static string BuildSuccessMessage(StateCommandResult result)
+    {
+        if (!string.IsNullOrWhiteSpace(result.DebugMessage))
+        {
+            return result.DebugMessage;
+        }
+
+        var number = result.WorkOrder.Number ?? "unknown";
+        return $"Work order {number} was saved successfully.";
     }
 
     private async Task SpeakTitleAsync()
