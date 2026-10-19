@@ -69,8 +69,12 @@ $want = $out | Select-String 'HEAD=(\w+)' | ForEach-Object { $_.Matches[0].Group
 if ($want) { foreach ($i in 1..12) { if ((gh api "repos/$Repo/pulls/$pr" --jq .head.sha) -eq $want) { break }; Start-Sleep 5 } }
 # v18g: wait inline for what is left of an 8-minute budget (Submit itself takes ~1 min), so Submit + first wait is one turn
 # instead of two (round 4: wait turns replayed 13.5% of input). v14g's inline wait broke because it used the full 9 min on top.
-# v41g: wait inline up to 9 min total; a short (<4 min) inline wait only produced a PENDING turn, so skip it then (round 27)
-$left = [int][Math]::Floor(9 - ((Get-Date) - $t0).TotalMinutes)
-if ($left -ge 4) { $w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $w; if ($w -contains 'CHECKS=GREEN') { exit 0 } }  # v31g: no WAIT_CMD after GREEN
-"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9  (only if no CHECKS=GREEN/RED above; it stays silent until a verdict or 9 min)"
+# v41g: wait-mode A/B (round 28). Default "long": inline wait up to 9 min total, skipped if <4 min left (a short wait only made a
+# PENDING turn); WAIT_CMD waits 9 min silently. "keepwarm" (scripts/agent/wait-mode.txt on the branch): every call returns within
+# ~4 min with one short line, so the prompt cache (~5 min idle TTL, hypothesis) stays warm across check-ins.
+$warm = (Test-Path "$PSScriptRoot/wait-mode.txt") -and ((Get-Content "$PSScriptRoot/wait-mode.txt" -Raw) -match 'keepwarm')
+$callMin = if ($warm) { 4 } else { 9 }
+$left = [int][Math]::Min($callMin, [Math]::Floor(9 - ((Get-Date) - $t0).TotalMinutes))
+if ($left -ge $(if ($warm) { 1 } else { 4 })) { $w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $w; if ($w -contains 'CHECKS=GREEN') { exit 0 } }  # v31g: no WAIT_CMD after GREEN
+"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin $callMin  (only if no CHECKS=GREEN/RED above; silent until a verdict or $callMin min)"
 exit 0

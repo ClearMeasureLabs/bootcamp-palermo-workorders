@@ -49,7 +49,7 @@ while ($true) {
   }
   if ($runs -and -not $pending -and (Get-Date) -gt $graceUntil) { break }
   if ((Get-Date).AddSeconds($PollSec) -gt $deadline) {
-    "CHECKS=PENDING (run the same command again)"; exit 0  # v11: exit 0 so the output is recorded; was exit 3
+    "CHECKS=PENDING (rerun)"; exit 0  # v11: exit 0 so the output is recorded; was exit 3
   }
   Start-Sleep -Seconds $PollSec
 }
