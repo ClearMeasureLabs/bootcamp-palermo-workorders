@@ -45,4 +45,7 @@ public class WorkOrderManageModel
 
     [StringLength(WorkOrder.RoomNumberMaxLength, ErrorMessage = "Room cannot exceed 900 characters.")]
     public string? RoomNumber { get; set; }
+
+    [StringLength(WorkOrder.AssetTagMaxLength, ErrorMessage = "Asset Tag cannot exceed 10 characters.")]
+    public string? AssetTag { get; set; }
 }

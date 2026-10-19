@@ -194,6 +194,7 @@ public class McpWorkOrderToolTests
             Description = "A description",
             Instructions = "preschool quiet",
             RoomNumber = "101",
+            AssetTag = "EQ-9",
             DueDate = new DateOnly(2026, 9, 12),
             Status = WorkOrderStatus.Draft,
             CreatedDate = createdDate
@@ -214,6 +215,7 @@ public class McpWorkOrderToolTests
         detail.GetProperty("Description").GetString().ShouldBe("A description");
         detail.GetProperty("Instructions").GetString().ShouldBe("preschool quiet");
         detail.GetProperty("RoomNumber").GetString().ShouldBe("101");
+        detail.GetProperty("AssetTag").GetString().ShouldBe("EQ-9");
         detail.GetProperty("DueDate").GetString().ShouldBe("2026-09-12");
         detail.GetProperty("Status").GetString().ShouldBe("Draft");
         detail.GetProperty("Creator").GetString().ShouldBe("John Doe");

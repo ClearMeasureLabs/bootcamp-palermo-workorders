@@ -21,6 +21,7 @@ public class WorkOrderMappingTests
             Description = "Replace broken light bulbs in conference room",
             Instructions = "Lock out panel before work.",
             RoomNumber = "CR-101",
+            AssetTag = "LAMP-3",
             Status = WorkOrderStatus.Draft,
             Creator = creator
         };
@@ -46,6 +47,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
         rehydratedWorkOrder.Instructions.ShouldBe("Lock out panel before work.");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
+        rehydratedWorkOrder.AssetTag.ShouldBe("LAMP-3");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
         rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);
@@ -361,6 +363,98 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Assignee!.Id.ShouldBe(assignee.Id);
         rehydratedWorkOrder.Assignee.FirstName.ShouldBe("Jane");
         rehydratedWorkOrder.Assignee.LastName.ShouldBe("Smith");
+    }
+
+    [Test]
+    public void ShouldPersistAssetTag()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("assetcreator", "Asset", "Creator", "asset@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-AT",
+            Title = "Repair projector",
+            Description = "Replace lamp",
+            AssetTag = "PROJ-7",
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+            rehydrated.AssetTag.ShouldBe("PROJ-7");
+        }
+    }
+
+    [Test]
+    public void ShouldPersistNullAssetTag()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("noasset", "No", "Asset", "noasset@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-NA",
+            Title = "No asset tag",
+            Description = "General repairs",
+            AssetTag = null,
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+            rehydrated.AssetTag.ShouldBeNull();
+        }
+    }
+
+    [Test]
+    public void ShouldPersistAssetTagUpTo10Characters()
+    {
+        new DatabaseTests().Clean();
+
+        var assetTag = new string('A', WorkOrder.AssetTagMaxLength);
+        var creator = new Employee("asset10", "Ten", "Chars", "asset10@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-A10",
+            Title = "Max asset tag",
+            Description = "Boundary length",
+            AssetTag = assetTag,
+            Status = WorkOrderStatus.Draft,
+            Creator = creator
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<WorkOrder>().Single(wo => wo.Id == workOrder.Id);
+            rehydrated.AssetTag.ShouldBe(assetTag);
+            rehydrated.AssetTag!.Length.ShouldBe(WorkOrder.AssetTagMaxLength);
+        }
     }
 
     [Test]

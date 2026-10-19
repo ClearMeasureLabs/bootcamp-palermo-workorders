@@ -21,6 +21,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public const int InstructionsMaxLength = 4000;
 
+    /// <summary>
+    /// Maximum length of <see cref="AssetTag"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int AssetTagMaxLength = 10;
+
     public string? Title { get; set; } = "";
 
     public string? Description
@@ -36,6 +41,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     } = "";
 
     public string? RoomNumber { get; set; }
+
+    /// <summary>
+    /// Optional asset tag of the equipment being repaired (max 10 characters).
+    /// </summary>
+    public string? AssetTag { get; set; }
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 

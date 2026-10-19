@@ -22,6 +22,7 @@ internal class BogusOverrides : AutoGeneratorOverride
                 order.Title = order.Title.ClampLength(1, 200);        // HasMaxLength(200)
                 order.Description = order.Description.ClampLength(1, 4000); // HasMaxLength(4000)
                 order.RoomNumber = order.RoomNumber.ClampLength(1, WorkOrder.RoomNumberMaxLength);
+                order.AssetTag = order.AssetTag.ClampLength(1, WorkOrder.AssetTagMaxLength);
                 order.DueDate = context.Faker.Random.Bool()
                     ? DateOnly.FromDateTime(context.Faker.Date.Past())
                     : null;
