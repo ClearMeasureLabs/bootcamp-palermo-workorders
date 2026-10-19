@@ -1,6 +1,7 @@
 name: Render diagrams (check)
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'arch/**'
@@ -52,7 +53,15 @@ jobs:
           done < <(find arch -type f -name '*.puml' -not -path 'arch/templates/*')
 
           if [ "$DIFF_FOUND" -eq 1 ]; then
-            echo "Diagrams are not up-to-date (normalized SVGs differ). Re-run arch/render-diagrams.ps1 or arch/render-diagrams.sh and commit generated images." 
+            echo "Diagrams are not up-to-date (normalized SVGs differ). Re-run arch/render-diagrams.ps1 or arch/render-diagrams.sh and commit generated images."
             exit 1
           fi
+
+      - name: Upload rendered diagrams
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-diagrams
+          retention-days: 7
+          path: arch/**/*.svg
 
