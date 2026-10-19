@@ -115,5 +115,31 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public bool IsOverdue() => GetDueDateUrgency() == DueDateUrgency.Overdue;
 
+    /// <summary>
+    /// Whole calendar days since <see cref="CreatedDate"/> (local date), or null when unset.
+    /// </summary>
+    public int? GetAgeInDays(TimeProvider timeProvider)
+    {
+        if (CreatedDate is null)
+        {
+            return null;
+        }
+
+        var today = timeProvider.GetLocalNow().Date;
+        return (today - CreatedDate.Value.Date).Days;
+    }
+
+    /// <summary>
+    /// Human-readable age since creation (e.g. "Today", "3 days"), or null when unset.
+    /// </summary>
+    public string? FormatAgeDisplay(TimeProvider timeProvider) =>
+        GetAgeInDays(timeProvider) switch
+        {
+            null => null,
+            <= 0 => "Today",
+            1 => "1 day",
+            var days => $"{days} days"
+        };
+
     public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
 }

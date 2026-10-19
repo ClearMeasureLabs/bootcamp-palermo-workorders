@@ -125,6 +125,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
+            Age = workOrder.FormatAgeDisplay(TimeProvider.System),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
             DueDateInput = workOrder.DueDate,

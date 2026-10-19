@@ -34,6 +34,11 @@ public class WorkOrderManageModel
     public string? CreatedDate { get; set; }
 
     /// <summary>
+    /// Human-readable age since creation (e.g. "Today", "3 days"), or null when unset.
+    /// </summary>
+    public string? Age { get; set; }
+
+    /// <summary>
     /// Optional due date bound to the native date picker. Null when unset.
     /// </summary>
     public DateOnly? DueDateInput { get; set; }
