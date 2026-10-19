@@ -86,4 +86,44 @@ public class McpEmployeeToolTests
 
         result.ShouldContain("No employee found");
     }
+
+    [Test]
+    public async Task ShouldReturnWorkloadCountsAsJson()
+    {
+        var emp = new Employee("hank", "Hank", "Hill", "hank@test.com");
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp);
+        context.Add(new WorkOrder
+        {
+            Creator = emp,
+            Assignee = emp,
+            Number = "WL-MCP-1",
+            Status = WorkOrderStatus.Assigned
+        });
+        context.Add(new WorkOrder
+        {
+            Creator = emp,
+            Assignee = emp,
+            Number = "WL-MCP-2",
+            Status = WorkOrderStatus.InProgress
+        });
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.GetEmployeeWorkload(bus, "hank");
+
+        result.ShouldContain("\"Username\": \"hank\"");
+        result.ShouldContain("\"AssignedCount\": 1");
+        result.ShouldContain("\"InProgressCount\": 1");
+    }
+
+    [Test]
+    public async Task ShouldReturnNotFoundMessage_WhenWorkloadEmployeeMissing()
+    {
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.GetEmployeeWorkload(bus, "ghost");
+
+        result.ShouldBe("Employee with username 'ghost' not found.");
+    }
 }

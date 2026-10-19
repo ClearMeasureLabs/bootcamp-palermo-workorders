@@ -35,6 +35,21 @@ public class EmployeeTools
         }
     }
 
+    [McpServerTool(Name = "get-employee-workload"),
+     Description("Returns how many work orders assigned to an employee are in Assigned and In Progress status.")]
+    public static async Task<string> GetEmployeeWorkload(
+        IBus bus,
+        [Description("The employee's username")] string username)
+    {
+        var workload = await bus.Send(new EmployeeWorkloadQuery(username));
+        if (workload is null)
+        {
+            return $"Employee with username '{username}' not found.";
+        }
+
+        return JsonSerializer.Serialize(workload, new JsonSerializerOptions { WriteIndented = true });
+    }
+
     private static object FormatEmployee(Employee emp) => new
     {
         emp.UserName,

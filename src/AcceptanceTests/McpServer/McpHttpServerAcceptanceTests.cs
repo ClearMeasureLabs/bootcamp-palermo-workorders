@@ -44,6 +44,7 @@ public class McpHttpServerAcceptanceTests : AcceptanceTestBase
         toolNames.ShouldContain("execute-work-order-command");
         toolNames.ShouldContain("list-employees");
         toolNames.ShouldContain("get-employee");
+        toolNames.ShouldContain("get-employee-workload");
     }
 
     [Test]
