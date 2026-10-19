@@ -32,3 +32,4 @@ See PLAN.md and round-N.md. Estimates: bytes/4 via scripts/agent/measure_transcr
 | 25 (change-type c25-c32) | v38g | c25-c32 (-v38): UI+PW, LLM multi-layer, symptom bug, workflow, cancel-token batch, options trap, vague, build ps1 | 8/8 GREEN | 3,400k | 425.0k (median 212.9k; 146.8k avg w/o c25/c26) | - |
 | 26 (change-type c33-c40) | v39g | c33-c40 (-v39): UI badge, gRPC, symptom bug, docs, test stabilization, header trap, vague, language setting | 8/8 real GREEN (c34/c36 empty final reply) | 3,375k | 421.9k (median 240.2k) | - |
 | 27 (expensive types c41-c48) | v40g | c41-c48 (-v40): 3 UI+PW, 3 big multi-layer, vague, symptom bug | 8/8 GREEN | 11,943k | 1,492.9k (median 619.8k; 852.7k w/o c44) | - |
+| 28 (wait-mode A/B c49-c56) | v41g | c49-c56 (-v41): 2 UI+PW, 2 multi-layer, vague, symptom bug, test-only, trap; keep-warm vs long wait | 8/8 GREEN | 13,515k | 1,689.4k (median 727.3k; 851.9k w/o c53) | - |
