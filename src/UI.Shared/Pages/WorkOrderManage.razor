@@ -124,33 +124,40 @@
                 <WorkOrderChat/>
             }
 
-            @if (_attachments.Length > 0)
+            @if (_workOrder != null && _workOrder.Id != Guid.Empty)
             {
                 <div class="attachments-section" data-testid="@Elements.AttachmentsSection">
-                    <h4>Attachments</h4>
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>File Name</th>
-                                <th>Content Type</th>
-                                <th>Size</th>
-                                <th>Uploaded By</th>
-                                <th>Upload Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var attachment in _attachments)
-                            {
-                                <tr data-testid="@Elements.AttachmentRow">
-                                    <td data-testid="@Elements.AttachmentFileName">@attachment.FileName</td>
-                                    <td data-testid="@Elements.AttachmentContentType">@attachment.ContentType</td>
-                                    <td data-testid="@Elements.AttachmentFileSize">@attachment.FileSize</td>
-                                    <td data-testid="@Elements.AttachmentUploadedBy">@attachment.UploadedBy?.GetFullName()</td>
-                                    <td data-testid="@Elements.AttachmentUploadedDate">@attachment.UploadedDate.ToString("G")</td>
+                    <h4>Attachments (@_attachments.Length)</h4>
+                    @if (_attachments.Length == 0)
+                    {
+                        <p data-testid="@Elements.NoAttachmentsMessage">No attachments yet.</p>
+                    }
+                    else
+                    {
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Content Type</th>
+                                    <th>Size</th>
+                                    <th>Uploaded By</th>
+                                    <th>Upload Date</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var attachment in _attachments)
+                                {
+                                    <tr data-testid="@Elements.AttachmentRow">
+                                        <td data-testid="@Elements.AttachmentFileName">@attachment.FileName</td>
+                                        <td data-testid="@Elements.AttachmentContentType">@attachment.ContentType</td>
+                                        <td data-testid="@Elements.AttachmentFileSize">@attachment.FileSize</td>
+                                        <td data-testid="@Elements.AttachmentUploadedBy">@attachment.UploadedBy?.GetFullName()</td>
+                                        <td data-testid="@Elements.AttachmentUploadedDate">@attachment.UploadedDate.ToString("G")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
                 </div>
             }
         </div>
@@ -198,6 +205,7 @@
         WorkOrderNumber,
         Status,
         AttachmentsSection,
+        NoAttachmentsMessage,
         AttachmentRow,
         AttachmentFileName,
         AttachmentContentType,

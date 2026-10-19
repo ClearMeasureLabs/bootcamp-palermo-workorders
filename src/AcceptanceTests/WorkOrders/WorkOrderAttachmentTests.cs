@@ -50,4 +50,24 @@ public class WorkOrderAttachmentTests : AcceptanceTestBase
         var uploaderCell = Page.GetByTestId(nameof(WorkOrderManage.Elements.AttachmentUploadedBy));
         await Expect(uploaderCell).ToContainTextAsync(CurrentUser.GetFullName());
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowNoAttachmentsYet_WhenSavedDraftHasNone()
+    {
+        await LoginAsCurrentUser();
+
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await ClickWorkOrderNumberFromSearchPage(order);
+
+        var attachmentsSection = Page.GetByTestId(nameof(WorkOrderManage.Elements.AttachmentsSection));
+        await Expect(attachmentsSection).ToBeVisibleAsync();
+        await Expect(attachmentsSection).ToContainTextAsync("Attachments (0)");
+
+        var emptyMessage = Page.GetByTestId(nameof(WorkOrderManage.Elements.NoAttachmentsMessage));
+        await Expect(emptyMessage).ToHaveTextAsync("No attachments yet.");
+    }
 }
