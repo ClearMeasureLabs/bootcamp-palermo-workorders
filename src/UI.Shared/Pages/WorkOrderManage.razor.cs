@@ -100,8 +100,8 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
         Model = CreateViewModel(CurrentMode, workOrder);
         var commandList = new StateCommandList();
-        Model.IsReadOnly = !commandList.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
+        Model.IsReadOnly = WorkOrderFieldReadOnly.Evaluate(workOrder, ValidCommands);
         _workOrder = workOrder;
 
         if (workOrder.Id != Guid.Empty)
