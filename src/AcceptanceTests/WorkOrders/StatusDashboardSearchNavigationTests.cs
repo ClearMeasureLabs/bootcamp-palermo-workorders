@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.Core.Model;
 using IndexPage = ClearMeasure.Bootcamp.UI.Shared.Pages.Index;
 
@@ -12,17 +13,17 @@ public class StatusDashboardSearchNavigationTests : AcceptanceTestBase
         await LoginAsCurrentUser();
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var draftCard = Page.GetByTestId(nameof(IndexPage.Elements.StatusCard) + WorkOrderStatus.Draft.Key);
+        var draftKey = WorkOrderStatus.Draft.Key;
+        var draftCard = Page.GetByTestId(nameof(IndexPage.Elements.StatusCard) + draftKey);
         await draftCard.WaitForAsync();
         await draftCard.ClickAsync();
 
-        await Page.WaitForURLAsync($"**/workorder/search?status={WorkOrderStatus.Draft.Key}");
+        await Page.WaitForURLAsync(new Regex($@"/workorder/search\?status={Regex.Escape(draftKey)}"));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Expect(Page.Locator($"select >> option[value='{WorkOrderStatus.Draft.Key}']")).ToHaveJSPropertyAsync("selected", true);
+        await Expect(Page.Locator("select").First).ToHaveValueAsync(draftKey);
 
         var rows = Page.Locator("table tbody tr");
-        await rows.First.WaitForAsync();
         var rowCount = await rows.CountAsync();
         for (var i = 0; i < rowCount; i++)
         {
