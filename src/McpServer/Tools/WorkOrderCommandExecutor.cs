@@ -12,12 +12,13 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 internal static class WorkOrderCommandExecutor
 {
     private const string AvailableCommandsList =
-        "DraftToAssignedCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand";
+        "DraftToAssignedCommand, DraftToCancelledCommand, AssignedToInProgressCommand, InProgressToAssignedCommand, Shelve, InProgressToCompleteCommand, AssignedToCancelledCommand";
 
     private static readonly IReadOnlyDictionary<string, Func<WorkOrder, Employee, StateCommandBase>> CommandFactories =
         new Dictionary<string, Func<WorkOrder, Employee, StateCommandBase>>(StringComparer.Ordinal)
         {
             ["DraftToAssignedCommand"] = (workOrder, user) => new DraftToAssignedCommand(workOrder, user),
+            ["DraftToCancelledCommand"] = (workOrder, user) => new DraftToCancelledCommand(workOrder, user),
             ["AssignedToInProgressCommand"] = (workOrder, user) => new AssignedToInProgressCommand(workOrder, user),
             ["InProgressToAssignedCommand"] = (workOrder, user) => new InProgressToAssignedCommand(workOrder, user),
             ["Shelve"] = (workOrder, user) => new InProgressToAssignedCommand(workOrder, user),

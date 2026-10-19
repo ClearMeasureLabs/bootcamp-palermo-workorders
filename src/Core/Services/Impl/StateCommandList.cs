@@ -20,6 +20,7 @@ public class StateCommandList
         {
             new SaveDraftCommand(workOrder, currentUser),
             new DraftToAssignedCommand(workOrder, currentUser),
+            new DraftToCancelledCommand(workOrder, currentUser),
             new AssignedToInProgressCommand(workOrder, currentUser),
             new InProgressToAssignedCommand(workOrder, currentUser),
             new InProgressToCompleteCommand(workOrder, currentUser),
