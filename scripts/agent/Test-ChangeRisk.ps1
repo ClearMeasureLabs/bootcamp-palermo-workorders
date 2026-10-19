@@ -27,7 +27,7 @@ function Test-ImplicitUsings([string]$f) { $d = Split-Path $f
   $false }
 git add -A -N src 2>$null | Out-Null
 $base = if (git rev-parse -q --verify origin/analysis/token-reduction 2>$null) { 'origin/analysis/token-reduction' } else { 'origin/master' }
-$changed = @{}; $file = $null; $prevA = ''
+$changed = @{}; $file = $null; $prevA = ''; $lenProps = @{}
 foreach ($l in git diff -U0 $base -- src ':(exclude)src/**/Generated/**') {  # v33g: generated code is not ours (round 19 s08)
   if ($l -match '^\+\+\+ b/(.+)$') { $file = $Matches[1]; $changed[$file] = @(); $prevA = ''; continue }
   if ($l -match '^@@ .*\+(\d+)(?:,(\d+))? @@') { $s = [int]$Matches[1]; $c = if ($Matches[2]) { [int]$Matches[2] } else { 1 }; if ($c) { $changed[$file] += $s..($s + $c - 1) }; continue }
@@ -58,9 +58,14 @@ foreach ($l in git diff -U0 $base -- src ':(exclude)src/**/Generated/**') {  # v
         "QODANA_RISK $file : '$pn' is declared non-nullable, so '??'/null checks on it fail Qodana (NullCoalescingConditionIsAlwaysNotNull...): drop the check, or make the declaration nullable ('string? $pn') if null must be handled: $($a.Trim())" } }
     # v34g: round 20 C t03 CI RED x2: private positional test records -> NotAccessedPositionalProperty.Local / PropertyCanBeMadeInitOnly.Local
     if ($file -match 'Tests' -and $a -match '^\s*(private|file)\s+(sealed\s+)?record\s+\w+\s*\(') { "QODANA_RISK $file : private positional records in tests trip NotAccessedPositionalProperty.Local; use an anonymous object (new { A = 1, B = (string?)null }) or a public record: $($a.Trim())" }
+    if ($file -match '^src/DataAccess/' -and $a -match 'Property\(\s*\w+\s*=>\s*\w+\.(\w+)\s*\)[^;]*HasMaxLength\(([^)]+)\)') { $lenProps[$Matches[1]] = "${file}: $($Matches[2])" }  # v42g
     # v28g: whole-word Number, not PhoneNumber (round 13 r07 false NUMBER_RISK)
     if ($file -match 'Tests' -and $a -match '(?<!\w)Number\s*=\s*"([^"]{8,})"') { "NUMBER_RISK $file : work order Number '$($Matches[1])' > 7 chars" }; $prevA = $a }
 }
+# v42g: SQLite ignores nvarchar(n), SQL Server CI truncates: a new max-length column needs a Bogus clamp (round 28 c51 CI RED
+# 'String or binary data would be truncated ... PhoneNumber': AutoBogus made 22-char phone numbers)
+$bogus = if (Test-Path src/UnitTests/BogusOverrides.cs) { Get-Content src/UnitTests/BogusOverrides.cs -Raw } else { '' }
+foreach ($p in $lenProps.Keys) { if ($bogus -notmatch "\.$p\s*=") { "LENGTH_RISK $($lenProps[$p]) : new max-length column '$p': clamp it in src/UnitTests/BogusOverrides.cs (x.$p = x.$p.ClampLength(1, n), or null if optional); SQL Server CI rejects longer random values, SQLite does not" } }
 foreach ($f in $changed.Keys) {
   if ($f -notmatch '\.cs$' -or $f -match 'Tests' -or -not (Test-Path $f)) { continue }
   $src = @(Get-Content $f); $set = [Collections.Generic.HashSet[int]]::new([int[]]$changed[$f])

@@ -513,6 +513,7 @@ public class ServerFixture
 
             new ZDataLoader().LoadData();
             TestContext.Out.WriteLine("ZDataLoader().LoadData(); - complete");
+            SeedExtraWorkOrdersForAgentRun(context);
 
             // Release all pooled connections so the server process opens the
             // database file with a clean view of the seeded data
@@ -520,6 +521,30 @@ public class ServerFixture
 
             DatabaseInitialized = true;
         }
+    }
+
+    // Agent token-reduction harness only (scripts/agent/Invoke-LocalAcceptance.ps1 sets the variable; never published to master):
+    // CI runs the whole suite against one database, so pages see many more rows than a fresh local run. Seed that volume locally
+    // so paging / row-count bugs fail before CI (round 28 c49).
+    private static void SeedExtraWorkOrdersForAgentRun(DbContext context)
+    {
+        if (!int.TryParse(Environment.GetEnvironmentVariable("AGENT_ACC_EXTRA_WORKORDERS"), out var count) || count <= 0) return;
+        var creator = context.Set<Employee>().Single(e => e.UserName == "tlovejoy");
+        for (var i = 0; i < count; i++)
+        {
+            context.Add(new WorkOrder
+            {
+                Number = Guid.NewGuid().ToString("N")[..7].ToUpperInvariant(),
+                Creator = creator,
+                Title = $"Seeded volume work order {i + 1}",
+                Description = "Extra row seeded for local agent acceptance runs",
+                RoomNumber = $"S{i + 1}",
+                Status = WorkOrderStatus.Draft
+            });
+        }
+
+        context.SaveChanges();
+        TestContext.Out.WriteLine($"Seeded {count} extra work orders (AGENT_ACC_EXTRA_WORKORDERS)");
     }
 
     [OneTimeTearDown]

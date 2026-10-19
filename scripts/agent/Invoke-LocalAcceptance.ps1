@@ -11,9 +11,17 @@ $ui = @($chg | Where-Object { $_ -match '^src/(UI|UI\.Shared|UI\.Client|Acceptan
 if (-not $ui) { 'ACC_TEST=SKIPPED no UI/acceptance change'; return }
 $cls = @($chg | Where-Object { $_ -match '^src/AcceptanceTests/.*Tests\.cs$' -and (Test-Path $_) } | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) })
 $pages = @($ui | Where-Object { $_ -notmatch '^src/AcceptanceTests/' -and $_ -match '\.razor(\.cs)?$' } | ForEach-Object { (Split-Path $_ -Leaf).Split('.')[0] } | Select-Object -Unique)
+# v42g: a changed non-page UI .cs (state, service, model) maps to the pages that use it (round 28 c53: WorkOrderSearchState.cs -> SKIPPED)
+$types = @($ui | Where-Object { $_ -notmatch '^src/AcceptanceTests/' -and $_ -match '\.cs$' -and $_ -notmatch '\.razor\.cs$' } | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) })
+if ($types) { $pages += @(rg -l -w @($types | ForEach-Object { '-e'; $_ }) --glob '*.razor' --glob '*.razor.cs' src/UI.Shared src/UI 2>$null | ForEach-Object { (Split-Path $_ -Leaf).Split('.')[0] }); $pages = @($pages | Select-Object -Unique) }
 if ($pages) { $cls += @(rg -l -w @($pages | ForEach-Object { '-e'; $_ }) --glob '*Tests.cs' src/AcceptanceTests 2>$null | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) }) }
 $cls = @($cls | Where-Object { $_ } | Select-Object -Unique -First 6)
-if (-not $cls) { 'ACC_TEST=SKIPPED no acceptance class covers the changed files'; return }
+# v42g: the shared test base, or a search/manage default (state class, or an added initializer/OnInitialized line in those pages),
+# reaches every flow that lands on those pages: run all WorkOrders + McpServer classes (round 28 c53: 3 CI REDs across 5 classes)
+$wide = @($chg | Where-Object { $_ -match 'AcceptanceTestBase\.cs$|^src/UI\.Shared/.*(State|Defaults)\w*\.cs$' }).Count -gt 0
+if (-not $wide) { foreach ($p in $ui | Where-Object { $_ -match '/WorkOrder(Search|Manage)\.razor(\.cs)?$' }) {
+  if (git diff -U0 -- $p | Where-Object { $_ -match '^\+.*(\{ get; set; \} = |OnInitialized|OnParametersSet)' }) { $wide = $true } } }
+if (-not $cls -and -not $wide) { 'ACC_TEST=SKIPPED no acceptance class covers the changed files'; return }
 $pw = "src/AcceptanceTests/bin/Release/net10.0/playwright.ps1"
 if (-not (Get-ChildItem "$HOME/.cache/ms-playwright" -Filter 'chromium*' -ErrorAction SilentlyContinue)) {
   pwsh -NoProfile $pw install chromium --with-deps 2>&1 | Out-Null
@@ -22,8 +30,10 @@ if (-not (Get-ChildItem "$HOME/.cache/ms-playwright" -Filter 'chromium*' -ErrorA
 $db = Join-Path ([IO.Path]::GetTempPath()) 'agent-acc.db'; Remove-Item $db -ErrorAction SilentlyContinue
 $env:DATABASE_ENGINE = 'SQLite'; $env:ConnectionStrings__SqlConnectionString = "Data Source=$db"
 $f = ($cls | ForEach-Object { "FullyQualifiedName~.$_." }) -join '|'
+if ($wide) { $f = (@('FullyQualifiedName~.AcceptanceTests.WorkOrders.', 'FullyQualifiedName~.AcceptanceTests.McpServer.') + @($cls | ForEach-Object { "FullyQualifiedName~.$_." })) -join '|'; $cls = @('WorkOrders/*', 'McpServer/*') + $cls }
+$env:AGENT_ACC_EXTRA_WORKORDERS = '40'  # v42g: CI-like row volume (ServerFixture seeds it; round 28 c49 paging RED)
 $r = dotnet test $proj -c Release --no-build --nologo --settings src/AcceptanceTests/AcceptanceTests.runsettings --logger 'console;verbosity=normal' --filter $f 2>&1
-$code = $LASTEXITCODE; Remove-Item env:DATABASE_ENGINE, env:ConnectionStrings__SqlConnectionString
+$code = $LASTEXITCODE; Remove-Item env:DATABASE_ENGINE, env:ConnectionStrings__SqlConnectionString, env:AGENT_ACC_EXTRA_WORKORDERS
 $sum = @($r | Select-String 'Passed!|Failed!|Total tests|Passed:' | ForEach-Object { $_.Line.Trim() }) | Select-Object -Last 1
 if (-not $code) { "ACC_TEST=OK ($($cls -join ',')) $($sum -replace ' - .*$')"; return }
 $fail = @($r | Select-String '^\s*Failed (\S+)' | ForEach-Object { $_.Matches[0].Groups[1].Value } | Select-Object -Unique)

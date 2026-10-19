@@ -1,10 +1,10 @@
 # v11 (PENDING exits 0). v10 (stuck-queued ignore). v3. Wait for every check-run on the PR head and print a compact verdict. Each call returns within -MaxCallMin
-# (default 9, under the agent runtime's ~10 min terminal cap, so the call never gets backgrounded):
+# (v42g default 20: round 28 c53 showed a 19.4-min terminal call returns normally; one silent wait per CI cycle):
 #   exit 0 CHECKS=GREEN | 1 CHECKS=RED (code failures, with log tail) | 3 CHECKS=PENDING (just rerun the same command)
 # Infra flakes (a job cancelled or timed out, or running >= 25 min with no test report) are re-run ONCE automatically
 # with `gh run rerun --failed` instead of reported. That avoids empty-commit retriggers and log spelunking.
 # The aggregator "Build result" is not reported as a root cause.
-param([Parameter(Mandatory)][int]$Pr, [switch]$ForceRerun, [int]$MaxCallMin = 9, [int]$PollSec = 45, [int]$SettleSec = 60,
+param([Parameter(Mandatory)][int]$Pr, [switch]$ForceRerun, [int]$MaxCallMin = 20, [int]$PollSec = 45, [int]$SettleSec = 60,
       [string]$Repo = 'ClearMeasureLabs/bootcamp-palermo-workorders')
 $ErrorActionPreference = 'Stop'
 $deadline = (Get-Date).AddMinutes($MaxCallMin)
@@ -12,6 +12,9 @@ $state = Join-Path ([IO.Path]::GetTempPath()) "wait-pr-$Pr.json"
 $rerun = @(if (Test-Path $state) { Get-Content $state -Raw | ConvertFrom-Json } else { @() })
 $graceUntil = Get-Date  # v8: after a rerun, old failed check-runs stay "completed" for a bit; don't report RED from them (rep-3 t02)
 $sha = gh api "repos/$Repo/pulls/$Pr" --jq .head.sha  # REST (gh pr view uses GraphQL)
+# v42g: a PR touching UI/acceptance files owns its acceptance failures; never auto-rerun them as flakes (round 28 c53: each real
+# acceptance RED cost an extra 12-16 min rerun)
+$uiPr = [bool](gh api "repos/$Repo/pulls/$Pr/files?per_page=100" --jq '.[].filename' 2>$null | Where-Object { $_ -match '^src/(UI|UI\.Shared|UI\.Client|AcceptanceTests)/' })
 $age = (Get-Date) - [datetime](gh api "repos/$Repo/commits/$sha" --jq .commit.committer.date)
 if ($age.TotalSeconds -lt $SettleSec) { Start-Sleep -Seconds ($SettleSec - [int]$age.TotalSeconds) }
 function Get-Runs {
@@ -36,7 +39,7 @@ while ($true) {
     $log = (gh run view $runId --repo $Repo --log-failed 2>$null) -replace "`0", ''
     # v8: acceptance/integration jobs fail intermittently on tests the PR doesn't touch (rep-3 t09, t11), so rerun them once.
     # A real failure reproduces on the rerun and is then reported. -ForceRerun forces one rerun of any failed job.
-    $flaky = $ForceRerun -or $b.Conclusion -in 'cancelled', 'timed_out' -or $b.Name -match 'Acceptance|Integration' -or ($mins -ge 25 -and ($log -match 'No test report files were found|No files were found'))
+    $flaky = $ForceRerun -or $b.Conclusion -in 'cancelled', 'timed_out' -or ($b.Name -match 'Integration' -or ($b.Name -match 'Acceptance' -and -not $uiPr)) -or ($mins -ge 25 -and ($log -match 'No test report files were found|No files were found'))
     if ($flaky -and $runId -notin $rerun) {
       # v9: `gh run rerun` fails while other jobs of the run are still in progress. v8 recorded the run as rerun anyway, so neither the
       # auto rerun nor -ForceRerun ever happened (rep-5 t04). Record it only on success; otherwise keep polling and retry later.
@@ -61,6 +64,8 @@ foreach ($b in $bad) {
     ((gh run view $Matches[1] --repo $Repo --log-failed 2>$null) -replace "`0", '') -split "`n" |
       Select-String -Pattern 'error [A-Z]+\d+|Failed |Assert|Exception|error:|CRAP|exceed|violation|threshold' | Select-Object -Last 20 |
       ForEach-Object { $l = $_.Line -replace '^\S+\s+\S+\s+\S+Z\s', ''; $l.Substring(0, [Math]::Min(250, $l.Length)) }
+    $rid = $Matches[1]; if ($b.Name -match 'Acceptance') { $ft = @(((gh run view $rid --repo $Repo --log-failed 2>$null) -replace "`0", '') -split "`n" | ForEach-Object { if ($_ -match '\sFailed (\w+) \[') { $Matches[1] } } | Select-Object -Unique)
+      if ($ft) { "FAILED_TESTS ($($ft.Count)): $(($ft | Select-Object -First 12) -join ', ') (fix these; Submit runs them locally)" } }  # v42g
   }
   if (-not $qdone -and $b.Url -match '/runs/(\d+)') { $qdone = $true  # v7: Qodana findings live in the SARIF artifact, not the log
     $d = Join-Path ([IO.Path]::GetTempPath()) "qodana-$($Matches[1])"; Remove-Item -Recurse -Force $d -ErrorAction SilentlyContinue
