@@ -209,7 +209,7 @@ public class WorkOrderSearchTests
     [Test]
     public async Task ClearFiltersButton_ShouldBeDisabled_WhenAllFiltersAreEmpty()
     {
-        await using var ctx = CreateContext();
+        await using var ctx = CreateContext(searchState: new WorkOrderSearchState { AssignedToMe = false });
 
         var component = ctx.Render<WorkOrderSearch>();
 
@@ -530,7 +530,7 @@ public class WorkOrderSearchTests
 
         var checkbox = component.Find($"#{WorkOrderSearch.Elements.AssignedToMeCheckbox}");
         checkbox.ShouldNotBeNull();
-        checkbox.HasAttribute("checked").ShouldBeFalse();
+        checkbox.HasAttribute("checked").ShouldBeTrue();
     }
 
     [Test]

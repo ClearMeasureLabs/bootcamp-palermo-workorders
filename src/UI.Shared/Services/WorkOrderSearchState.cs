@@ -8,5 +8,5 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Services;
 // ReSharper disable once ClassNeverInstantiated.Global -- registered as singleton in UIClientServiceRegistry
 public class WorkOrderSearchState
 {
-    public bool AssignedToMe { get; set; }
+    public bool AssignedToMe { get; set; } = true;
 }
