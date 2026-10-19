@@ -98,14 +98,14 @@ public class McpEmployeeToolTests
         {
             Creator = emp,
             Assignee = emp,
-            Number = "WL-MCP-1",
+            Number = "WL-MCP1",
             Status = WorkOrderStatus.Assigned
         });
         context.Add(new WorkOrder
         {
             Creator = emp,
             Assignee = emp,
-            Number = "WL-MCP-2",
+            Number = "WL-MCP2",
             Status = WorkOrderStatus.InProgress
         });
         await context.SaveChangesAsync();

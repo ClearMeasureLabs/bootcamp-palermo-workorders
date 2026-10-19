@@ -74,7 +74,7 @@ public class EmployeeWorkloadQueryHandlerTests
         var result = await handler.Handle(new EmployeeWorkloadQuery("hank"));
 
         result.ShouldNotBeNull();
-        result!.Username.ShouldBe("hank");
+        result.Username.ShouldBe("hank");
         result.AssignedCount.ShouldBe(2);
         result.InProgressCount.ShouldBe(1);
     }
@@ -116,7 +116,7 @@ public class EmployeeWorkloadQueryHandlerTests
         var result = await handler.Handle(new EmployeeWorkloadQuery("hank"));
 
         result.ShouldNotBeNull();
-        result!.AssignedCount.ShouldBe(0);
+        result.AssignedCount.ShouldBe(0);
         result.InProgressCount.ShouldBe(0);
     }
 }
