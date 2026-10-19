@@ -38,7 +38,10 @@ public partial class WorkOrderSearch : AppComponentBase
 
         var employees = await Bus.Send(new EmployeeGetAllQuery());
         UserOptions = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
-        StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
+        var statusCounts = await Bus.Send(new WorkOrderCountByStatusQuery());
+        StatusOptions = WorkOrderStatus.GetAllItems()
+            .Select(s => new SelectListItem(s.Key, $"{s.FriendlyName} ({statusCounts.GetValueOrDefault(s.Key)})"))
+            .ToList();
         Model = new WorkOrderSearchModel();
 
         await RestoreAssignedToMeStateAsync();

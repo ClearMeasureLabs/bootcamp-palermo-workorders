@@ -681,4 +681,46 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task StatusOptions_ShowFriendlyNameWithZeroCount_WhenNoWorkOrders()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
+        var options = statusSelect.QuerySelectorAll("option").ToList();
+        options[0].GetAttribute("value").ShouldBe("");
+        options[0].TextContent.Trim().ShouldBe("All");
+        foreach (var status in WorkOrderStatus.GetAllItems())
+        {
+            var option = options.Single(o => o.GetAttribute("value") == status.Key);
+            option.TextContent.Trim().ShouldBe($"{status.FriendlyName} (0)");
+        }
+    }
+
+    [Test]
+    public async Task StatusOptions_ShowFriendlyNameWithCounts_FromCountByStatusQuery()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.InProgress },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var statusSelect = component.Find($"#{WorkOrderSearch.Elements.StatusSelect}");
+        var options = statusSelect.QuerySelectorAll("option").ToList();
+        options.Single(o => o.GetAttribute("value") == WorkOrderStatus.Draft.Key)
+            .TextContent.Trim().ShouldBe("Draft (2)");
+        options.Single(o => o.GetAttribute("value") == WorkOrderStatus.Assigned.Key)
+            .TextContent.Trim().ShouldBe("Assigned (0)");
+        options.Single(o => o.GetAttribute("value") == WorkOrderStatus.InProgress.Key)
+            .TextContent.Trim().ShouldBe("In Progress (1)");
+        options.Single(o => o.GetAttribute("value") == "").TextContent.Trim().ShouldBe("All");
+    }
 }

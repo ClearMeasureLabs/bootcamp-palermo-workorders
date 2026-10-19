@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -831,5 +832,22 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         await Expect(tableRows).ToHaveCountAsync(1);
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
+    }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowDraftStatusOptionWithCountAtLeastOne_AfterSavingDraft()
+    {
+        await CreateAndSaveNewWorkOrder();
+
+        var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
+        await Expect(statusSelect).ToBeVisibleAsync();
+
+        var draftOption = statusSelect.Locator($"option[value='{WorkOrderStatus.Draft.Key}']");
+        await Expect(draftOption).ToHaveCountAsync(1);
+
+        var text = (await draftOption.TextContentAsync())?.Trim() ?? string.Empty;
+        var match = Regex.Match(text, @"^Draft \((\d+)\)$");
+        match.Success.ShouldBeTrue();
+        int.Parse(match.Groups[1].Value).ShouldBeGreaterThanOrEqualTo(1);
     }
 }

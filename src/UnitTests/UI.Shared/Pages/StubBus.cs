@@ -53,6 +53,14 @@ public class StubBus(WorkOrder[]? workOrderResults = null) : Bus(null!)
         if (request is WorkOrderCountByStatusQuery)
         {
             var counts = WorkOrderStatus.GetAllItems().ToDictionary(s => s.Key, _ => 0);
+            if (workOrderResults != null)
+            {
+                foreach (var workOrder in workOrderResults)
+                {
+                    counts[workOrder.Status.Key]++;
+                }
+            }
+
             return Task.FromResult<TResponse>((TResponse)(object)counts);
         }
 
