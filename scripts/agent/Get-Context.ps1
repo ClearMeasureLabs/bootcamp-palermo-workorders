@@ -11,7 +11,7 @@ $cnt = Join-Path ([IO.Path]::GetTempPath()) 'agent-getcontext-count'
 # v33g: a new -Issue starts a fresh 3-call budget (multi-item sessions)
 $curf = Join-Path ([IO.Path]::GetTempPath()) 'agent-getcontext-issue'
 if ($Issue -and -not $File -and -not $PSBoundParameters.ContainsKey('Find')) { $prev = if (Test-Path $curf) { "$(Get-Content $curf -ErrorAction SilentlyContinue)".Trim() } else { '' }
-  if ($prev -and $prev -ne "$Issue") { Remove-Item $cnt -ErrorAction SilentlyContinue }; Set-Content $curf $Issue }
+  if ($prev -and $prev -ne "$Issue") { Remove-Item $cnt, "$cnt.seen", "$cnt.rescue" -ErrorAction SilentlyContinue }; Set-Content $curf $Issue }
 $used = 0; if (Test-Path $cnt) { $used = [int](@(Get-Content $cnt -ErrorAction SilentlyContinue | ForEach-Object { if ("$_" -match '(\d+)') { [int]$Matches[1] } }) + 0 | Measure-Object -Maximum).Maximum }
 # v30g: limit 3 (issue + 2). v29g's 6 became a target (round 16: 49 calls, 6.1/run, 4 runs hit LIMIT then shell-read).
 if ($File -and $Find) { 'REJECTED: use -File or -Find, not both (this call was not counted)'; exit 0 }
@@ -25,8 +25,16 @@ $lnf = "$cnt.lines"; $lnUsed = if (Test-Path $lnf) { [int]("0$(Get-Content $lnf)
 # v39g: -Find allowed in the 4 extra calls (round 25 c25/c26: 17 refused calls, then 8 shell reads)
 # v43g: a plain -File is allowed too (outline, or the file if <= 120 lines) inside the 800-line budget (round 29 c61/c62: the
 # refused plain -File was their only read of the target, so they edited nothing)
-if ($used -ge 7 -or $lnUsed -ge 800 -or ($used -ge 3 -and -not ($File -or $PSBoundParameters.ContainsKey('Find')))) { 'NEXT: read budget used up (normal, not an error; never reply SCRIPT_FAIL for this). Edit now with what you have, then Submit; Submit names anything missing. Do not call Get-Context again. Never shell/grep/read tools, never touch /tmp/agent-*, never probe with edits.'; exit 0 }
-$tmpc = "$cnt.$PID"; Set-Content $tmpc ($used + 1); Move-Item -Force $tmpc $cnt
+# vFinal: after the budget, up to 2 rescue -File reads of a file never read with -File (round 33 c93: the budget ran out before
+# MainLayout.razor was read; 41 probe edits cost 472k). Rescue reads are capped at 80 lines.
+$seenf = "$cnt.seen"; $rescf = "$cnt.rescue"; $resc = if (Test-Path $rescf) { [int]("0$(Get-Content $rescf)".Trim()) } else { 0 }
+$seen = @(if (Test-Path $seenf) { Get-Content $seenf })
+$rescue = $false
+if ($used -ge 7 -or $lnUsed -ge 800 -or ($used -ge 3 -and -not ($File -or $PSBoundParameters.ContainsKey('Find')))) {
+  $names = @($parts | ForEach-Object { ($_ -split ':')[0] })
+  if ($File -and $resc -lt 2 -and $names.Count -eq 1 -and -not ($seen -contains $names[0])) { $rescue = $true; Set-Content $rescf ($resc + 1) }
+  else { 'NEXT: read budget used up (normal, not an error; never reply SCRIPT_FAIL for this). Edit now with what you have, then Submit; Submit names anything missing. If you must edit a file you have never read with -File, one -File read of that single file is still allowed (2 max). Never shell/grep/read tools, never touch /tmp/agent-*, never probe with edits.'; exit 0 } }
+if (-not $rescue) { $tmpc = "$cnt.$PID"; Set-Content $tmpc ($used + 1); Move-Item -Force $tmpc $cnt }
 # v30g: an explicit -Find is a capped grep: matching lines with 2 lines of context, max 25 hits / ~1500 chars (v29g returned
 # 3-5 KB outlines per -Find and often missed what the agent was hunting for).
 if ($PSBoundParameters.ContainsKey('Find')) {
@@ -41,7 +49,7 @@ if ($PSBoundParameters.ContainsKey('Find')) {
 }
 # v29g: -File path[:a-b] = capped read. Small files print whole; big files print an outline first, then ask for a range.
 if ($File) {
-  $max = if ($used -ge 3) { 79 } else { 119 }; $lines = 0
+  $max = if ($used -ge 3 -or $rescue) { 79 } else { 119 }; $lines = 0
   foreach ($part in $parts | Select-Object -First 5) {
   $fp, $rg = $part -split ':'; if (-not (Test-Path $fp)) { "NO_FILE $fp (use -Find to locate it)"; continue }
   # v46g: a directory lists its source files instead of crashing with no output (round 32 c83: 2 calls lost)
@@ -53,7 +61,7 @@ if ($File) {
     $ol = @($all | ForEach-Object -Begin { $n = 0 } -Process { $n++; if ($_ -match '^\s*(@page|@code|\[Test|(public|private|protected|internal)\b)') { "{0,4}: {1}" -f $n, $_.Trim().Substring(0, [Math]::Min(100, $_.Trim().Length)) } } | Select-Object -First 60)
     $ol; $lines += $ol.Count
     continue }
-  "== $fp $a-$b of $($all.Count)"
+  Add-Content $seenf $fp; "== $fp $a-$b of $($all.Count)"
   $us = @($all | Where-Object { $_ -match '^\s*using [\w.]+;' } | ForEach-Object { ($_ -replace '^\s*using\s+|;\s*$', '') }); if ($us -and $a -gt 1) { "  usings: " + ($us -join '; ') }
   for ($i = $a; $i -le $b; $i++) { "{0,3}:{1}" -f $i, $all[$i - 1].TrimEnd() }
   $lines += $b - $a + 1 }
