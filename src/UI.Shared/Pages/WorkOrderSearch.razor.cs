@@ -17,6 +17,7 @@ public partial class WorkOrderSearch : AppComponentBase
     private string? _sortColumn;
     private bool _sortAscending = true;
     private bool _assignedToMe;
+    private string? _currentUsername;
 
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
@@ -41,11 +42,20 @@ public partial class WorkOrderSearch : AppComponentBase
         StatusOptions = WorkOrderStatus.GetAllItems().Select(s => new SelectListItem(s.Key, s.FriendlyName)).ToList();
         Model = new WorkOrderSearchModel();
 
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _currentUsername = authState.User.Identity?.Name;
+
         await RestoreAssignedToMeStateAsync();
         ApplyQueryParameterOverrides();
 
         // Perform initial search
         await SearchWorkOrders();
+    }
+
+    private bool IsAssignedToCurrentUser(WorkOrder workOrder)
+    {
+        return _currentUsername is not null
+               && workOrder.Assignee?.UserName == _currentUsername;
     }
 
     private async Task RestoreAssignedToMeStateAsync()

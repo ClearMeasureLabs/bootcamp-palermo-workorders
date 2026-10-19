@@ -400,6 +400,10 @@
     background-color: #fff0f0;
 }
 
+.my-work-order {
+    background-color: #f0fff4;
+}
+
 .overdue-toggle-wrapper {
     display: flex;
     align-items: center;

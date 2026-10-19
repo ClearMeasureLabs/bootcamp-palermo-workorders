@@ -122,6 +122,10 @@
                             {
                                 rowClass += " overdue-row";
                             }
+                            if (IsAssignedToCurrentUser(order.WorkOrder))
+                            {
+                                rowClass += " my-work-order";
+                            }
                             <tr class="@rowClass">
                                 <td>
                                     @{
@@ -132,7 +136,7 @@
                                     </a>
                                 </td>
                                 <td>@order.Creator?.GetFullName()</td>
-                                <td>@order.Assignee?.GetFullName()</td>
+                                <td>@order.Assignee?.GetFullName()@(IsAssignedToCurrentUser(order.WorkOrder) ? " (you)" : "")</td>
                                 <td>
                                     <span class="status-badge">@order.Status</span>
                                 </td>

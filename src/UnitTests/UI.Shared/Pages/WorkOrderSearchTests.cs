@@ -635,6 +635,50 @@ public class WorkOrderSearchTests
     }
 
     [Test]
+    public async Task ShouldApply_MyWorkOrder_CssClassAndYouMarker_WhenAssigneeIsCurrentUser()
+    {
+        var me = new Employee(CurrentUsername, "Jeffrey", "Palermo", "j@example.com");
+        var myOrder = new WorkOrder
+        {
+            Number = "WO-MINE",
+            Title = "Mine",
+            Status = WorkOrderStatus.Assigned,
+            Assignee = me
+        };
+
+        await using var ctx = CreateContext(new StubBus([myOrder]));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var rows = component.FindAll("tbody tr");
+        rows.Count.ShouldBe(1);
+        rows[0].ClassName!.ShouldContain("my-work-order");
+        rows[0].TextContent.ShouldContain("(you)");
+    }
+
+    [Test]
+    public async Task ShouldNotApply_MyWorkOrder_CssClassOrYouMarker_WhenAssigneeIsSomeoneElse()
+    {
+        var other = new Employee("otherusr", "Other", "User", "o@example.com");
+        var theirOrder = new WorkOrder
+        {
+            Number = "WO-OTH",
+            Title = "Theirs",
+            Status = WorkOrderStatus.Assigned,
+            Assignee = other
+        };
+
+        await using var ctx = CreateContext(new StubBus([theirOrder]));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var rows = component.FindAll("tbody tr");
+        rows.Count.ShouldBe(1);
+        rows[0].ClassName!.ShouldNotContain("my-work-order");
+        rows[0].TextContent.ShouldNotContain("(you)");
+    }
+
+    [Test]
     public async Task ShouldReport_HasActiveFilters_True_WhenOverdueOnlyIsSet()
     {
         await using var ctx = CreateContext();
