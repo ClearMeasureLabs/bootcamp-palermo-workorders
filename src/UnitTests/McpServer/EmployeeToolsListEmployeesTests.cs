@@ -49,9 +49,12 @@ public class EmployeeToolsListEmployeesTests
 
         public override Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
         {
-            if (request is EmployeeGetAllQuery)
+            if (request is EmployeeGetAllQuery getAll)
             {
-                return Task.FromResult((TResponse)(object)employees);
+                var result = getAll.IncludeInactive
+                    ? employees
+                    : employees.Where(e => e.IsActive).ToArray();
+                return Task.FromResult((TResponse)(object)result);
             }
 
             throw new NotImplementedException();

@@ -4,6 +4,7 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 {
     public Employee()
     {
+        IsActive = true;
         UserName = null!;
         EmailAddress = null!;
         FirstName = null!;
@@ -17,6 +18,7 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
         FirstName = firstName;
         LastName = lastName;
         EmailAddress = emailAddress;
+        IsActive = true;
     }
 
     public override Guid Id { get; set; }
@@ -36,8 +38,9 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string PreferredLanguage { get; set; } = "en-US";
 
+    /// <summary>When false, the employee is hidden from assignment lists.</summary>
     // ReSharper disable once PropertyCanBeMadeInitOnly.Global -- domain entity mutated after load
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
 
     public ISet<Role> Roles { get; init; } = new HashSet<Role>();
 

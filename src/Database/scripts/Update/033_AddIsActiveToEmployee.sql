@@ -2,6 +2,7 @@ BEGIN TRY
 	BEGIN TRANSACTION
 	PRINT N'Adding IsActive column to [dbo].[Employee]'
 	ALTER TABLE [dbo].[Employee] ADD [IsActive] BIT NOT NULL CONSTRAINT [DF_Employee_IsActive] DEFAULT (1)
+	UPDATE [dbo].[Employee] SET [IsActive] = 1
 	PRINT 'The database update succeeded'
 	COMMIT TRANSACTION
 END TRY

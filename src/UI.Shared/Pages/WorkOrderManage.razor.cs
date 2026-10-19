@@ -135,17 +135,14 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private static string? FormatDueDateDisplay(DateOnly? dueDate) =>
         dueDate?.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
 
-    public static IEnumerable<Employee> FilterAssigneeEmployees(
-        IEnumerable<Employee> employees,
-        string? currentAssigneeUserName)
+    private async Task LoadUserOptions()
     {
-        return employees.Where(e => e.IsActive || e.UserName == currentAssigneeUserName);
-    }
-
-    private async Task LoadUserOptions()    {
-        var employees = await Bus.Send(new EmployeeGetAllQuery());
         var assigneeUserName = Model.WorkOrder?.Assignee?.UserName;
-        var items = FilterAssigneeEmployees(employees, assigneeUserName)
+        var employees = await Bus.Send(new EmployeeGetAllQuery
+        {
+            AlwaysIncludeUserName = assigneeUserName
+        });
+        var items = employees
             .Select(e => new SelectListItem(e.UserName, e.GetFullName()))
             .ToList();
         items.Insert(0, new SelectListItem("", ""));

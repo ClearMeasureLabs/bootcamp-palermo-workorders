@@ -16,7 +16,7 @@ public class WorkOrderManageAssigneeFilterTests
             new Employee("inactive1", "I", "One", "i1@test.com") { IsActive = false }
         };
 
-        var filtered = WorkOrderManage.FilterAssigneeEmployees(employees, currentAssigneeUserName: null)
+        var filtered = AssigneeEmployeeFilter.Filter(employees, currentAssigneeUserName: null)
             .Select(e => e.UserName)
             .ToArray();
 
@@ -32,7 +32,7 @@ public class WorkOrderManageAssigneeFilterTests
             new Employee("inactive1", "I", "One", "i1@test.com") { IsActive = false }
         };
 
-        var filtered = WorkOrderManage.FilterAssigneeEmployees(employees, "inactive1")
+        var filtered = AssigneeEmployeeFilter.Filter(employees, "inactive1")
             .Select(e => e.UserName)
             .ToArray();
 

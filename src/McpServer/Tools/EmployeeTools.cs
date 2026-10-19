@@ -15,11 +15,7 @@ public class EmployeeTools
         IBus bus,
         [Description("When true, include inactive employees")] bool includeInactive = false)
     {
-        var employees = await bus.Send(new EmployeeGetAllQuery());
-        if (!includeInactive)
-        {
-            employees = employees.Where(e => e.IsActive).ToArray();
-        }
+        var employees = await bus.Send(new EmployeeGetAllQuery { IncludeInactive = includeInactive });
 
         return JsonSerializer.Serialize(employees.Select(FormatEmployee).ToArray(),
             new JsonSerializerOptions { WriteIndented = true });

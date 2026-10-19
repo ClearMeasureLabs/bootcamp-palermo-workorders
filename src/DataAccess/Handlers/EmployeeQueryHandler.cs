@@ -21,8 +21,14 @@ public class EmployeeQueryHandler(DataContext context)
 
     public async Task<Employee[]> Handle(EmployeeGetAllQuery request, CancellationToken cancellationToken = default)
     {
-        var query = context.Set<Employee>()
-            .Include("Roles");
+        var query = context.Set<Employee>().Include("Roles").AsQueryable();
+        if (!request.IncludeInactive)
+        {
+            var alwaysInclude = request.AlwaysIncludeUserName;
+            query = query.Where(e => e.IsActive ||
+                                    (alwaysInclude != null && e.UserName == alwaysInclude));
+        }
+
         var employees = await query.ToListAsync(cancellationToken);
 
         return employees.OrderBy(e => e.LastName).ThenBy(e => e.FirstName).ToArray();
