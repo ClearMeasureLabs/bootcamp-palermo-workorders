@@ -177,8 +177,11 @@ public class McpWorkOrderToolTests
     {
         var bus = TestHost.GetRequiredService<IBus>();
 
-        await Should.ThrowAsync<ArgumentOutOfRangeException>(
-            () => WorkOrderTools.ListWorkOrders(bus, status: "NotAStatus"));
+        var result = await WorkOrderTools.ListWorkOrders(bus, status: "NotAStatus");
+
+        result.ShouldContain("Unknown status 'NotAStatus'");
+        result.ShouldContain("Valid statuses:");
+        result.ShouldContain("Cancelled");
     }
 
     [Test]

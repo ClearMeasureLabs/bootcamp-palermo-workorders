@@ -13,17 +13,18 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 [McpServerToolType]
 public class WorkOrderTools
 {
-    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, and assignee username. Valid statuses: Draft, Assigned, InProgress, Complete.")]
+    [McpServerTool(Name = "list-work-orders"), Description("Lists all work orders, optionally filtered by status, creator username, and assignee username. Valid statuses: Draft, Assigned, InProgress, Complete, Cancelled.")]
     public static async Task<string> ListWorkOrders(
         IBus bus,
-        [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null,
+        [Description("Optional status filter (Draft, Assigned, InProgress, Complete, Cancelled)")] string? status = null,
         [Description("Optional creator username filter")] string? creatorUsername = null,
         [Description("Optional assignee username filter")] string? assigneeUsername = null)
     {
         var query = new WorkOrderSpecificationQuery();
-        if (!string.IsNullOrWhiteSpace(status))
+        var statusError = ApplyStatusFilter(query, status);
+        if (statusError != null)
         {
-            query.MatchStatus(WorkOrderStatus.FromKey(status));
+            return statusError;
         }
 
         if (!string.IsNullOrWhiteSpace(creatorUsername))
@@ -234,6 +235,26 @@ public class WorkOrderTools
             UploadedByUsername = a.UploadedBy?.UserName,
             a.UploadedDate
         }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private static string? ApplyStatusFilter(WorkOrderSpecificationQuery query, string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return null;
+        }
+
+        var matchedStatus = Array.Find(WorkOrderStatus.GetAllItems(),
+            instance => instance.Key.Equals(status, StringComparison.InvariantCultureIgnoreCase));
+        if (matchedStatus is null)
+        {
+            var valid = string.Join(", ",
+                WorkOrderStatus.GetAllItems().OrderBy(s => s.SortBy).Select(s => s.Key));
+            return $"Unknown status '{status}'. Valid statuses: {valid}.";
+        }
+
+        query.MatchStatus(matchedStatus);
+        return null;
     }
 
     private static string? ValidateSave(
