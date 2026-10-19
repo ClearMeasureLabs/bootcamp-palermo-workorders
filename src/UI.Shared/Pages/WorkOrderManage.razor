@@ -103,6 +103,10 @@
                         <InputDate TValue="DateOnly?" data-testid="@Elements.DueDate" id="DueDate"
                                    @bind-Value="Model.DueDateInput"
                                    class="@($"form-control input-date {CurrentDueDateCssClass}")" />
+                        <button type="button" data-testid="@Elements.DueDateToday" class="btn btn-sm btn-outline-secondary"
+                                @onclick="SetDueDateToToday">Today</button>
+                        <button type="button" data-testid="@Elements.DueDateNextSaturday" class="btn btn-sm btn-outline-secondary"
+                                @onclick="SetDueDateToNextSaturday">Next Saturday</button>
                         @if (!string.IsNullOrEmpty(CurrentDueDateUrgencyText))
                         {
                             <span class="visually-hidden">@CurrentDueDateUrgencyText</span>
@@ -193,6 +197,8 @@
         CreatedDate,
         DueDate,
         DueDateDisplay,
+        DueDateToday,
+        DueDateNextSaturday,
         ReadOnlyMessage,
         CommandButton,
         WorkOrderNumber,

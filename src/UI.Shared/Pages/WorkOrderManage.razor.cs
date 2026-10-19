@@ -135,6 +135,25 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private static string? FormatDueDateDisplay(DateOnly? dueDate) =>
         dueDate?.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
 
+    private void SetDueDateToToday()
+    {
+        Model.DueDateInput = GetChicagoDate(Clock);
+    }
+
+    private void SetDueDateToNextSaturday()
+    {
+        var today = GetChicagoDate(Clock);
+        var daysUntilSaturday = ((int)DayOfWeek.Saturday - (int)today.DayOfWeek + 7) % 7;
+        Model.DueDateInput = today.AddDays(daysUntilSaturday);
+    }
+
+    private static DateOnly GetChicagoDate(TimeProvider clock)
+    {
+        var zone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+        var local = TimeZoneInfo.ConvertTime(clock.GetUtcNow(), zone);
+        return DateOnly.FromDateTime(local.DateTime);
+    }
+
     private async Task LoadUserOptions()
     {
         var employees = await Bus.Send(new EmployeeGetAllQuery());
