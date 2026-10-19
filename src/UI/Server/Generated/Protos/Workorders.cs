@@ -29,7 +29,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             "eRIPCgdtZXNzYWdlGAEgASgJIi0KG0dldFdvcmtPcmRlckJ5TnVtYmVyUmVx",
             "dWVzdBIOCgZudW1iZXIYASABKAkiRgoZR2V0V29ya09yZGVyQnlOdW1iZXJS",
             "ZXBseRIpCgp3b3JrX29yZGVyGAEgASgLMhUud29ya29yZGVycy5Xb3JrT3Jk",
-            "ZXIitwMKCVdvcmtPcmRlchIOCgZudW1iZXIYASABKAkSDQoFdGl0bGUYAiAB",
+            "ZXIi0QMKCVdvcmtPcmRlchIOCgZudW1iZXIYASABKAkSDQoFdGl0bGUYAiAB",
             "KAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEwoLcm9vbV9udW1iZXIYBCABKAkS",
             "EgoKc3RhdHVzX2tleRgFIAEoCRIYChBjcmVhdG9yX3VzZXJuYW1lGAYgASgJ",
             "EhkKEWFzc2lnbmVlX3VzZXJuYW1lGAcgASgJEjoKEWFzc2lnbmVkX2RhdGVf",
@@ -37,13 +37,14 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             "EGNyZWF0ZWRfZGF0ZV91dGMYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGlt",
             "ZXN0YW1wSAGIAQESOwoSY29tcGxldGVkX2RhdGVfdXRjGAogASgLMhouZ29v",
             "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcEgCiAEBEhUKCGR1ZV9kYXRlGAsgASgJ",
-            "SAOIAQFCFAoSX2Fzc2lnbmVkX2RhdGVfdXRjQhMKEV9jcmVhdGVkX2RhdGVf",
-            "dXRjQhUKE19jb21wbGV0ZWRfZGF0ZV91dGNCCwoJX2R1ZV9kYXRlMqwBCgpX",
-            "b3JrT3JkZXJzEjYKBFBpbmcSFy53b3Jrb3JkZXJzLlBpbmdSZXF1ZXN0GhUu",
-            "d29ya29yZGVycy5QaW5nUmVwbHkSZgoUR2V0V29ya09yZGVyQnlOdW1iZXIS",
-            "Jy53b3Jrb3JkZXJzLkdldFdvcmtPcmRlckJ5TnVtYmVyUmVxdWVzdBolLndv",
-            "cmtvcmRlcnMuR2V0V29ya09yZGVyQnlOdW1iZXJSZXBseUInqgIkQ2xlYXJN",
-            "ZWFzdXJlLkJvb3RjYW1wLlVJLlNlcnZlci5HcnBjYgZwcm90bzM="));
+            "SAOIAQESGAoQZHVlX2RhdGVfdXJnZW5jeRgMIAEoCUIUChJfYXNzaWduZWRf",
+            "ZGF0ZV91dGNCEwoRX2NyZWF0ZWRfZGF0ZV91dGNCFQoTX2NvbXBsZXRlZF9k",
+            "YXRlX3V0Y0ILCglfZHVlX2RhdGUyrAEKCldvcmtPcmRlcnMSNgoEUGluZxIX",
+            "LndvcmtvcmRlcnMuUGluZ1JlcXVlc3QaFS53b3Jrb3JkZXJzLlBpbmdSZXBs",
+            "eRJmChRHZXRXb3JrT3JkZXJCeU51bWJlchInLndvcmtvcmRlcnMuR2V0V29y",
+            "a09yZGVyQnlOdW1iZXJSZXF1ZXN0GiUud29ya29yZGVycy5HZXRXb3JrT3Jk",
+            "ZXJCeU51bWJlclJlcGx5QieqAiRDbGVhck1lYXN1cmUuQm9vdGNhbXAuVUku",
+            "U2VydmVyLkdycGNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -51,7 +52,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.PingReply.Parser, new[]{ "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberRequest.Parser, new[]{ "Number" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply), global::ClearMeasure.Bootcamp.UI.Server.Grpc.GetWorkOrderByNumberReply.Parser, new[]{ "WorkOrder" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder), global::ClearMeasure.Bootcamp.UI.Server.Grpc.WorkOrder.Parser, new[]{ "Number", "Title", "Description", "RoomNumber", "StatusKey", "CreatorUsername", "AssigneeUsername", "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate", "DueDateUrgency" }, new[]{ "AssignedDateUtc", "CreatedDateUtc", "CompletedDateUtc", "DueDate" }, null, null, null)
           }));
     }
     #endregion
@@ -868,6 +869,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       createdDateUtc_ = other.createdDateUtc_ != null ? other.createdDateUtc_.Clone() : null;
       completedDateUtc_ = other.completedDateUtc_ != null ? other.completedDateUtc_.Clone() : null;
       dueDate_ = other.dueDate_;
+      dueDateUrgency_ = other.dueDateUrgency_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1023,6 +1025,18 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       dueDate_ = null;
     }
 
+    /// <summary>Field number for the "due_date_urgency" field.</summary>
+    public const int DueDateUrgencyFieldNumber = 12;
+    private string dueDateUrgency_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string DueDateUrgency {
+      get { return dueDateUrgency_; }
+      set {
+        dueDateUrgency_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1049,6 +1063,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (!object.Equals(CreatedDateUtc, other.CreatedDateUtc)) return false;
       if (!object.Equals(CompletedDateUtc, other.CompletedDateUtc)) return false;
       if (DueDate != other.DueDate) return false;
+      if (DueDateUrgency != other.DueDateUrgency) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1067,6 +1082,7 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       if (createdDateUtc_ != null) hash ^= CreatedDateUtc.GetHashCode();
       if (completedDateUtc_ != null) hash ^= CompletedDateUtc.GetHashCode();
       if (HasDueDate) hash ^= DueDate.GetHashCode();
+      if (DueDateUrgency.Length != 0) hash ^= DueDateUrgency.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1129,6 +1145,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(90);
         output.WriteString(DueDate);
       }
+      if (DueDateUrgency.Length != 0) {
+        output.WriteRawTag(98);
+        output.WriteString(DueDateUrgency);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1183,6 +1203,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
         output.WriteRawTag(90);
         output.WriteString(DueDate);
       }
+      if (DueDateUrgency.Length != 0) {
+        output.WriteRawTag(98);
+        output.WriteString(DueDateUrgency);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1225,6 +1249,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
       if (HasDueDate) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(DueDate);
+      }
+      if (DueDateUrgency.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(DueDateUrgency);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1279,6 +1306,9 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
       }
       if (other.HasDueDate) {
         DueDate = other.DueDate;
+      }
+      if (other.DueDateUrgency.Length != 0) {
+        DueDateUrgency = other.DueDateUrgency;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1352,6 +1382,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
             DueDate = input.ReadString();
             break;
           }
+          case 98: {
+            DueDateUrgency = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -1422,6 +1456,10 @@ namespace ClearMeasure.Bootcamp.UI.Server.Grpc {
           }
           case 90: {
             DueDate = input.ReadString();
+            break;
+          }
+          case 98: {
+            DueDateUrgency = input.ReadString();
             break;
           }
         }

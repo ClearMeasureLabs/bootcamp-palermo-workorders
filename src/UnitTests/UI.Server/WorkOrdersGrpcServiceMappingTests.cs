@@ -75,4 +75,43 @@ public class WorkOrdersGrpcServiceMappingTests
         mapped.CompletedDateUtc.ShouldBeNull();
         mapped.HasDueDate.ShouldBeFalse();
     }
+
+    [Test]
+    public void MapWorkOrder_MapsDueDateUrgency_WhenOverdue()
+    {
+        var clock = new FixedTimeProvider(new DateTimeOffset(2026, 8, 29, 17, 0, 0, TimeSpan.Zero));
+        var source = new ClearMeasure.Bootcamp.Core.Model.WorkOrder
+        {
+            Number = "WO-4",
+            Title = "T",
+            Description = "D",
+            Status = WorkOrderStatus.Assigned,
+            DueDate = new DateOnly(2026, 8, 28)
+        };
+
+        var mapped = WorkOrdersGrpcService.MapWorkOrder(source, clock);
+
+        mapped.DueDateUrgency.ShouldBe(nameof(DueDateUrgency.Overdue));
+    }
+
+    [Test]
+    public void MapWorkOrder_MapsEmptyDueDateUrgency_WhenNoDueDate()
+    {
+        var source = new ClearMeasure.Bootcamp.Core.Model.WorkOrder
+        {
+            Number = "WO-5",
+            Title = "T",
+            Description = "D",
+            Status = WorkOrderStatus.Assigned
+        };
+
+        var mapped = WorkOrdersGrpcService.MapWorkOrder(source);
+
+        mapped.DueDateUrgency.ShouldBe("");
+    }
+
+    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
 }

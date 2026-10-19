@@ -1,8 +1,10 @@
 using System.Globalization;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.Core.Services;
 using Grpc.Core;
 using Google.Protobuf.WellKnownTypes;
+using DueDateUrgency = ClearMeasure.Bootcamp.Core.Model.DueDateUrgency;
 
 namespace ClearMeasure.Bootcamp.UI.Server.Grpc;
 
@@ -34,7 +36,10 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
         return new GetWorkOrderByNumberReply { WorkOrder = MapWorkOrder(workOrder) };
     }
 
-    internal static WorkOrder MapWorkOrder(Core.Model.WorkOrder source)
+    internal static WorkOrder MapWorkOrder(Core.Model.WorkOrder source) =>
+        MapWorkOrder(source, TimeProvider.System);
+
+    internal static WorkOrder MapWorkOrder(Core.Model.WorkOrder source, TimeProvider timeProvider)
     {
         var message = new WorkOrder
         {
@@ -43,12 +48,24 @@ public class WorkOrdersGrpcService(IBus bus) : WorkOrders.WorkOrdersBase
             Description = source.Description ?? "",
             RoomNumber = source.RoomNumber ?? "",
             StatusKey = source.Status.Key,
-            CreatorUsername = source.Creator?.UserName ?? "",
-            AssigneeUsername = source.Assignee?.UserName ?? ""
+            CreatorUsername = source.Creator != null ? source.Creator.UserName : "",
+            AssigneeUsername = source.Assignee != null ? source.Assignee.UserName : "",
+            DueDateUrgency = FormatDueDateUrgency(source, timeProvider)
         };
 
         GrpcWorkOrderDateMapper.ApplyOptionalDates(message, source);
         return message;
+    }
+
+    private static string FormatDueDateUrgency(Core.Model.WorkOrder source, TimeProvider timeProvider)
+    {
+        var urgency = DueDateUrgencyCalculator.Calculate(source, timeProvider);
+        if (urgency == DueDateUrgency.None)
+        {
+            return "";
+        }
+
+        return urgency.ToString();
     }
 }
 
