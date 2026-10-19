@@ -290,4 +290,52 @@ public class WorkOrderSpecificationHandlerTests
         orders.Length.ShouldBe(1);
         orders[0].Number.ShouldBe("OVR-001");
     }
+
+    [Test]
+    public async Task ShouldReturnWorkOrdersDueStrictlyBefore_WhenDueBeforeFilterIsSet()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("dbf1", "1", "1", "1");
+        var cutoff = new DateOnly(2026, 6, 1);
+        var beforeOrder = new WorkOrder
+        {
+            Creator = employee,
+            Number = "BEF-001",
+            Status = WorkOrderStatus.Draft,
+            DueDate = new DateOnly(2026, 5, 15)
+        };
+        var onCutoffOrder = new WorkOrder
+        {
+            Creator = employee,
+            Number = "ON-001",
+            Status = WorkOrderStatus.Draft,
+            DueDate = cutoff
+        };
+        var afterOrder = new WorkOrder
+        {
+            Creator = employee,
+            Number = "AFT-001",
+            Status = WorkOrderStatus.Draft,
+            DueDate = new DateOnly(2026, 7, 1)
+        };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(employee);
+            context.Add(beforeOrder);
+            context.Add(onCutoffOrder);
+            context.Add(afterOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var dataContext = TestHost.GetRequiredService<DataContext>();
+        var repository = new WorkOrderSearchHandler(dataContext);
+        var specification = new WorkOrderSpecificationQuery();
+        specification.MatchDueBefore(cutoff);
+        var orders = await repository.Handle(specification);
+
+        orders.Length.ShouldBe(1);
+        orders[0].Number.ShouldBe("BEF-001");
+    }
 }

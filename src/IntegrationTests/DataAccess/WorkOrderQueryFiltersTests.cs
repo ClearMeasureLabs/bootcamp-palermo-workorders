@@ -23,4 +23,23 @@ public class WorkOrderQueryFiltersTests
         filtered.Length.ShouldBe(1);
         filtered[0].Number.ShouldBe("1");
     }
+
+    [Test]
+    public void ShouldApplyDueBeforeFilter_WhenDueBeforeIsSet()
+    {
+        var creator = new Employee("c", "c", "c", "c");
+        var cutoff = new DateOnly(2026, 6, 1);
+        var orders = new[]
+        {
+            new WorkOrder { Number = "1", Creator = creator, DueDate = new DateOnly(2026, 5, 31) },
+            new WorkOrder { Number = "2", Creator = creator, DueDate = cutoff },
+            new WorkOrder { Number = "3", Creator = creator, DueDate = new DateOnly(2026, 6, 2) },
+            new WorkOrder { Number = "4", Creator = creator, DueDate = null }
+        }.AsQueryable();
+
+        var filtered = WorkOrderQueryFilters.Apply(orders, null, null, null, dueBefore: cutoff).ToArray();
+
+        filtered.Length.ShouldBe(1);
+        filtered[0].Number.ShouldBe("1");
+    }
 }

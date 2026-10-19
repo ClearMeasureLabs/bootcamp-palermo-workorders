@@ -56,6 +56,11 @@
                     </div>
 
                     <div class="filter-group">
+                        <label class="filter-label" for="@Elements.DueBeforeInput">Due before</label>
+                        <InputDate id="@Elements.DueBeforeInput" TValue="DateOnly?" @bind-Value="Model.Filters.DueBefore" class="form-control" />
+                    </div>
+
+                    <div class="filter-group">
                         <button id="@Elements.SearchButton" type="submit" class="btn btn-primary">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
@@ -170,6 +175,7 @@
         AssigneeSelect,
         StatusSelect,
         OverdueOnlyToggle,
+        DueBeforeInput,
         SearchButton,
         ClearFiltersButton,
         WorkOrderLink,

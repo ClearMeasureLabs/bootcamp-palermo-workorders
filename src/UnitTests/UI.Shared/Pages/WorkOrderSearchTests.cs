@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
@@ -672,13 +674,68 @@ public class WorkOrderSearchTests
     [Test]
     public void ShouldRemotableRequest_RoundTrip_OverdueOnly()
     {
-        var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();
+        var query = new WorkOrderSpecificationQuery();
         query.MatchOverdueOnly(true);
 
-        var json = System.Text.Json.JsonSerializer.Serialize(query);
-        var rehydrated = System.Text.Json.JsonSerializer.Deserialize<ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery>(json);
+        var json = JsonSerializer.Serialize(query);
+        var rehydrated = JsonSerializer.Deserialize<WorkOrderSpecificationQuery>(json);
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+
+    [Test]
+    public void ShouldRemotableRequest_RoundTrip_DueBefore()
+    {
+        var dueBefore = new DateOnly(2026, 6, 15);
+        var query = new WorkOrderSpecificationQuery();
+        query.MatchDueBefore(dueBefore);
+
+        var json = JsonSerializer.Serialize(query);
+        var rehydrated = JsonSerializer.Deserialize<WorkOrderSpecificationQuery>(json);
+
+        rehydrated.ShouldNotBeNull();
+        rehydrated.DueBefore.ShouldBe(dueBefore);
+    }
+
+    [Test]
+    public async Task ShouldReport_HasActiveFilters_True_WhenDueBeforeIsSet()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var dueBeforeInput = component.Find($"#{WorkOrderSearch.Elements.DueBeforeInput}");
+        await dueBeforeInput.ChangeAsync(new() { Value = "2026-01-01" });
+
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        clearButton.HasAttribute("disabled").ShouldBeFalse();
+    }
+
+    [Test]
+    public async Task ShouldReset_DueBefore_OnClearFilters()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var instance = component.Instance;
+        var dueBeforeInput = component.Find($"#{WorkOrderSearch.Elements.DueBeforeInput}");
+        await dueBeforeInput.ChangeAsync(new() { Value = "2026-01-01" });
+        instance.Model.Filters.DueBefore.ShouldBe(new DateOnly(2026, 1, 1));
+
+        var clearButton = component.Find($"#{WorkOrderSearch.Elements.ClearFiltersButton}");
+        await clearButton.ClickAsync(new());
+
+        instance.Model.Filters.DueBefore.ShouldBeNull();
+    }
+
+    [Test]
+    public async Task ShouldRender_DueBefore_DateInput()
+    {
+        await using var ctx = CreateContext();
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var input = component.Find($"#{WorkOrderSearch.Elements.DueBeforeInput}");
+        input.ShouldNotBeNull();
     }
 }

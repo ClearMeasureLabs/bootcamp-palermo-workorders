@@ -3,6 +3,7 @@ using System.Reflection;
 using AutoBogus;
 using AutoBogus.Conventions;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Queries;
 using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests;
@@ -34,6 +35,7 @@ public static class ObjectMother
                 .WithSkip<WorkOrder>(wo => wo.Creator)
                 .WithSkip<WorkOrder>(wo => wo.Assignee)
                 .WithSkip<WorkOrder>(wo => wo.DueDate)
+                .WithSkip<WorkOrderSpecificationQuery>(q => q.DueBefore)
                 .WithSkip<Employee>(wo => wo.Roles)
                 .WithOverride(new BogusOverrides());
         });
