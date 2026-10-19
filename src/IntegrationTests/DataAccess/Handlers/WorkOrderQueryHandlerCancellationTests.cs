@@ -14,7 +14,7 @@ public class WorkOrderQueryHandlerCancellationTests
         var dataContext = TestHost.GetRequiredService<DataContext>();
         var handler = new WorkOrderQueryHandler(dataContext);
         using var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync();
 
         await Should.ThrowAsync<OperationCanceledException>(() =>
             handler.Handle(new WorkOrderByNumberQuery("WO-CANC"), cts.Token));
