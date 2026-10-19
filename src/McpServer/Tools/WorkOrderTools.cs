@@ -53,6 +53,16 @@ public class WorkOrderTools
             new JsonSerializerOptions { WriteIndented = true });
     }
 
+    [McpServerTool(Name = "list-due-soon-work-orders"), Description("Lists open work orders due between today and today + days (America/Chicago). Days defaults to 7 (1-30).")]
+    public static async Task<string> ListDueSoonWorkOrders(
+        IBus bus,
+        [Description("Number of days ahead to include (1-30). Defaults to 7.")] int days = 7)
+    {
+        var workOrders = await bus.Send(new WorkOrdersDueSoonQuery(days));
+        return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
+            new JsonSerializerOptions { WriteIndented = true });
+    }
+
     [McpServerTool(Name = "get-work-order"), Description("Retrieves a single work order by its number, including full details.")]
     public static async Task<string> GetWorkOrder(
         IBus bus,

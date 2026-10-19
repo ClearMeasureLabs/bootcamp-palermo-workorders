@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.Core.Services.Impl;
 using ClearMeasure.Bootcamp.IntegrationTests.DataAccess;
 using ClearMeasure.Bootcamp.McpServer.Tools;
@@ -627,6 +628,42 @@ public class McpWorkOrderToolTests
         context.AddRange(lovejoy, otherCreator, willie, otherAssignee);
         context.Set<WorkOrder>().AddRange(workOrders);
         await context.SaveChangesAsync();
+    }
+
+    [Test]
+    public async Task ShouldListDueSoonWorkOrders()
+    {
+        var today = ChurchTimeZone.Today(TestHost.GetRequiredService<TimeProvider>());
+        var employee = new Employee("dueuser", "Due", "User", "due@test.com");
+        var dueSoon = new WorkOrder
+        {
+            Creator = employee,
+            Number = "DS-MCP1",
+            Title = "Due soon order",
+            Status = WorkOrderStatus.Draft,
+            DueDate = today.AddDays(2)
+        };
+        var tooFar = new WorkOrder
+        {
+            Creator = employee,
+            Number = "DS-MCP2",
+            Title = "Too far order",
+            Status = WorkOrderStatus.Draft,
+            DueDate = today.AddDays(14)
+        };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(dueSoon);
+        context.Add(tooFar);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ListDueSoonWorkOrders(bus);
+
+        result.ShouldContain("DS-MCP1");
+        result.ShouldContain("Due soon order");
+        result.ShouldNotContain("DS-MCP2");
     }
 
     private static WorkOrder CreateWorkOrder(
