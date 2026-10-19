@@ -119,6 +119,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             WorkOrderNumber = workOrder.Number,
             Status = workOrder.Status.FriendlyName,
             CreatorFullName = workOrder.Creator!.GetFullName(),
+            CreatorEmail = workOrder.GetContactEmail(),
             AssignedToUserName = workOrder.Assignee?.UserName,
             Title = workOrder.Title,
             Description = workOrder.Description,

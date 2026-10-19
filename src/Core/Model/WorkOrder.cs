@@ -43,6 +43,11 @@ public class WorkOrder : EntityBase<WorkOrder>
 
     public Employee? Assignee { get; set; }
 
+    /// <summary>
+    /// Email address for the person to contact about this work order (the creator).
+    /// </summary>
+    public string? GetContactEmail() => Creator?.EmailAddress;
+
     public string? Number { get; set; }
 
     public string FriendlyStatus => GetTextForStatus();

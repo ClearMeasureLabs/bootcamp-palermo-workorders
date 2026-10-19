@@ -16,6 +16,11 @@ public class WorkOrderManageModel
 
     public string? CreatorFullName { get; set; }
 
+    /// <summary>
+    /// Creator email shown so viewers know who to contact about the work order.
+    /// </summary>
+    public string? CreatorEmail { get; set; }
+
     public string? AssignedToUserName { get; set; }
 
     [Required] public string? Title { get; set; }
