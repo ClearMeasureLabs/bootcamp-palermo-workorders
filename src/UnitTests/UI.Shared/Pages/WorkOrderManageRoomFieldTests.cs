@@ -62,6 +62,11 @@ public class WorkOrderManageRoomFieldTests
                 return Task.FromResult((TResponse)(object)employees);
             }
 
+            if (request is OpenWorkOrderCountByAssigneeQuery)
+            {
+                return Task.FromResult((TResponse)(object)new Dictionary<string, int>());
+            }
+
             if (request is WorkOrderAttachmentsQuery)
             {
                 return Task.FromResult((TResponse)(object)Array.Empty<WorkOrderAttachment>());

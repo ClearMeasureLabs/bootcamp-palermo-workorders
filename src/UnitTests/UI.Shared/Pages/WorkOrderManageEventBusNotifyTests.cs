@@ -122,6 +122,11 @@ public class WorkOrderManageEventBusNotifyTests
                 return Task.FromResult<TResponse>((TResponse)(object)employees);
             }
 
+            if (request is OpenWorkOrderCountByAssigneeQuery)
+            {
+                return Task.FromResult<TResponse>((TResponse)(object)new Dictionary<string, int>());
+            }
+
             if (request is WorkOrderAttachmentsQuery)
             {
                 return Task.FromResult<TResponse>((TResponse)(object)Array.Empty<WorkOrderAttachment>());

@@ -138,7 +138,12 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private async Task LoadUserOptions()
     {
         var employees = await Bus.Send(new EmployeeGetAllQuery());
-        var items = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
+        var openCounts = await Bus.Send(new OpenWorkOrderCountByAssigneeQuery());
+        var items = employees.Select(e =>
+        {
+            openCounts.TryGetValue(e.UserName, out var openCount);
+            return new SelectListItem(e.UserName, $"{e.GetFullName()} ({openCount} open)");
+        }).ToList();
         items.Insert(0, new SelectListItem("", ""));
         UserOptions = items;
     }

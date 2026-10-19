@@ -219,6 +219,11 @@ public class WorkOrderManageSpeechTests
                 return Task.FromResult<TResponse>((TResponse)(object)employees);
             }
 
+            if (request is OpenWorkOrderCountByAssigneeQuery)
+            {
+                return Task.FromResult<TResponse>((TResponse)(object)new Dictionary<string, int>());
+            }
+
             if (request is WorkOrderAttachmentsQuery)
             {
                 var attachments = Array.Empty<WorkOrderAttachment>();
