@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.Core.Model;
+using Shouldly;
 
 namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 
@@ -6,96 +7,97 @@ namespace ClearMeasure.Bootcamp.UnitTests.Core.Model;
 public class WorkOrderTests
 {
     [Test]
-    public void PropertiesShouldInitializeToProperDefaults()
+    public void CanReassign_WhenDraft_ReturnsTrue()
     {
-        var workOrder = new WorkOrder();
-        Assert.That(workOrder.Id, Is.EqualTo(Guid.Empty));
-        Assert.That(workOrder.Title, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Description, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Instructions, Is.EqualTo(string.Empty));
-        Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Draft));
-        Assert.That(workOrder.Number, Is.EqualTo(null));
-        Assert.That(workOrder.Creator, Is.EqualTo(null));
-        Assert.That(workOrder.Assignee, Is.EqualTo(null));
-        Assert.That(workOrder.DueDate, Is.Null);
+        var workOrder = ObjectMother.Faker<WorkOrder>();
+        workOrder.Status = WorkOrderStatus.Draft;
+
+        workOrder.CanReassign().ShouldBeTrue();
+    }
+
+    [TestCase(nameof(WorkOrderStatus.Assigned))]
+    [TestCase(nameof(WorkOrderStatus.InProgress))]
+    [TestCase(nameof(WorkOrderStatus.Complete))]
+    [TestCase(nameof(WorkOrderStatus.Cancelled))]
+    public void CanReassign_WhenNotDraft_ReturnsFalse(string statusKey)
+    {
+        var workOrder = ObjectMother.Faker<WorkOrder>();
+        workOrder.Status = WorkOrderStatus.FromKey(statusKey);
+
+        workOrder.CanReassign().ShouldBeFalse();
     }
 
     [Test]
-    public void ToStringShouldReturnWoNumber()
+    public void ToString_ReturnsWorkOrderNumberText()
     {
-        var order = new WorkOrder() { Number = "456" };
-        Assert.That(order.ToString(), Is.EqualTo("Work Order 456"));
+        var workOrder = ObjectMother.Faker<WorkOrder>();
+        workOrder.Number = "WO-123";
+
+        workOrder.ToString().ShouldBe("Work Order WO-123");
     }
 
     [Test]
-    public void PropertiesShouldGetAndSetValuesProperly()
+    public void GetMessage_ReturnsWorkOrderStatusText()
     {
-        var workOrder = new WorkOrder();
-        var guid = Guid.NewGuid();
-        var creator = new Employee();
-        var assignee = new Employee();
+        var workOrder = ObjectMother.Faker<WorkOrder>();
+        workOrder.Number = "WO-123";
+        workOrder.Status = WorkOrderStatus.Assigned;
 
-        workOrder.Id = guid;
-        workOrder.Title = "Title";
-        workOrder.Description = "Description";
-        workOrder.Instructions = "Bring ladder and safety gear";
-        workOrder.Status = WorkOrderStatus.Complete;
-        workOrder.Number = "Number";
-        workOrder.Creator = creator;
-        workOrder.Assignee = assignee;
-
-        Assert.That(workOrder.Id, Is.EqualTo(guid));
-        Assert.That(workOrder.Title, Is.EqualTo("Title"));
-        Assert.That(workOrder.Description, Is.EqualTo("Description"));
-        Assert.That(workOrder.Instructions, Is.EqualTo("Bring ladder and safety gear"));
-        Assert.That(workOrder.Status, Is.EqualTo(WorkOrderStatus.Complete));
-        Assert.That(workOrder.Number, Is.EqualTo("Number"));
-        Assert.That(workOrder.Creator, Is.EqualTo(creator));
-        Assert.That(workOrder.Assignee, Is.EqualTo(assignee));
+        workOrder.GetMessage().ShouldBe("Work Order WO-123 is now in Status Assigned");
     }
 
     [Test]
-    public void ShouldShowFriendlyStatusValuesAsStrings()
+    public void Description_WhenNull_BecomesEmpty()
     {
-        var workOrder = new WorkOrder() { Status = WorkOrderStatus.Assigned };
+        var workOrder = ObjectMother.Faker<WorkOrder>();
 
-        Assert.That(workOrder.FriendlyStatus, Is.EqualTo("Assigned"));
+        workOrder.Description = null;
+
+        workOrder.Description.ShouldBe(string.Empty);
     }
 
     [Test]
-    public void ShouldTruncateTo4000CharactersOnDescription()
+    public void Description_WhenLongerThanMax_IsTruncated()
     {
-        var longText = new string('x', 4001);
-        var order = new WorkOrder() { Description = longText };
-        Assert.That(order.Description.Length, Is.EqualTo(4000));
+        var workOrder = ObjectMother.Faker<WorkOrder>();
+        var value = new string('a', WorkOrder.DescriptionMaxLength + 10);
+
+        workOrder.Description = value;
+
+        workOrder.Description.ShouldBe(value[..WorkOrder.DescriptionMaxLength]);
     }
 
     [Test]
-    public void ShouldTruncateTo4000CharactersOnInstructions()
+    public void Instructions_WhenNull_BecomesEmpty()
     {
-        var longText = new string('x', 4001);
-        var order = new WorkOrder() { Instructions = longText };
-        Assert.That(order.Instructions.Length, Is.EqualTo(4000));
+        var workOrder = ObjectMother.Faker<WorkOrder>();
+
+        workOrder.Instructions = null;
+
+        workOrder.Instructions.ShouldBe(string.Empty);
     }
 
     [Test]
-    public void ShouldReturnEmptyStringWhenInstructionsSetToNull()
+    public void Instructions_WhenLongerThanMax_IsTruncated()
     {
-        var order = new WorkOrder() { Instructions = null };
-        Assert.That(order.Instructions, Is.EqualTo(string.Empty));
+        var workOrder = ObjectMother.Faker<WorkOrder>();
+        var value = new string('b', WorkOrder.InstructionsMaxLength + 10);
+
+        workOrder.Instructions = value;
+
+        workOrder.Instructions.ShouldBe(value[..WorkOrder.InstructionsMaxLength]);
     }
 
     [Test]
-    public void InstructionsMaxLength_ShouldBe4000()
+    public void ChangeStatus_WithEmployeeAndDate_SetsStatus()
     {
-        Assert.That(WorkOrder.InstructionsMaxLength, Is.EqualTo(4000));
-    }
+        var workOrder = ObjectMother.Faker<WorkOrder>();
+        workOrder.Status = WorkOrderStatus.Draft;
+        var employee = ObjectMother.Faker<Employee>();
+        var date = new DateTime(2024, 6, 15, 10, 0, 0, DateTimeKind.Utc);
 
-    [Test]
-    public void ShouldChangeStatus()
-    {
-        var order = new WorkOrder() { Status = WorkOrderStatus.Draft };
-        order.ChangeStatus(WorkOrderStatus.Assigned);
-        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Assigned));
+        workOrder.ChangeStatus(employee, date, WorkOrderStatus.InProgress);
+
+        workOrder.Status.ShouldBe(WorkOrderStatus.InProgress);
     }
 }
