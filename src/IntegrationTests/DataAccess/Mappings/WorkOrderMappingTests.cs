@@ -14,11 +14,13 @@ public class WorkOrderMappingTests
     {
         new DatabaseTests().Clean();
 
+        var creator = new Employee("cncreator", "Create", "Or", "cn@example.com");
         var order = new WorkOrder
         {
             Number = "WO-CN1",
             Title = "Completion notes test",
             Description = "Desc",
+            Creator = creator,
             CompletionNotes = "Replaced the filter and tested airflow."
         };
 
@@ -28,6 +30,7 @@ public class WorkOrderMappingTests
 
         using (var context = new DataContext(new TestDatabaseConfiguration(configuration)))
         {
+            context.Add(creator);
             context.Add(order);
             context.SaveChanges();
         }
