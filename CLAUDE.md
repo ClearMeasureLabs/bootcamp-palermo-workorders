@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Implementing a single GitHub issue (agents)
+
+Follow `.claude/skills/feature-loop-lean/GENERAL.md` (token-lean loop: `scripts/agent/Get-Context.ps1` then `scripts/agent/Submit-Change.ps1`). Launch prompt: `docs/agent-launch-prompt.md`.
+
 ## Project Overview
 
 Work Order management system. .NET 10.0, Onion Architecture, Blazor WebAssembly + Server UI, EF Core 10, SQL Server, MediatR for CQRS, Lamar DI, deployed to Azure Container Apps.
