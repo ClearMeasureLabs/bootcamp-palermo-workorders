@@ -1,3 +1,4 @@
+@using ClearMeasure.Bootcamp.Core.Model.StateCommands
 <div class="work-order-container">
     <div class="work-order-header">
         <h2 title="Create or edit a work order" data-testid="@Elements.ManageHeadingTooltip">
@@ -167,14 +168,35 @@
                     {
                         var buttonTestId = Elements.CommandButton + command.TransitionVerbPresentTense;
                         var buttonClass = "btn btn-primary";
-                        <button data-testid="@buttonTestId" type="submit" @onclick="@(() => SelectedCommand = command.TransitionVerbPresentTense)" class="@buttonClass">
-                            @command.TransitionVerbPresentTense
-                        </button>
+                        var isCancel = command.TransitionVerbPresentTense == AssignedToCancelledCommand.Name;
+                        if (isCancel)
+                        {
+                            <button data-testid="@buttonTestId" type="button" @onclick="ShowCancelConfirmation" class="@buttonClass">
+                                @command.TransitionVerbPresentTense
+                            </button>
+                        }
+                        else
+                        {
+                            <button data-testid="@buttonTestId" type="submit" @onclick="@(() => SelectedCommand = command.TransitionVerbPresentTense)" class="@buttonClass">
+                                @command.TransitionVerbPresentTense
+                            </button>
+                        }
                     }
                 </div>
             }
         </div>
     </EditForm>
+
+    @if (_showCancelConfirmation)
+    {
+        <div data-testid="@Elements.CancelConfirmationDialog" class="cancel-confirmation-dialog" role="dialog">
+            <p data-testid="@Elements.CancelConfirmationMessage">
+                Cancel work order @Model.WorkOrderNumber? This removes the assignee.
+            </p>
+            <button data-testid="@Elements.CancelConfirmButton" type="button" class="btn btn-primary" @onclick="ConfirmCancelAsync">Confirm</button>
+            <button data-testid="@Elements.CancelKeepButton" type="button" class="btn btn-secondary" @onclick="KeepCancel">Keep</button>
+        </div>
+    }
 </div>
 
 @code
@@ -195,6 +217,10 @@
         DueDateDisplay,
         ReadOnlyMessage,
         CommandButton,
+        CancelConfirmationDialog,
+        CancelConfirmationMessage,
+        CancelConfirmButton,
+        CancelKeepButton,
         WorkOrderNumber,
         Status,
         AttachmentsSection,

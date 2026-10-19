@@ -44,6 +44,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private List<SelectListItem> UserOptions { get; set; } = new();
     private IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     private string? SelectedCommand { get; set; }
+    private bool _showCancelConfirmation;
 
     [Parameter] public string? Id { get; set; }
 
@@ -146,17 +147,49 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private async Task HandleSubmit()
     {
         var currentUser = (await UserSession!.GetCurrentUserAsync())!;
-        WorkOrder workOrder;
+        var workOrder = await LoadWorkOrderForSubmitAsync(currentUser);
+        await ApplyModelToWorkOrderAsync(workOrder);
 
+        var matchingCommand = new StateCommandList()
+            .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
+
+        await CompleteCommandAsync(matchingCommand);
+    }
+
+    private void ShowCancelConfirmation()
+    {
+        _showCancelConfirmation = true;
+    }
+
+    private void KeepCancel()
+    {
+        _showCancelConfirmation = false;
+    }
+
+    private async Task ConfirmCancelAsync()
+    {
+        _showCancelConfirmation = false;
+        SelectedCommand = AssignedToCancelledCommand.Name;
+
+        var currentUser = (await UserSession!.GetCurrentUserAsync())!;
+        var workOrder = await LoadWorkOrderForSubmitAsync(currentUser);
+        await ApplyModelToWorkOrderAsync(workOrder);
+
+        await CompleteCommandAsync(new AssignedToCancelledCommand(workOrder, currentUser));
+    }
+
+    private async Task<WorkOrder> LoadWorkOrderForSubmitAsync(Employee currentUser)
+    {
         if (Model.Mode == EditMode.New)
         {
-            workOrder = WorkOrderBuilder!.CreateNewWorkOrder(currentUser);
-        }
-        else
-        {
-            workOrder = (await Bus.Send(new WorkOrderByNumberQuery(Model.WorkOrderNumber!)))!;
+            return WorkOrderBuilder!.CreateNewWorkOrder(currentUser);
         }
 
+        return (await Bus.Send(new WorkOrderByNumberQuery(Model.WorkOrderNumber!)))!;
+    }
+
+    private async Task ApplyModelToWorkOrderAsync(WorkOrder workOrder)
+    {
         Employee? assignee = null;
         if (Model.AssignedToUserName != null)
         {
@@ -170,13 +203,12 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
         workOrder.DueDate = Model.DueDateInput;
+    }
 
-        var matchingCommand = new StateCommandList()
-            .GetMatchingCommand(workOrder, currentUser, SelectedCommand!);
-
+    private async Task CompleteCommandAsync(IStateCommand matchingCommand)
+    {
         var result = await Bus.Send(matchingCommand);
         EventBus.Notify(new WorkOrderChangedEvent(result));
-
         NavigationManager!.NavigateTo("/workorder/search");
     }
 
