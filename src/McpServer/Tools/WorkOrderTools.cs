@@ -230,10 +230,12 @@ public class WorkOrderTools
             a.FileName,
             a.ContentType,
             a.FileSize,
+            a.Description,
             UploadedBy = a.UploadedBy?.GetFullName(),
             UploadedByUsername = a.UploadedBy?.UserName,
             a.UploadedDate
         }).ToArray(), new JsonSerializerOptions { WriteIndented = true });
+
     }
 
     private static string? ValidateSave(

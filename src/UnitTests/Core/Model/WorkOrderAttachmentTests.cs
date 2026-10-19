@@ -31,4 +31,17 @@ public class WorkOrderAttachmentTests
 
         attachment.UploadedDate.ShouldBe(expectedDate);
     }
+
+    [Test]
+    public void WorkOrderAttachment_ShouldAcceptOptionalDescription()
+    {
+        var workOrder = new WorkOrder { Id = Guid.NewGuid() };
+        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        var command = new ClearMeasure.Bootcamp.Core.Model.StateCommands.AddAttachmentMetadataCommand(
+            workOrder, uploader, "damage-photo.jpg", "image/jpeg", 2048, "Front door damage");
+
+        var attachment = command.CreateAttachment(DateTime.UtcNow);
+
+        attachment.Description.ShouldBe("Front door damage");
+    }
 }

@@ -34,6 +34,7 @@ public class WorkOrderManageAttachmentsTests
                 FileName = "damage-photo.jpg",
                 ContentType = "image/jpeg",
                 FileSize = 2048,
+                Description = "Front door damage",
                 UploadedById = uploader.Id,
                 UploadedBy = uploader,
                 UploadedDate = new DateTime(2025, 3, 1, 10, 0, 0)
@@ -62,6 +63,9 @@ public class WorkOrderManageAttachmentsTests
 
         var fileNameCell = component.Find($"[data-testid='{WorkOrderManage.Elements.AttachmentFileName}']");
         fileNameCell.TextContent.ShouldBe("damage-photo.jpg");
+
+        var descriptionCell = component.Find($"[data-testid='{WorkOrderManage.Elements.AttachmentDescription}']");
+        descriptionCell.TextContent.ShouldBe("Front door damage");
     }
 
     private class StubWorkOrderManageBus(WorkOrderAttachment[] attachments) : Bus(null!)

@@ -132,6 +132,7 @@
                         <thead>
                             <tr>
                                 <th>File Name</th>
+                                <th>Description</th>
                                 <th>Content Type</th>
                                 <th>Size</th>
                                 <th>Uploaded By</th>
@@ -143,6 +144,7 @@
                             {
                                 <tr data-testid="@Elements.AttachmentRow">
                                     <td data-testid="@Elements.AttachmentFileName">@attachment.FileName</td>
+                                    <td data-testid="@Elements.AttachmentDescription">@attachment.Description</td>
                                     <td data-testid="@Elements.AttachmentContentType">@attachment.ContentType</td>
                                     <td data-testid="@Elements.AttachmentFileSize">@attachment.FileSize</td>
                                     <td data-testid="@Elements.AttachmentUploadedBy">@attachment.UploadedBy?.GetFullName()</td>
@@ -200,6 +202,7 @@
         AttachmentsSection,
         AttachmentRow,
         AttachmentFileName,
+        AttachmentDescription,
         AttachmentContentType,
         AttachmentFileSize,
         AttachmentUploadedBy,

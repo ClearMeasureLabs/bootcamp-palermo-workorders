@@ -45,6 +45,35 @@ public class WorkOrderAttachmentHandlerTests : IntegratedTestBase
     }
 
     [Test]
+    public async Task AddAttachmentMetadataCommand_ShouldPersistDescription()
+    {
+        new DatabaseTests().Clean();
+
+        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com");
+        var workOrder = new WorkOrder { Number = "WO-DESC", Creator = uploader };
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(uploader);
+            context.Add(workOrder);
+            await context.SaveChangesAsync();
+        }
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var command = new AddAttachmentMetadataCommand(
+            workOrder, uploader, "damage-photo.jpg", "image/jpeg", 4096, "Front door damage");
+        var attachment = await bus.Send(command);
+
+        attachment.Description.ShouldBe("Front door damage");
+
+        await using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var persisted = context.Set<WorkOrderAttachment>().Single(a => a.Id == attachment.Id);
+            persisted.Description.ShouldBe("Front door damage");
+        }
+    }
+
+    [Test]
     public async Task WorkOrderAttachmentsQuery_ShouldReturnAttachmentsForWorkOrder()
     {
         new DatabaseTests().Clean();

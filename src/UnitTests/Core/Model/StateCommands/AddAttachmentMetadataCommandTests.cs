@@ -24,5 +24,19 @@ public class AddAttachmentMetadataCommandTests
         attachment.WorkOrderId.ShouldBe(workOrder.Id);
         attachment.UploadedById.ShouldBe(uploader.Id);
         attachment.UploadedDate.ShouldBe(uploadDate);
+        attachment.Description.ShouldBeNull();
+    }
+
+    [Test]
+    public void AddAttachmentMetadataCommand_ShouldSetOptionalDescription()
+    {
+        var workOrder = new WorkOrder { Id = Guid.NewGuid() };
+        var uploader = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        var command = new AddAttachmentMetadataCommand(
+            workOrder, uploader, "damage-photo.jpg", "image/jpeg", 4096, "Front door damage");
+
+        var attachment = command.CreateAttachment(DateTime.UtcNow);
+
+        attachment.Description.ShouldBe("Front door damage");
     }
 }

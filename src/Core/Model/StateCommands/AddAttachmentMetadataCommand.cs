@@ -7,7 +7,8 @@ public record AddAttachmentMetadataCommand(
     Employee UploadedBy,
     string FileName,
     string ContentType,
-    long FileSize) : IRequest<WorkOrderAttachment>
+    long FileSize,
+    string? Description = null) : IRequest<WorkOrderAttachment>
 {
     public WorkOrderAttachment CreateAttachment(DateTime uploadedDate)
     {
@@ -21,6 +22,7 @@ public record AddAttachmentMetadataCommand(
             FileName = FileName,
             ContentType = ContentType,
             FileSize = FileSize,
+            Description = Description,
             UploadedById = UploadedBy.Id,
             UploadedDate = uploadedDate
         };

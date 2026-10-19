@@ -606,6 +606,40 @@ public class McpWorkOrderToolTests
         wo.Status.ShouldBe(WorkOrderStatus.Complete);
     }
 
+    [Test]
+    public async Task ShouldListWorkOrderAttachmentsWithDescription()
+    {
+        new DatabaseTests().Clean();
+
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var workOrder = new WorkOrder { Creator = employee, Number = "WO-ATT1", Title = "Fix sink" };
+        var attachment = new WorkOrderAttachment
+        {
+            WorkOrderId = workOrder.Id,
+            FileName = "photo.jpg",
+            ContentType = "image/jpeg",
+            FileSize = 1024,
+            Description = "Front door damage",
+            UploadedById = employee.Id,
+            UploadedDate = DateTime.UtcNow
+        };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(workOrder);
+        await context.SaveChangesAsync();
+        attachment.WorkOrderId = workOrder.Id;
+        attachment.UploadedById = employee.Id;
+        context.Add(attachment);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ListWorkOrderAttachments(bus, "WO-ATT1");
+
+        result.ShouldContain("photo.jpg");
+        result.ShouldContain("Front door damage");
+    }
+
     private static async Task SeedFilterWorkOrders()
     {
         var lovejoy = new Employee("tlovejoy", "Timothy", "Lovejoy Jr", "lovejoy@test.com");
