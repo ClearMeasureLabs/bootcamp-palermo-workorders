@@ -60,6 +60,36 @@ public class WorkOrderManageSubmitTests
     }
 
     [Test]
+    public async Task ShouldShowDepartmentInAssigneeDropdown_WhenEmployeeHasDepartment()
+    {
+        await using var ctx = new BunitContext();
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        user.AddRole(new Role("creator", true, false));
+        var assignee = new Employee("alee", "Alex", "Lee", "alex@example.com") { Department = "Facilities" };
+        var bus = new StubSubmitBus(employees: [assignee]);
+
+        ctx.Services.AddSingleton<IBus>(bus);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            var assigneeSelect = component.Find($"[data-testid='{WorkOrderManage.Elements.Assignee}']");
+            assigneeSelect.TextContent.ShouldContain("Alex Lee (Facilities)");
+        });
+    }
+
+    [Test]
     public async Task ShouldLoadExistingWorkOrder_WhenEditModeSubmitted()
     {
         await using var ctx = new BunitContext();
@@ -108,7 +138,7 @@ public class WorkOrderManageSubmitTests
         });
     }
 
-    private sealed class StubSubmitBus(WorkOrder? existing = null) : Bus(null!)
+    private sealed class StubSubmitBus(WorkOrder? existing = null, Employee[]? employees = null) : Bus(null!)
     {
         public object? LastCommand { get; private set; }
         public int WorkOrderByNumberHits { get; private set; }
@@ -119,7 +149,7 @@ public class WorkOrderManageSubmitTests
         {
             if (request is EmployeeGetAllQuery)
             {
-                return Task.FromResult((TResponse)(object)Array.Empty<Employee>());
+                return Task.FromResult((TResponse)(object)(employees ?? []));
             }
 
             if (request is WorkOrderAttachmentsQuery)

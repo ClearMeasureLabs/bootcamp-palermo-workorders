@@ -86,4 +86,34 @@ public class McpEmployeeToolTests
 
         result.ShouldContain("No employee found");
     }
+
+    [Test]
+    public async Task ShouldIncludeDepartment_WhenGettingEmployeeByUsername()
+    {
+        var emp = new Employee("deptuser", "Dana", "Lee", "dana@test.com") { Department = "Facilities" };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.GetEmployee(bus, "deptuser");
+
+        result.ShouldContain("\"Department\": \"Facilities\"");
+    }
+
+    [Test]
+    public async Task ShouldIncludeDepartment_WhenListingEmployees()
+    {
+        var emp = new Employee("listdept", "Sam", "Ng", "sam@test.com") { Department = "Worship" };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus);
+
+        result.ShouldContain("\"Department\": \"Worship\"");
+    }
 }

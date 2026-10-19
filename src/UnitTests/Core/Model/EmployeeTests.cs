@@ -227,4 +227,20 @@ public class EmployeeTests
         var employee = new Employee() { PreferredLanguage = "de-DE" };
         employee.PreferredLanguage.ShouldBe("de-DE");
     }
+
+    [Test]
+    public void GetFullNameWithDepartment_WithDepartment_ShouldAppendDepartmentInParentheses()
+    {
+        var employee = new Employee("user", "Jeffrey", "Palermo", "jp@example.com") { Department = "Facilities" };
+        employee.GetFullNameWithDepartment().ShouldBe("Jeffrey Palermo (Facilities)");
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void GetFullNameWithDepartment_WithBlankDepartment_ShouldReturnFullNameOnly(string? department)
+    {
+        var employee = new Employee("user", "Jeffrey", "Palermo", "jp@example.com") { Department = department };
+        employee.GetFullNameWithDepartment().ShouldBe("Jeffrey Palermo");
+    }
 }

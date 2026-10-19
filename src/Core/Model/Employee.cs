@@ -32,6 +32,12 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
     /// </summary>
     public string? MiddleName { get; set; }
 
+    /// <summary>
+    /// Optional ministry or department. When null or blank it is omitted from assignee dropdown labels.
+    /// </summary>
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global
+    public string? Department { get; set; }
+
     public string EmailAddress { get; set; }
 
     public string PreferredLanguage { get; set; } = "en-US";
@@ -54,6 +60,16 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
         return string.IsNullOrWhiteSpace(MiddleName)
             ? $"{FirstName} {LastName}"
             : $"{FirstName} {MiddleName} {LastName}";
+    }
+
+    /// <summary>
+    /// Full name for assignee dropdowns; appends <see cref="Department"/> in parentheses when set.
+    /// </summary>
+    public string GetFullNameWithDepartment()
+    {
+        return string.IsNullOrWhiteSpace(Department)
+            ? GetFullName()
+            : $"{GetFullName()} ({Department})";
     }
 
     public override string ToString()
