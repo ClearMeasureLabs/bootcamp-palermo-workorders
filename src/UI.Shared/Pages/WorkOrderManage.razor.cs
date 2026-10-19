@@ -44,11 +44,13 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private List<SelectListItem> UserOptions { get; set; } = new();
     private IEnumerable<IStateCommand> ValidCommands { get; set; } = new List<IStateCommand>();
     private string? SelectedCommand { get; set; }
+    private bool _navigateToNewAfterSave;
 
     [Parameter] public string? Id { get; set; }
 
     [SupplyParameterFromQuery] public string? Mode { get; set; }
     private EditMode CurrentMode => Mode?.ToLower() == "edit" ? EditMode.Edit : EditMode.New;
+    private bool ShowSaveAndAddAnother => Model.Mode == EditMode.New;
 
     protected override async Task OnInitializedAsync()
     {
@@ -177,7 +179,21 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         var result = await Bus.Send(matchingCommand);
         EventBus.Notify(new WorkOrderChangedEvent(result));
 
+        if (_navigateToNewAfterSave)
+        {
+            _navigateToNewAfterSave = false;
+            NavigationManager!.NavigateTo("/workorder/manage?mode=New", forceLoad: true);
+            return;
+        }
+
         NavigationManager!.NavigateTo("/workorder/search");
+    }
+
+    private async Task HandleSaveAndAddAnother()
+    {
+        SelectedCommand = "Save";
+        _navigateToNewAfterSave = true;
+        await HandleSubmit();
     }
 
     private async Task SpeakTitleAsync()

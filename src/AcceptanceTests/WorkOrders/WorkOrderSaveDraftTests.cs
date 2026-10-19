@@ -62,6 +62,57 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task ShouldSaveAndAddAnother_LandOnEmptyForm_AndShowDraftInSearch()
+    {
+        await LoginAsCurrentUser();
+
+        var order = Faker<WorkOrder>();
+        order.Title = $"[{TestTag}] save and add another";
+        order.Number = null;
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Click(nameof(NavMenu.Elements.NewWorkOrder));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+
+        await WaitForNewWorkOrderFormReadyAsync();
+        var woNumberLocator = Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber));
+        order.Number = await woNumberLocator.InnerTextAsync();
+
+        await Input(nameof(WorkOrderManage.Elements.Title), order.Title!);
+        await Input(nameof(WorkOrderManage.Elements.Description), order.Description!);
+        if (!string.IsNullOrEmpty(order.Instructions))
+        {
+            await Input(nameof(WorkOrderManage.Elements.Instructions), order.Instructions!);
+        }
+        if (!string.IsNullOrEmpty(order.RoomNumber))
+        {
+            await Input(nameof(WorkOrderManage.Elements.RoomNumber), order.RoomNumber!);
+        }
+
+        await Click(nameof(WorkOrderManage.Elements.SaveAndAddAnother));
+        await Page.WaitForURLAsync("**/workorder/manage?mode=New");
+        await WaitForNewWorkOrderFormReadyAsync();
+
+        var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
+        await Expect(titleField).ToHaveValueAsync("");
+        var descriptionField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Description));
+        await Expect(descriptionField).ToHaveValueAsync("");
+
+        var newNumber = await Page.GetByTestId(nameof(WorkOrderManage.Elements.WorkOrderNumber)).InnerTextAsync();
+        newNumber.ShouldNotBe(order.Number);
+
+        WorkOrder saved = await Bus.Send(new WorkOrderByNumberQuery(order.Number!))
+            ?? throw new InvalidOperationException("saved draft missing");
+        saved.Title.ShouldBe(order.Title);
+
+        await Click(nameof(NavMenu.Elements.MyWorkOrders));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+    }
+
+    [Test, Retry(2)]
     public async Task ShouldSaveWorkOrderWithBlankInstructions()
     {
         await LoginAsCurrentUser();

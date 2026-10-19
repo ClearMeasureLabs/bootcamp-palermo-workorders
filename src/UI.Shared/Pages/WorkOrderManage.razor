@@ -171,6 +171,12 @@
                             @command.TransitionVerbPresentTense
                         </button>
                     }
+                    @if (ShowSaveAndAddAnother)
+                    {
+                        <button data-testid="@Elements.SaveAndAddAnother" type="button" class="btn btn-primary" @onclick="HandleSaveAndAddAnother">
+                            Save and add another
+                        </button>
+                    }
                 </div>
             }
         </div>
@@ -195,6 +201,7 @@
         DueDateDisplay,
         ReadOnlyMessage,
         CommandButton,
+        SaveAndAddAnother,
         WorkOrderNumber,
         Status,
         AttachmentsSection,

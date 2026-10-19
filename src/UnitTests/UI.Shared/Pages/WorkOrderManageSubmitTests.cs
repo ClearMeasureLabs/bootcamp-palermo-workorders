@@ -108,6 +108,155 @@ public class WorkOrderManageSubmitTests
         });
     }
 
+    [Test]
+    public async Task ShouldShowSaveAndAddAnother_WhenCreatingNewWorkOrder()
+    {
+        await using var ctx = new BunitContext();
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        user.AddRole(new Role("creator", true, false));
+
+        ctx.Services.AddSingleton<IBus>(new StubSubmitBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            component.Find($"[data-testid='{WorkOrderManage.Elements.SaveAndAddAnother}']").ShouldNotBeNull();
+        });
+    }
+
+    [Test]
+    public async Task ShouldHideSaveAndAddAnother_WhenEditingExistingWorkOrder()
+    {
+        await using var ctx = new BunitContext();
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        user.AddRole(new Role("creator", true, false));
+        var existing = new WorkOrder
+        {
+            Id = Guid.NewGuid(),
+            Number = "WO-EDIT",
+            Title = "Existing",
+            Description = "Desc",
+            Status = WorkOrderStatus.Draft,
+            Creator = user
+        };
+
+        ctx.Services.AddSingleton<IBus>(new StubSubmitBus(existing));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo("http://localhost/?Mode=Edit&Id=WO-EDIT");
+
+        var component = ctx.Render<WorkOrderManage>(parameters => parameters
+            .Add(p => p.Id, "WO-EDIT"));
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").GetAttribute("value")
+                .ShouldBe("Existing");
+        });
+
+        component.FindAll($"[data-testid='{WorkOrderManage.Elements.SaveAndAddAnother}']").Count.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task ShouldHideSaveAndAddAnother_WhenPageIsReadOnly()
+    {
+        await using var ctx = new BunitContext();
+        var user = new Employee("viewer", "View", "Only", "v@example.com") { Id = Guid.NewGuid() };
+        var creator = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        var existing = new WorkOrder
+        {
+            Id = Guid.NewGuid(),
+            Number = "WO-RO",
+            Title = "Read only",
+            Description = "Desc",
+            Status = WorkOrderStatus.Complete,
+            Creator = creator
+        };
+
+        ctx.Services.AddSingleton<IBus>(new StubSubmitBus(existing));
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo("http://localhost/?Mode=Edit&Id=WO-RO");
+
+        var component = ctx.Render<WorkOrderManage>(parameters => parameters
+            .Add(p => p.Id, "WO-RO"));
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            component.Find($"[data-testid='{WorkOrderManage.Elements.ReadOnlyMessage}']").ShouldNotBeNull();
+        });
+
+        component.FindAll($"[data-testid='{WorkOrderManage.Elements.SaveAndAddAnother}']").Count.ShouldBe(0);
+    }
+
+    [Test]
+    public async Task ShouldNavigateToNewForm_WhenSaveAndAddAnotherSubmitted()
+    {
+        await using var ctx = new BunitContext();
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        user.AddRole(new Role("creator", true, false));
+        var bus = new StubSubmitBus();
+
+        ctx.Services.AddSingleton<IBus>(bus);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "New"));
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").ShouldNotBeNull();
+        });
+
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.Title}']").ChangeAsync(new() { Value = "Another title" });
+        await component.Find($"[data-testid='{WorkOrderManage.Elements.Description}']").ChangeAsync(new() { Value = "Another description" });
+
+        var saveAndAddAnother = component.Find($"[data-testid='{WorkOrderManage.Elements.SaveAndAddAnother}']");
+        await saveAndAddAnother.ClickAsync(new());
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            bus.LastCommand.ShouldNotBeNull();
+            bus.LastCommand.ShouldBeOfType<SaveDraftCommand>();
+            navigationManager.Uri.ShouldContain("/workorder/manage");
+            navigationManager.Uri.ShouldContain("mode=New");
+            navigationManager.Uri.ShouldNotContain("/workorder/search");
+        });
+    }
+
     private sealed class StubSubmitBus(WorkOrder? existing = null) : Bus(null!)
     {
         public object? LastCommand { get; private set; }
