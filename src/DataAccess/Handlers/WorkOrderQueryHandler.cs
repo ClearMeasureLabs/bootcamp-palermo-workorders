@@ -10,22 +10,24 @@ namespace ClearMeasure.Bootcamp.DataAccess.Handlers;
 public class WorkOrderQueryHandler(DataContext context) :
     IRequestHandler<WorkOrderByNumberQuery, WorkOrder?>
 {
-    public async Task<WorkOrder?> GetWorkOrderAsync(string number)
+    public async Task<WorkOrder?> GetWorkOrderAsync(string number,
+        CancellationToken cancellationToken = default)
     {
         return await context.Set<WorkOrder>()
             .AsNoTracking()
-            .SingleOrDefaultAsync(wo => wo.Number == number);
+            .SingleOrDefaultAsync(wo => wo.Number == number, cancellationToken);
     }
 
-    public async Task<WorkOrder[]> GetWorkOrdersAsync(WorkOrderSearchSpecification specification)
+    public async Task<WorkOrder[]> GetWorkOrdersAsync(WorkOrderSearchSpecification specification,
+        CancellationToken cancellationToken = default)
     {
         var query = WorkOrderQueryFilters.Apply(context.Set<WorkOrder>(), specification);
-        return await query.ToArrayAsync();
+        return await query.ToArrayAsync(cancellationToken);
     }
 
     public async Task<WorkOrder?> Handle(WorkOrderByNumberQuery request,
         CancellationToken cancellationToken = default)
     {
-        return await GetWorkOrderAsync(request.Number);
+        return await GetWorkOrderAsync(request.Number, cancellationToken);
     }
 }

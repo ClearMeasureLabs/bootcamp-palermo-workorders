@@ -87,7 +87,7 @@ public class CreateDatedWorkOrdersHandler(
             throw;
         }
 
-        await PublishCreatedEventAsync(created.Count);
+        await PublishCreatedEventAsync(created.Count, cancellationToken);
 
         logger.LogInformation(
             "Created {Count} dated work orders for assignee {AssigneeUsername}",
@@ -115,10 +115,11 @@ public class CreateDatedWorkOrdersHandler(
             : null;
     }
 
-    private async Task PublishCreatedEventAsync(int count)
+    private async Task PublishCreatedEventAsync(int count, CancellationToken cancellationToken)
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await bus.Publish(new DatedWorkOrdersCreatedEvent(count));
         }
         catch (Exception ex)
