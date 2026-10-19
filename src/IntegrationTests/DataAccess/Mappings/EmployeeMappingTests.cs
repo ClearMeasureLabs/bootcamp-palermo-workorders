@@ -77,6 +77,26 @@ public class EmployeeMappingTests
     }
 
     [Test]
+    public void ShouldPersistInitials()
+    {
+        new DatabaseTests().Clean();
+
+        var emp = new Employee("userinitials", "First", "Last", "emailinitials@example.com") { Initials = "HS" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            rehydrated.Initials.ShouldBe("HS");
+        }
+    }
+
+    [Test]
     public void ShouldPersistNullMiddleName()
     {
         new DatabaseTests().Clean();

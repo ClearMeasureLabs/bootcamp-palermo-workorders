@@ -16,6 +16,19 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 [Route("/workorder/manage/{id?}")]
 public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 {
+    private static string FormatAssigneeDisplay(Employee? assignee)
+    {
+        if (assignee is null)
+        {
+            return string.Empty;
+        }
+
+        var fullName = assignee.GetFullName();
+        return string.IsNullOrWhiteSpace(assignee.Initials)
+            ? fullName
+            : $"{fullName} ({assignee.Initials})";
+    }
+
     private WorkOrder? _workOrder;
     private WorkOrder? _lastNotifiedWorkOrder;
     private WorkOrderAttachment[] _attachments = [];

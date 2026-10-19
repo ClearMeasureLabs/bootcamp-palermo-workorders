@@ -108,6 +108,51 @@ public class WorkOrderManageSubmitTests
         });
     }
 
+    [Test]
+    public async Task ShouldShowAssigneeInitials_WhenAssigneeHasInitialsAndPageIsReadOnly()
+    {
+        await using var ctx = new BunitContext();
+        var user = new Employee("jpalermo", "Jeffrey", "Palermo", "jp@example.com") { Id = Guid.NewGuid() };
+        user.AddRole(new Role("creator", true, false));
+        var assignee = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com")
+        {
+            Id = Guid.NewGuid(),
+            Initials = "HS"
+        };
+        var existing = new WorkOrder
+        {
+            Id = Guid.NewGuid(),
+            Number = "WO-INIT",
+            Status = WorkOrderStatus.Complete,
+            Creator = user,
+            Assignee = assignee,
+            Title = "Done",
+            Description = ""
+        };
+        var bus = new StubSubmitBus(existing);
+
+        ctx.Services.AddSingleton<IBus>(bus);
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton<IWorkOrderBuilder>(new StubWorkOrderBuilder(user));
+        ctx.Services.AddSingleton<IUserSession>(new StubUserSession(user));
+        ctx.Services.AddSingleton<ITranslationService>(new StubTranslationService());
+        ctx.Services.AddSpeechSynthesis();
+        ctx.Services.AddSpeechRecognition();
+
+        var navigationManager = ctx.Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(navigationManager.GetUriWithQueryParameter("Mode", "Edit"));
+        navigationManager.NavigateTo($"/workorder/manage/{existing.Number}?Mode=Edit");
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            var text = component.Find($"[data-testid='{WorkOrderManage.Elements.AssigneeFullName}']").TextContent;
+            text.ShouldContain("Homer Simpson (HS)");
+        });
+    }
+
     private sealed class StubSubmitBus(WorkOrder? existing = null) : Bus(null!)
     {
         public object? LastCommand { get; private set; }
