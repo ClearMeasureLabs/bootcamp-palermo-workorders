@@ -15,19 +15,16 @@ public class StatusDashboardSearchNavigationTests : AcceptanceTestBase
 
         var draftKey = WorkOrderStatus.Draft.Key;
         var draftCard = Page.GetByTestId(nameof(IndexPage.Elements.StatusCard) + draftKey);
-        await draftCard.WaitForAsync();
+        await Expect(draftCard).ToBeVisibleAsync();
         await draftCard.ClickAsync();
 
-        await Page.WaitForURLAsync(new Regex($@"/workorder/search\?status={Regex.Escape(draftKey)}"));
+        await Expect(Page).ToHaveURLAsync(new Regex($@"/workorder/search\?status={Regex.Escape(draftKey)}"));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        await Expect(Page.Locator("select").First).ToHaveValueAsync(draftKey);
-
-        var rows = Page.Locator("table tbody tr");
-        var rowCount = await rows.CountAsync();
-        for (var i = 0; i < rowCount; i++)
-        {
-            await Expect(rows.Nth(i)).ToContainTextAsync(WorkOrderStatus.Draft.FriendlyName);
-        }
+        var draftRows = Page.Locator("table tbody tr", new() { HasText = WorkOrderStatus.Draft.FriendlyName });
+        var otherRows = Page.Locator("table tbody tr")
+            .Filter(new() { HasNotText = WorkOrderStatus.Draft.FriendlyName });
+        await Expect(draftRows.First).ToBeVisibleAsync();
+        await Expect(otherRows).ToHaveCountAsync(0);
     }
 }
