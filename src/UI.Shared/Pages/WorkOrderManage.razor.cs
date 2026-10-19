@@ -200,6 +200,8 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         _loadedRoomNumber = Model.RoomNumber;
     }
 
+    private void OnEditableFieldChanged() => StateHasChanged();
+
     private static bool IsFieldDirty(string? current, string? loaded) =>
         !string.Equals(current ?? string.Empty, loaded ?? string.Empty, StringComparison.Ordinal);
 

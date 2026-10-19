@@ -22,8 +22,7 @@ public class WorkOrderUnsavedChangesTests : AcceptanceTestBase
         var badge = Page.GetByTestId(nameof(WorkOrderManage.Elements.UnsavedChangesBadge));
         await Expect(badge).ToHaveCountAsync(0);
 
-        var titleField = Page.GetByTestId(nameof(WorkOrderManage.Elements.Title));
-        await titleField.FillAsync($"{order.Title} - edited");
+        await Input(nameof(WorkOrderManage.Elements.Title), $"{order.Title} - edited");
 
         await Expect(badge).ToBeVisibleAsync();
         await Expect(badge).ToContainTextAsync("Unsaved changes");
