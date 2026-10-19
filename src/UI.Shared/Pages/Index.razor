@@ -52,28 +52,28 @@
         </div>
     </div>
 
-    <AuthorizeView>
-        <Authorized>
-            <div class="status-dashboard" data-testid="@nameof(Elements.StatusDashboard)">
-                @foreach (var status in StatusItems)
-                {
-                    var count = _statusCounts.GetValueOrDefault(status.Key);
-                    <a href="/workorder/search?status=@status.Key"
-                       class="status-card"
-                       aria-label="@($"View {count} {status.FriendlyName} work orders")"
-                       data-testid="@(nameof(Elements.StatusCard) + status.Key)">
-                        <div class="status-card-count" data-testid="@(nameof(Elements.StatusCardCount) + status.Key)">@count</div>
-                        <div class="status-card-label">@status.FriendlyName</div>
-                    </a>
-                }
-            </div>
-        </Authorized>
-    </AuthorizeView>
-
     <div class="church-footer">
         <p>"Blessed are those who maintain the house of the Lord" - Springfield Church Manual</p>
     </div>
 </div>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="status-dashboard" data-testid="@nameof(Elements.StatusDashboard)">
+            @foreach (var status in StatusItems)
+            {
+                var count = _statusCounts.GetValueOrDefault(status.Key);
+                <a href="/workorder/search?status=@status.Key"
+                   class="status-card"
+                   aria-label="@($"View {count} {status.FriendlyName} work orders")"
+                   data-testid="@(nameof(Elements.StatusCard) + status.Key)">
+                    <div class="status-card-count" data-testid="@(nameof(Elements.StatusCardCount) + status.Key)">@count</div>
+                    <div class="status-card-label">@status.FriendlyName</div>
+                </a>
+            }
+        </div>
+    </Authorized>
+</AuthorizeView>
 
 @code {
     public enum Elements

@@ -16,7 +16,8 @@ public class StatusDashboardSearchNavigationTests : AcceptanceTestBase
         var draftKey = WorkOrderStatus.Draft.Key;
         var draftCard = Page.GetByTestId(nameof(IndexPage.Elements.StatusCard) + draftKey);
         await Expect(draftCard).ToBeVisibleAsync();
-        await draftCard.ClickAsync();
+        await draftCard.ScrollIntoViewIfNeededAsync();
+        await draftCard.ClickAsync(new() { Force = true });
 
         await Expect(Page).ToHaveURLAsync(new Regex($@"/workorder/search\?status={Regex.Escape(draftKey)}"));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
