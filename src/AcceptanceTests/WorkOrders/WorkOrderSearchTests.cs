@@ -662,9 +662,11 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         myOrder.Creator = CurrentUser;
         myOrder.Assignee = CurrentUser;
         myOrder.Title = $"[{TestTag}] my order";
+        myOrder.CreatedDate = DateTime.UtcNow;
         otherOrder.Creator = otherEmployee;
         otherOrder.Assignee = otherEmployee;
         otherOrder.Title = $"[{TestTag}] other order";
+        otherOrder.CreatedDate = DateTime.UtcNow.AddSeconds(-1);
 
         await using var context = TestHost.NewDbContext();
         context.Attach(CurrentUser);
