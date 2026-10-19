@@ -832,4 +832,26 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var onlyRow = tableRows.First;
         await Expect(onlyRow).ToHaveClassAsync(new Regex("overdue-row"));
     }
+
+    [Test, Retry(2)]
+    public async Task ShouldShowDraftCountInStatusSummary_AfterCreatingDraftAndSearching()
+    {
+        var order = await CreateAndSaveNewWorkOrder();
+
+        await Page.WaitForURLAsync("**/workorder/search");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var summary = Page.GetByTestId(nameof(WorkOrderSearch.Elements.StatusSummary));
+        await Expect(summary).ToBeVisibleAsync();
+        await Expect(summary).ToContainTextAsync("Draft");
+        await Expect(summary).ToContainTextAsync(new Regex(@"\d+ Draft"));
+
+        order.Number.ShouldNotBeNullOrWhiteSpace();
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number))
+            .ToBeVisibleAsync();
+    }
 }

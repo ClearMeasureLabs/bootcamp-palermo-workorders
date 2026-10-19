@@ -681,4 +681,34 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task ShouldShowStatusSummary_ForMixedResultSet_InWorkflowOrder()
+    {
+        var rows = new[]
+        {
+            new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.InProgress },
+            new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-004", Title = "D", Status = WorkOrderStatus.Assigned },
+            new WorkOrder { Number = "WO-005", Title = "E", Status = WorkOrderStatus.Draft },
+            new WorkOrder { Number = "WO-006", Title = "F", Status = WorkOrderStatus.Assigned },
+        };
+        await using var ctx = CreateContext(new StubBus(rows));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var summary = component.Find($"[data-testid='{WorkOrderSearch.Elements.StatusSummary}']");
+        summary.TextContent.ShouldBe("3 Draft · 2 Assigned · 1 In Progress");
+    }
+
+    [Test]
+    public async Task ShouldHideStatusSummary_WhenThereAreNoResults()
+    {
+        await using var ctx = CreateContext(new StubBus([]));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.FindAll($"[data-testid='{WorkOrderSearch.Elements.StatusSummary}']").Count.ShouldBe(0);
+    }
 }

@@ -84,6 +84,7 @@
             }
             else
             {
+                <div class="status-summary" data-testid="@Elements.StatusSummary">@StatusSummaryText</div>
                 <table class="grid-data">
                     <thead>
                     <tr>
@@ -181,7 +182,8 @@
         SortByRoomButton,
         AssignedToMeCheckbox,
         SearchHint,
-        SearchHeadingTooltip
+        SearchHeadingTooltip,
+        StatusSummary
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();

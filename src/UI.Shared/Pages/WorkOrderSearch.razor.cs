@@ -198,6 +198,16 @@ public partial class WorkOrderSearch : AppComponentBase
         await SearchWorkOrders();
     }
 
+    /// <summary>
+    /// Per-status counts for the current result set, in workflow order; zero counts omitted.
+    /// </summary>
+    internal string StatusSummaryText =>
+        string.Join(" · ",
+            WorkOrderStatus.GetAllItems()
+                .Select(status => (status, Count: Model.Results.Count(row => row.Status == status)))
+                .Where(entry => entry.Count > 0)
+                .Select(entry => $"{entry.Count} {entry.status.FriendlyName}"));
+
     private bool HasActiveFilters =>
         !string.IsNullOrEmpty(Model.Filters.Creator) ||
         !string.IsNullOrEmpty(Model.Filters.Assignee) ||

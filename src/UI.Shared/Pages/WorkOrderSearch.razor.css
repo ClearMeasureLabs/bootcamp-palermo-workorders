@@ -121,6 +121,15 @@
     font-weight: 600;
 }
 
+.status-summary {
+    padding: 0.75rem 2rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #4a5568;
+    background: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
 .grid-data {
     width: 100%;
     border-collapse: collapse;
@@ -372,6 +381,12 @@
 
 :global(html[data-theme="dark"]) .empty-results {
     color: #a0aec0;
+}
+
+:global(html[data-theme="dark"]) .status-summary {
+    color: #e2e8f0;
+    background: #1a202c;
+    border-bottom-color: #4a5568;
 }
 
 :global(html[data-theme="dark"]) .grid-data tbody tr {
