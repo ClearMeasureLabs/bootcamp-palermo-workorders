@@ -46,4 +46,23 @@ public class LastWorkOrderTests
         component.FindAll($"[data-testid='{nameof(LastWorkOrder.Elements.LastWorkOrderTooltip)}']")
             .ShouldBeEmpty();
     }
+
+    [Test]
+    public async Task ShouldUpdateMenuLinkNumberWhenWorkOrderOpened()
+    {
+        await using var ctx = new BunitContext();
+
+        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
+
+        var component = ctx.Render<LastWorkOrder>();
+
+        var sampleWorkOrder = new WorkOrder { Number = "WO-042" };
+        component.Instance.Handle(new WorkOrderSelectedEvent(sampleWorkOrder));
+        component.Render();
+
+        var link = component.Find($"[data-testid='{nameof(LastWorkOrder.Elements.LastWorkOrderTooltip)}']");
+        link.TextContent.Trim().ShouldBe("WO-042");
+        link.GetAttribute("href")!.ShouldContain("WO-042");
+    }
 }
