@@ -1,3 +1,4 @@
+using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
@@ -143,6 +144,19 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         UserOptions = items;
     }
 
+    /// <summary>
+    /// Resolves assignee for save. The blank select choice binds as empty string, not null.
+    /// </summary>
+    internal static async Task<Employee?> ResolveAssigneeForSaveAsync(string? assignedToUserName, IBus bus)
+    {
+        if (string.IsNullOrEmpty(assignedToUserName))
+        {
+            return null;
+        }
+
+        return await bus.Send(new EmployeeByUserNameQuery(assignedToUserName));
+    }
+
     private async Task HandleSubmit()
     {
         var currentUser = (await UserSession!.GetCurrentUserAsync())!;
@@ -157,11 +171,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             workOrder = (await Bus.Send(new WorkOrderByNumberQuery(Model.WorkOrderNumber!)))!;
         }
 
-        Employee? assignee = null;
-        if (Model.AssignedToUserName != null)
-        {
-            assignee = await Bus.Send(new EmployeeByUserNameQuery(Model.AssignedToUserName));
-        }
+        var assignee = await ResolveAssigneeForSaveAsync(Model.AssignedToUserName, Bus);
 
         workOrder.Number = Model.WorkOrderNumber;
         workOrder.Assignee = assignee;
