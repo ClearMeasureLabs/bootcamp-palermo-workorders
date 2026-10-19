@@ -176,8 +176,10 @@ public partial class WorkOrderSearch : AppComponentBase
     private void ApplySortByRoom()
     {
         Model.Results = _sortAscending
-            ? Model.Results.OrderBy(r => r.WorkOrder.RoomNumber, StringComparer.CurrentCultureIgnoreCase).ToArray()
-            : Model.Results.OrderByDescending(r => r.WorkOrder.RoomNumber, StringComparer.CurrentCultureIgnoreCase).ToArray();
+            ? Model.Results.OrderBy(r => string.IsNullOrEmpty(r.WorkOrder.RoomNumber) ? 1 : 0)
+                           .ThenBy(r => r.WorkOrder.RoomNumber, StringComparer.CurrentCultureIgnoreCase).ToArray()
+            : Model.Results.OrderBy(r => string.IsNullOrEmpty(r.WorkOrder.RoomNumber) ? 1 : 0)
+                           .ThenByDescending(r => r.WorkOrder.RoomNumber, StringComparer.CurrentCultureIgnoreCase).ToArray();
     }
 
     private WorkOrderSearchResultRow MapSearchRow(WorkOrder workOrder)

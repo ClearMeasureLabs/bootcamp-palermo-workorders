@@ -456,11 +456,11 @@ public class WorkOrderSearchTests
     }
 
     [Test]
-    public async Task SortByRoom_Ascending_SortsResultsByRoomNumber()
+    public async Task SortByRoom_Ascending_SortsResultsByRoomNumber_NullsLast()
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = "C" },
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = null },
             new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, RoomNumber = "A" },
             new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, RoomNumber = "B" },
         };
@@ -471,18 +471,18 @@ public class WorkOrderSearchTests
         var sortBtn = component.Find($"#{WorkOrderSearch.Elements.SortByRoomButton}");
         await sortBtn.ClickAsync(new());
 
-        var cells = component.FindAll("tbody tr td:nth-child(7)");
-        cells[0].TextContent.Trim().ShouldBe("A");
-        cells[1].TextContent.Trim().ShouldBe("B");
-        cells[2].TextContent.Trim().ShouldBe("C");
+        var tds = component.FindAll("tbody tr");
+        tds[0].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-001");
+        tds[1].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-002");
+        tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
     }
 
     [Test]
-    public async Task SortByRoom_ClickingAgain_ReversesToDescending()
+    public async Task SortByRoom_ClickingAgain_ReversesToDescending_NullsLast()
     {
         var rows = new[]
         {
-            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = "C" },
+            new WorkOrder { Number = "WO-003", Title = "C", Status = WorkOrderStatus.Draft, RoomNumber = null },
             new WorkOrder { Number = "WO-001", Title = "A", Status = WorkOrderStatus.Draft, RoomNumber = "A" },
             new WorkOrder { Number = "WO-002", Title = "B", Status = WorkOrderStatus.Draft, RoomNumber = "B" },
         };
@@ -494,10 +494,10 @@ public class WorkOrderSearchTests
         await sortBtn.ClickAsync(new());
         await sortBtn.ClickAsync(new());
 
-        var cells = component.FindAll("tbody tr td:nth-child(7)");
-        cells[0].TextContent.Trim().ShouldBe("C");
-        cells[1].TextContent.Trim().ShouldBe("B");
-        cells[2].TextContent.Trim().ShouldBe("A");
+        var tds = component.FindAll("tbody tr");
+        tds[0].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-002");
+        tds[1].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-001");
+        tds[2].QuerySelector("td")!.TextContent.Trim().ShouldBe("WO-003");
     }
     [Test]
     public async Task AssignedToMeCheckbox_WhenSessionStateIsTrue_RestoresCheckboxAndFiltersOnLoad()
