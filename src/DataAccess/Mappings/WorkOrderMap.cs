@@ -23,6 +23,7 @@ public class WorkOrderMap : IEntityFrameworkMapping
             entity.Property(e => e.Instructions).HasMaxLength(WorkOrder.InstructionsMaxLength);
             entity.Property(e => e.RoomNumber).HasMaxLength(WorkOrder.RoomNumberMaxLength);
             entity.Property(e => e.DueDate).HasColumnType("date");
+            entity.Property(e => e.CompletionNotes).HasMaxLength(WorkOrder.CompletionNotesMaxLength);
 
             // Configure relationships
             entity.HasOne(e => e.Creator)

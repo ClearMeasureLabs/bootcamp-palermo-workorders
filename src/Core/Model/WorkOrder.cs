@@ -21,6 +21,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public const int InstructionsMaxLength = 4000;
 
+    /// <summary>
+    /// Maximum length of <see cref="CompletionNotes"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int CompletionNotesMaxLength = 1000;
+
     public string? Title { get; set; } = "";
 
     public string? Description
@@ -58,6 +63,12 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// Optional calendar due date (date-only, no time). Null when unset.
     /// </summary>
     public DateOnly? DueDate { get; set; }
+
+    /// <summary>
+    /// Optional notes recorded by the technician when completing the work order.
+    /// </summary>
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global
+    public string? CompletionNotes { get; set; }
 
     private string GetTruncatedString(string? value)
     {
