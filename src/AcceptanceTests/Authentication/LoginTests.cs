@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
@@ -144,7 +145,7 @@ public class LoginTests : AcceptanceTestBase
         await Expect(loginLink).ToBeVisibleAsync();
         await Expect(loginLink).ToHaveCSSAsync("animation-name", new Regex("login-link-blink-pulse"));
 
-        var probe = await loginLink.EvaluateAsync<BlinkAnimationProbe>(
+        var probe = await loginLink.EvaluateAsync<JsonElement>(
             """
             element => {
                 const anim = element.getAnimations().find(a =>
@@ -173,16 +174,22 @@ public class LoginTests : AcceptanceTestBase
             }
             """);
 
-        probe.ShouldNotBeNull();
-        probe.Name.ShouldStartWith("login-link-blink-pulse");
-        probe.Duration.ShouldBe(1500);
-        probe.Infinite.ShouldBeTrue();
-        probe.KeyframeOpacities.Min().ShouldBeGreaterThanOrEqualTo(0.5);
-        probe.KeyframeOpacities.Min().ShouldBeLessThan(0.75);
-        probe.KeyframeOpacities.Max().ShouldBeGreaterThan(0.9);
-        probe.Opacities.Min().ShouldBeLessThan(0.75);
-        probe.Opacities.Max().ShouldBeGreaterThan(0.9);
-        probe.Opacities.Min().ShouldBeGreaterThanOrEqualTo(0.5);
+        probe.ValueKind.ShouldBe(JsonValueKind.Object);
+        probe.GetProperty("name").GetString().ShouldStartWith("login-link-blink-pulse");
+        probe.GetProperty("duration").GetDouble().ShouldBe(1500);
+        probe.GetProperty("infinite").GetBoolean().ShouldBeTrue();
+
+        var keyframeOpacities = probe.GetProperty("keyframeOpacities").EnumerateArray()
+            .Select(value => value.GetDouble()).ToArray();
+        keyframeOpacities.Min().ShouldBeGreaterThanOrEqualTo(0.5);
+        keyframeOpacities.Min().ShouldBeLessThan(0.75);
+        keyframeOpacities.Max().ShouldBeGreaterThan(0.9);
+
+        var observedOpacities = probe.GetProperty("opacities").EnumerateArray()
+            .Select(value => value.GetDouble()).ToArray();
+        observedOpacities.Min().ShouldBeLessThan(0.75);
+        observedOpacities.Max().ShouldBeGreaterThan(0.9);
+        observedOpacities.Min().ShouldBeGreaterThanOrEqualTo(0.5);
     }
 
     [Test, Retry(2)]
@@ -528,19 +535,5 @@ public class LoginTests : AcceptanceTestBase
         await Expect(welcomeTextLocator).ToHaveTextAsync(
             "Welcome tlovejoy!",
             new LocatorAssertionsToHaveTextOptions { Timeout = 60_000 });
-    }
-
-    private sealed class BlinkAnimationProbe
-    {
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
-        public string Name { get; set; } = "";
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
-        public double Duration { get; set; }
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
-        public bool Infinite { get; set; }
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
-        public double[] KeyframeOpacities { get; set; } = [];
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Global -- Playwright JSON deserialization
-        public double[] Opacities { get; set; } = [];
     }
 }
