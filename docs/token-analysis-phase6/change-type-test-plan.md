@@ -80,6 +80,7 @@ Categories, matching the catalog's recommended sets:
 | 23 | v36g | c09 UI 1,930.8k, c10 ML 1,135.7k, c11 Bug 355.5k, c12 CI 183.2k, c13 Qual 203.9k, c14 Test 113.8k, c15 Trap 63.9k, c16 UI 179.7k; avg 520.8k, median 193.6k | probe edits 75→2; the read budget was gamed (c10 counter rewrites, c09 grep/read); v37g adds batched ranges |
 | 24 | v37g | c17 UI 79.8k (no PR), c18 ML 458.2k, c19 Bug 100.2k, c20 Docs 18.5k, c21 Qual 230.8k, c22 Test 38.7k, c23 Vague 896.7k, c24 Bug 305.6k; avg 266.1k, median 165.5k; c04 workflow probe 18.3k GREEN | v37 budget ×10 bug → LIMIT loops; v38g fixes it and makes the message NEXT: |
 | 25 | v38g | c25 UI 1,291.2k, c26 ML 1,228.0k, c27 Bug 42.0k, c28 CI 13.7k, c29 Qual 302.0k, c30 Trap 274.2k, c31 Vague 151.5k, c32 CI 97.3k; avg 425.0k, median 212.9k | refused -Find calls after the budget (c25 8, c26 9); 0 failed edits; v39g allows -Find in the extra calls |
+| 26 | v39g | c33 UI 1,290.3k, c34 ML 175.0k, c35 Bug 129.8k, c36 Docs 71.1k, c37 Test 331.9k, c38 Trap 216.5k, c39 Vague 264.0k, c40 ML 896.8k; avg 421.9k, median 240.2k | c34/c36 had an empty final reply (harness); see change-type-test-results.md |
 
 Round 23 prep (2026-10-18): issues #10636-10643, v36g, branches cursor/token-exp-p6-cNN-v36.
 Round 24 prep (2026-10-18): issues #10653-10660, v37g, branches cursor/token-exp-p6-cNN-v37. c20 is docs-only and exercises the NON_CODE path.
