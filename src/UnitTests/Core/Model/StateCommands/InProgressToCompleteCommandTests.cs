@@ -50,6 +50,25 @@ public class InProgressToCompleteCommandTests : StateCommandBaseTests
     }
 
     [Test]
+    public void ShouldPreserveCompletionNotesOnExecute()
+    {
+        var employee = new Employee();
+        var order = new WorkOrder
+        {
+            Number = "123",
+            Status = WorkOrderStatus.InProgress,
+            Assignee = employee,
+            CompletionNotes = "Replaced the belt"
+        };
+
+        var command = new InProgressToCompleteCommand(order, employee);
+        command.Execute(new StateCommandContext());
+
+        Assert.That(order.CompletionNotes, Is.EqualTo("Replaced the belt"));
+        Assert.That(order.Status, Is.EqualTo(WorkOrderStatus.Complete));
+    }
+
+    [Test]
     public void ShouldTransitionStateProperly()
     {
         var employee = new Employee();

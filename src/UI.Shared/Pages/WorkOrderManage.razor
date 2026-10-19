@@ -78,6 +78,17 @@
                     </div>
                 </div>
 
+                @if (_workOrder?.Status == WorkOrderStatus.Complete ||
+                     (_workOrder?.Status == WorkOrderStatus.InProgress && !Model.IsReadOnly))
+                {
+                    <div class="form-group">
+                        <label for="CompletionNotes" class="form-label">Completion notes:</label>
+                        <div>
+                            <InputTextArea data-testid="@Elements.CompletionNotes" id="CompletionNotes" @bind-Value="Model.CompletionNotes" class="form-control input-textarea" maxlength="@WorkOrder.CompletionNotesMaxLength" disabled="@(_workOrder.Status == WorkOrderStatus.Complete || Model.IsReadOnly)"/>
+                        </div>
+                    </div>
+                }
+
                 <div class="form-group">
                     <label for="RoomNumber" class="form-label">Room:</label>
                     <div>
@@ -180,8 +191,9 @@
 @code
 {
 
-    public enum Elements
-    {
+public enum Elements
+{
+        CompletionNotes,
         Assignee,
         Title,
         AssigneeFullName,
