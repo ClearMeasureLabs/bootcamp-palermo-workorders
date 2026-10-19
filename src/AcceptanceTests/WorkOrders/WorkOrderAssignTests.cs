@@ -1,6 +1,7 @@
 using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
@@ -45,6 +46,6 @@ public class WorkOrderAssignTests : AcceptanceTestBase
         WorkOrder rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.AssignedDate));
 
-        rehyratedOrder.AssignedDate.TruncateToMinute().ShouldBe(displayedDate);
+        ChurchTimeZone.ToLocal(rehyratedOrder.AssignedDate).TruncateToMinute().ShouldBe(displayedDate);
     }
 }

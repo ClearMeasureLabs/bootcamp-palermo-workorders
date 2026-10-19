@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace ClearMeasure.Bootcamp.Core.Services;
 
 /// <summary>
@@ -32,6 +34,33 @@ public static class ChurchTimeZone
         var daysUntilSaturday = ((int)DayOfWeek.Saturday - (int)today.DayOfWeek + 7) % 7;
         return today.AddDays(daysUntilSaturday);
     }
+
+    /// <summary>
+    /// Converts a UTC (or unspecified-as-UTC) instant to church-local wall time.
+    /// </summary>
+    public static DateTime? ToLocal(DateTime? utcDateTime)
+    {
+        if (utcDateTime is null)
+        {
+            return null;
+        }
+
+        return TimeZoneInfo.ConvertTimeFromUtc(AsUtc(utcDateTime.Value), Chicago);
+    }
+
+    /// <summary>
+    /// Formats a UTC (or unspecified-as-UTC) instant as church-local time for display.
+    /// </summary>
+    public static string? FormatLocal(DateTime? utcDateTime) =>
+        ToLocal(utcDateTime)?.ToString("G", CultureInfo.CurrentCulture);
+
+    private static DateTime AsUtc(DateTime value) =>
+        value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
 
     private static TimeZoneInfo ResolveChicago() =>
         FindTimeZone(IanaId)

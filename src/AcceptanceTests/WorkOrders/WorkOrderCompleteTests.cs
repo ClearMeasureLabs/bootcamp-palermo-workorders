@@ -1,5 +1,6 @@
 using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
 namespace ClearMeasure.Bootcamp.AcceptanceTests.WorkOrders;
@@ -49,7 +50,7 @@ public class WorkOrderCompleteTests : AcceptanceTestBase
 
         var rehyratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ??
                              throw new InvalidOperationException();
-        rehyratedOrder.CompletedDate.TruncateToMinute().ShouldBe(displayedDateTime);
+        ChurchTimeZone.ToLocal(rehyratedOrder.CompletedDate).TruncateToMinute().ShouldBe(displayedDateTime);
     }
 
     [Test, Retry(2)]

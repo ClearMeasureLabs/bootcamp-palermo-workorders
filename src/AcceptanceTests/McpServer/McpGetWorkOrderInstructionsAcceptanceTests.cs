@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Text.Json;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.UI.Shared.Components;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
@@ -110,7 +111,7 @@ public class McpGetWorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
 
         var createdDate = live.GetProperty("CreatedDate").GetDateTime();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
-            .ToHaveTextAsync(createdDate.ToString("G", CultureInfo.CurrentCulture));
+            .ToHaveTextAsync(ChurchTimeZone.FormatLocal(createdDate)!);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.AssignedDate)))
             .ToHaveTextAsync(string.Empty);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CompletedDate)))

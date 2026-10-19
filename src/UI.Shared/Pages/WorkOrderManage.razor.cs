@@ -124,9 +124,9 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Description = workOrder.Description,
             Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
-            CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
-            AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
-            CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
+            CreatedDate = ChurchTimeZone.FormatLocal(workOrder.CreatedDate),
+            AssignedDate = ChurchTimeZone.FormatLocal(workOrder.AssignedDate),
+            CompletedDate = ChurchTimeZone.FormatLocal(workOrder.CompletedDate),
             DueDateInput = workOrder.DueDate,
             DueDateDisplay = FormatDueDateDisplay(workOrder.DueDate)
         };

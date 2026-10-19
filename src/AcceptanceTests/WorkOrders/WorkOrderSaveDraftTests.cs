@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using ClearMeasure.Bootcamp.AcceptanceTests.Extensions;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 
@@ -58,7 +59,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
-        rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        ChurchTimeZone.ToLocal(rehydratedOrder.CreatedDate).TruncateToMinute().ShouldBe(displayedDate);
     }
 
     [Test, Retry(2)]
@@ -145,7 +146,7 @@ public class WorkOrderSaveDraftTests : AcceptanceTestBase
         WorkOrder rehydratedOrder = await Bus.Send(new WorkOrderByNumberQuery(order.Number!)) ?? throw new InvalidOperationException();
         var displayedDate = await Page.GetDateTimeFromTestIdAsync(nameof(WorkOrderManage.Elements.CreatedDate));
 
-        rehydratedOrder.CreatedDate.TruncateToMinute().ShouldBe(displayedDate);
+        ChurchTimeZone.ToLocal(rehydratedOrder.CreatedDate).TruncateToMinute().ShouldBe(displayedDate);
     }
 
     [Test, Retry(2)]
