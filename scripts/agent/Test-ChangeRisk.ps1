@@ -26,7 +26,7 @@ function Test-ImplicitUsings([string]$f) { $d = Split-Path $f
   while ($d) { $p = @(Get-ChildItem $d -Filter *.csproj -ErrorAction SilentlyContinue); if ($p) { return (Get-Content $p[0].FullName -Raw) -match 'ImplicitUsings>enable' }; $d = Split-Path $d }
   $false }
 git add -A -N src 2>$null | Out-Null
-$base = if (git rev-parse -q --verify origin/analysis/token-reduction 2>$null) { 'origin/analysis/token-reduction' } else { 'origin/master' }
+$base = 'HEAD'  # v43g: the agent's own changes only (agent VMs may lack origin/analysis/token-reduction; master differs from the skill tip)
 $changed = @{}; $file = $null; $prevA = ''; $lenProps = @{}
 foreach ($l in git diff -U0 $base -- src ':(exclude)src/**/Generated/**') {  # v33g: generated code is not ours (round 19 s08)
   if ($l -match '^\+\+\+ b/(.+)$') { $file = $Matches[1]; $changed[$file] = @(); $prevA = ''; continue }
@@ -58,14 +58,23 @@ foreach ($l in git diff -U0 $base -- src ':(exclude)src/**/Generated/**') {  # v
         "QODANA_RISK $file : '$pn' is declared non-nullable, so '??'/null checks on it fail Qodana (NullCoalescingConditionIsAlwaysNotNull...): drop the check, or make the declaration nullable ('string? $pn') if null must be handled: $($a.Trim())" } }
     # v34g: round 20 C t03 CI RED x2: private positional test records -> NotAccessedPositionalProperty.Local / PropertyCanBeMadeInitOnly.Local
     if ($file -match 'Tests' -and $a -match '^\s*(private|file)\s+(sealed\s+)?record\s+\w+\s*\(') { "QODANA_RISK $file : private positional records in tests trip NotAccessedPositionalProperty.Local; use an anonymous object (new { A = 1, B = (string?)null }) or a public record: $($a.Trim())" }
-    if ($file -match '^src/DataAccess/' -and $a -match 'Property\(\s*\w+\s*=>\s*\w+\.(\w+)\s*\)[^;]*HasMaxLength\(([^)]+)\)') { $lenProps[$Matches[1]] = "${file}: $($Matches[2])" }  # v42g
+    if ($file -match '^src/DataAccess/' -and $a -match 'Property\(\s*\w+\s*=>\s*\w+\.(\w+)\s*\)[^;]*HasMaxLength\(([^)]+)\)') { $lenProps["$((Split-Path $file -Leaf) -replace '(Map|Mapping|Configuration)?\.cs$','').$($Matches[1])"] = "${file}: $($Matches[2])" }  # v42g; v43g: Entity.Prop
     # v28g: whole-word Number, not PhoneNumber (round 13 r07 false NUMBER_RISK)
     if ($file -match 'Tests' -and $a -match '(?<!\w)Number\s*=\s*"([^"]{8,})"') { "NUMBER_RISK $file : work order Number '$($Matches[1])' > 7 chars" }; $prevA = $a }
 }
 # v42g: SQLite ignores nvarchar(n), SQL Server CI truncates: a new max-length column needs a Bogus clamp (round 28 c51 CI RED
 # 'String or binary data would be truncated ... PhoneNumber': AutoBogus made 22-char phone numbers)
 $bogus = if (Test-Path src/UnitTests/BogusOverrides.cs) { Get-Content src/UnitTests/BogusOverrides.cs -Raw } else { '' }
-foreach ($p in $lenProps.Keys) { if ($bogus -notmatch "\.$p\s*=") { "LENGTH_RISK $($lenProps[$p]) : new max-length column '$p': clamp it in src/UnitTests/BogusOverrides.cs (x.$p = x.$p.ClampLength(1, n), or null if optional); SQL Server CI rejects longer random values, SQLite does not" } }
+# v43g: look only inside that entity's `case Entity x:` block (round 29 c59: WorkOrderAttachment.Description passed because the
+# WorkOrder block sets order.Description)
+foreach ($k in @($lenProps.Keys)) { $en, $p = $k -split '\.', 2
+  $blk = if ($bogus -match "(?s)case\s+$en\b[^:]*:(.*?)(?=\bcase\s|\z)") { $Matches[1] } else { '' }
+  if ($blk -notmatch "\.$p\s*=") { "LENGTH_RISK $($lenProps[$k]) : new max-length column '$p': clamp it in the 'case $en' block of src/UnitTests/BogusOverrides.cs (x.$p = x.$p.ClampLength(1, n), or null if optional; add the case if missing); SQL Server CI rejects longer random values, SQLite does not" } }
+# v43g: an existing test file that shrinks a lot was probably overwritten (round 29 c60: WorkOrderMappingTests.cs +16 -403, green)
+foreach ($ns in git diff --numstat $base -- src) { $add, $del, $tf = $ns -split "`t"
+  if ($tf -notmatch 'Tests' -or $del -eq '-') { continue }
+  $orig = @(git show "${base}:$tf" 2>$null).Count; $shrink = [int]$del - [int]$add
+  if ($orig -and ($shrink -gt 100 -or $shrink -gt $orig / 2)) { "TEST_DELETE_RISK $tf : shrinks by $shrink lines (-$del +$add of $orig); existing tests were removed or the file was overwritten. Keep the existing tests and add yours (append after the last test)" } }
 foreach ($f in $changed.Keys) {
   if ($f -notmatch '\.cs$' -or $f -match 'Tests' -or -not (Test-Path $f)) { continue }
   $src = @(Get-Content $f); $set = [Collections.Generic.HashSet[int]]::new([int[]]$changed[$f])

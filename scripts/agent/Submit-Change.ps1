@@ -17,6 +17,7 @@ New-Item -ItemType Directory -Force $tools | Out-Null; Copy-Item "$PSScriptRoot/
 # v36g: non-code change (only .github/docs/root *.ps1): skip risk/build/tests, syntax-check instead, publish (round 22 c04)
 $srcChg = git status --porcelain -uall -- src; $nonSrc = @(git status --porcelain -uall -- .github docs ':(glob)*.ps1' | ForEach-Object { $_.Substring(3) })
 $nonCode = -not $srcChg -and $nonSrc
+if (-not $srcChg -and -not $nonSrc) { 'NO_CHANGES: you edited nothing. Make the change the criteria need (Get-Context -File/-Find to read the target), then Submit. If the criteria are already met, reply RESULT=ALREADY_DONE <file:line evidence>'; exit 0 }  # v43g: round 29 c61/c62
 if ($nonCode) {
   python3 -c 'import yaml' 2>$null; $hasYaml = $LASTEXITCODE -eq 0
   foreach ($p in $nonSrc | Where-Object { Test-Path $_ }) {
@@ -69,9 +70,10 @@ $want = $out | Select-String 'HEAD=(\w+)' | ForEach-Object { $_.Matches[0].Group
 if ($want) { foreach ($i in 1..12) { if ((gh api "repos/$Repo/pulls/$pr" --jq .head.sha) -eq $want) { break }; Start-Sleep 5 } }
 # v18g: wait inline for what is left of an 8-minute budget (Submit itself takes ~1 min), so Submit + first wait is one turn
 # instead of two (round 4: wait turns replayed 13.5% of input). v14g's inline wait broke because it used the full 9 min on top.
-# v42g: one silent wait: inline up to 20 min total (round 28: a 19.4-min terminal call returned normally; keep-warm 4-min check-ins
-# replayed 4.5x more wait-turn bytes per CI cycle). WAIT_CMD only if that inline wait ends PENDING.
-$left = [int][Math]::Floor(20 - ((Get-Date) - $t0).TotalMinutes)
-if ($left -ge 4) { $w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $w; if ($w -contains 'CHECKS=GREEN') { exit 0 } }  # v31g: no WAIT_CMD after GREEN
-"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 20  (only if no CHECKS=GREEN/RED above)"
+# v43g: every terminal call must end under the ~10-min tool cap (round 29: 9/12 long Submits cut at exactly 10.0 min with empty
+# output; agents then awaited the background shell and read terminal files). Inline wait only for what is left of 9 min, and
+# none once Submit's own work passed 7 min.
+$el = ((Get-Date) - $t0).TotalMinutes; $left = [int][Math]::Floor(9 - $el)
+if ($el -le 7 -and $left -ge 2) { $w = @(& "$tools/Wait-PrChecks.ps1" -Pr $pr -MaxCallMin $left); $w; if ($w -contains 'CHECKS=GREEN') { exit 0 } }  # v31g: no WAIT_CMD after GREEN
+"WAIT_CMD=pwsh -NoProfile $tools/Wait-PrChecks.ps1 -Pr $pr -MaxCallMin 9  (only if no CHECKS=GREEN/RED above)"
 exit 0

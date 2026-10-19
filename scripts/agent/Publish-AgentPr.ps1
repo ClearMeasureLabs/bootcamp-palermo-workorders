@@ -8,7 +8,13 @@ $ErrorActionPreference = 'Stop'
 function Fail($m) { "PUBLISH_FAIL: $m (do not repair by hand; reply with this line)"; exit 2 }
 $tmp = [IO.Path]::GetTempPath(); $patch = Join-Path $tmp 'agent-src.patch'; $wt = Join-Path $tmp 'agent-pub-wt'
 git fetch -q origin master
-$start = if (git rev-parse -q --verify origin/analysis/token-reduction 2>$null) { 'origin/analysis/token-reduction' } else { 'origin/master' }
+# v43g: diff against the item branch's start commit = the local HEAD (agents never commit; the branch was cut from the skill tip).
+# v42g used origin/analysis/token-reduction, else origin/master; agent VMs lacked that ref, so every round 29 PR carried skill-branch
+# src (the seeding hook) and c61/c62's empty changes still published (false GREEN).
+git fetch -q origin $Branch 2>$null; $start = if ($LASTEXITCODE -eq 0) { git merge-base HEAD FETCH_HEAD 2>$null } else { $null }
+if (-not $start) { $start = 'HEAD' }  # merge-base = the tip the branch was cut from, even if the agent committed locally
+$seed = 'scripts/agent/templates/acc-seed.patch'  # never publish the local acceptance seeding hook
+if ((Test-Path $seed) -and (Select-String -Quiet 'AGENT_ACC_EXTRA_WORKORDERS' src/AcceptanceTests/ServerFixture.cs -ErrorAction SilentlyContinue)) { git apply -R $seed 2>$null | Out-Null }
 # v36g: also publish .github, docs and root build scripts (round 22 c04: a workflow-only change hit NO_CHANGES)
 $paths = @('src', '.github', 'docs', ':(glob)*.ps1', ':(exclude)docs/token-analysis*')
 git add -A -- @paths 2>$null | Out-Null

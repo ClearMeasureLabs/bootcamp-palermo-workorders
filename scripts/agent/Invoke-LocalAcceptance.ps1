@@ -5,6 +5,11 @@ $ErrorActionPreference = 'Continue'
 Set-Location (git rev-parse --show-toplevel)
 $chg = @(git status --porcelain -uall -- src | ForEach-Object { $_.Substring(3) })
 $proj = 'src/AcceptanceTests/AcceptanceTests.csproj'
+# v43g: the CI-volume seeding hook is a temp patch applied here and always reverted (v42g committed it to src/, and it leaked into
+# every round 29 PR and hid c61/c62's empty changes from NO_CHANGES)
+$seed = "$(git rev-parse --show-toplevel)/scripts/agent/templates/acc-seed.patch"; $seeded = $false
+if ((Test-Path $seed) -and -not (Select-String -Quiet 'AGENT_ACC_EXTRA_WORKORDERS' src/AcceptanceTests/ServerFixture.cs)) { git apply $seed 2>$null; $seeded = -not $LASTEXITCODE }
+try {
 $b = dotnet build $proj -c Release -p:NuGetAudit=false -v q -nologo -clp:NoSummary 2>&1
 if ($LASTEXITCODE) { $b | Select-String ': error ' | ForEach-Object { "FIX: $($_.Line.Trim() -replace '\s*\[.*\]$')" } | Select-Object -Unique -First 10; 'ACC_BUILD=FAIL'; return }
 $ui = @($chg | Where-Object { $_ -match '^src/(UI|UI\.Shared|UI\.Client|AcceptanceTests)/' -and $_ -match '\.(razor|cs|css)$' })
@@ -31,7 +36,7 @@ $db = Join-Path ([IO.Path]::GetTempPath()) 'agent-acc.db'; Remove-Item $db -Erro
 $env:DATABASE_ENGINE = 'SQLite'; $env:ConnectionStrings__SqlConnectionString = "Data Source=$db"
 $f = ($cls | ForEach-Object { "FullyQualifiedName~.$_." }) -join '|'
 if ($wide) { $f = (@('FullyQualifiedName~.AcceptanceTests.WorkOrders.', 'FullyQualifiedName~.AcceptanceTests.McpServer.') + @($cls | ForEach-Object { "FullyQualifiedName~.$_." })) -join '|'; $cls = @('WorkOrders/*', 'McpServer/*') + $cls }
-$env:AGENT_ACC_EXTRA_WORKORDERS = '40'  # v42g: CI-like row volume (ServerFixture seeds it; round 28 c49 paging RED)
+if ($seeded) { $env:AGENT_ACC_EXTRA_WORKORDERS = '40' }  # v42g: CI-like row volume (ServerFixture seeds it; round 28 c49 paging RED)
 $r = dotnet test $proj -c Release --no-build --nologo --settings src/AcceptanceTests/AcceptanceTests.runsettings --logger 'console;verbosity=normal' --filter $f 2>&1
 $code = $LASTEXITCODE; Remove-Item env:DATABASE_ENGINE, env:ConnectionStrings__SqlConnectionString, env:AGENT_ACC_EXTRA_WORKORDERS
 $sum = @($r | Select-String 'Passed!|Failed!|Total tests|Passed:' | ForEach-Object { $_.Line.Trim() }) | Select-Object -Last 1
@@ -45,3 +50,4 @@ foreach ($t in $fail | Select-Object -First 6) {
   $msg = ($r[($i + 1)..($i + 6)] | Where-Object { $_ -and $_ -notmatch '^\s*(Error Message:|Stack Trace:)\s*$' } | Select-Object -First 3 | ForEach-Object { $_.Trim() }) -join ' | '
   "FIX: acceptance $($t -replace '^.*\.(\w+\.\w+)$','$1'): $($msg.Substring(0, [Math]::Min(300, $msg.Length)))" }
 "ACC_TEST=FIX ($($fail.Count) failed; run on SQLite + headless Chromium like CI)"
+} finally { if ($seeded) { git apply -R $seed 2>$null } }

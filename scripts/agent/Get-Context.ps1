@@ -23,7 +23,9 @@ $parts = @($File -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
 $ranged = $parts -and -not @($parts | Where-Object { $_ -notmatch ':\d+-\d+$' })
 $lnf = "$cnt.lines"; $lnUsed = if (Test-Path $lnf) { [int]("0$(Get-Content $lnf)".Trim()) } else { 0 }  # v38g: v37 stored lines*10 -> budget hit after ~80 lines (round 24 c17/c18)
 # v39g: -Find allowed in the 4 extra calls (round 25 c25/c26: 17 refused calls, then 8 shell reads)
-if ($used -ge 7 -or $lnUsed -ge 800 -or ($used -ge 3 -and -not ($ranged -or $PSBoundParameters.ContainsKey('Find')))) { 'NEXT: read budget used up (normal, not an error; never reply SCRIPT_FAIL for this). Edit now with what you have, then Submit; Submit names anything missing. Do not call Get-Context again. Never shell/grep/read tools, never touch /tmp/agent-*, never probe with edits.'; exit 0 }
+# v43g: a plain -File is allowed too (outline, or the file if <= 120 lines) inside the 800-line budget (round 29 c61/c62: the
+# refused plain -File was their only read of the target, so they edited nothing)
+if ($used -ge 7 -or $lnUsed -ge 800 -or ($used -ge 3 -and -not ($File -or $PSBoundParameters.ContainsKey('Find')))) { 'NEXT: read budget used up (normal, not an error; never reply SCRIPT_FAIL for this). Edit now with what you have, then Submit; Submit names anything missing. Do not call Get-Context again. Never shell/grep/read tools, never touch /tmp/agent-*, never probe with edits.'; exit 0 }
 $tmpc = "$cnt.$PID"; Set-Content $tmpc ($used + 1); Move-Item -Force $tmpc $cnt
 # v30g: an explicit -Find is a capped grep: matching lines with 2 lines of context, max 25 hits / ~1500 chars (v29g returned
 # 3-5 KB outlines per -Find and often missed what the agent was hunting for).
@@ -46,7 +48,8 @@ if ($File) {
   if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min([Math]::Min($b, $all.Count), $a + $max) }
   elseif ($all.Count -gt 120) {
     "== $fp OUTLINE ($($all.Count) lines; read ranges with -File '${fp}:a-b,other:c-d', max 120 lines each)"
-    $n = 0; $all | ForEach-Object { $n++; if ($_ -match '^\s*(@page|@code|\[Test|(public|private|protected|internal)\b)') { "{0,4}: {1}" -f $n, $_.Trim().Substring(0, [Math]::Min(100, $_.Trim().Length)) } } | Select-Object -First 60
+    $ol = @($all | ForEach-Object -Begin { $n = 0 } -Process { $n++; if ($_ -match '^\s*(@page|@code|\[Test|(public|private|protected|internal)\b)') { "{0,4}: {1}" -f $n, $_.Trim().Substring(0, [Math]::Min(100, $_.Trim().Length)) } } | Select-Object -First 60)
+    $ol; $lines += $ol.Count
     continue }
   "== $fp $a-$b of $($all.Count)"
   $us = @($all | Where-Object { $_ -match '^\s*using [\w.]+;' } | ForEach-Object { ($_ -replace '^\s*using\s+|;\s*$', '') }); if ($us -and $a -gt 1) { "  usings: " + ($us -join '; ') }
