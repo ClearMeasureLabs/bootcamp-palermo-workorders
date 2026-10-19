@@ -132,7 +132,16 @@
                                     </a>
                                 </td>
                                 <td>@order.Creator?.GetFullName()</td>
-                                <td>@order.Assignee?.GetFullName()</td>
+                                <td>
+                                    @if (order.Assignee is null)
+                                    {
+                                        <span class="unassigned">Unassigned</span>
+                                    }
+                                    else
+                                    {
+                                        @order.Assignee.GetFullName()
+                                    }
+                                </td>
                                 <td>
                                     <span class="status-badge">@order.Status</span>
                                 </td>

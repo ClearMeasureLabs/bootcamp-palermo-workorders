@@ -121,6 +121,11 @@
     font-weight: 600;
 }
 
+.unassigned {
+    font-style: italic;
+    color: #94a3b8;
+}
+
 .grid-data {
     width: 100%;
     border-collapse: collapse;

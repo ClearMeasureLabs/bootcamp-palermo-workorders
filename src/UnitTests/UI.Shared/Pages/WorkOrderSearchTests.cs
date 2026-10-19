@@ -1,10 +1,12 @@
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
+using MediatR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -680,5 +682,63 @@ public class WorkOrderSearchTests
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task ShouldShowUnassigned_WhenAssigneeIsNull()
+    {
+        var creator = new Employee { UserName = "creator1", FirstName = "Cre", LastName = "Ator" };
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-UNA1",
+            Title = "Unassigned order",
+            Creator = creator,
+            Assignee = null,
+            Status = WorkOrderStatus.Draft
+        };
+        await using var ctx = CreateContext(new StubBusWithSearchOrders(workOrder));
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var unassigned = component.Find(".unassigned");
+        unassigned.TextContent.ShouldBe("Unassigned");
+    }
+
+    [Test]
+    public async Task ShouldShowAssigneeName_WhenAssigneeIsSet()
+    {
+        var creator = new Employee { UserName = "creator1", FirstName = "Cre", LastName = "Ator" };
+        var assignee = new Employee { UserName = "assignee1", FirstName = "As", LastName = "Signee" };
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-ASN1",
+            Title = "Assigned order",
+            Creator = creator,
+            Assignee = assignee,
+            Status = WorkOrderStatus.Assigned
+        };
+        await using var ctx = CreateContext(new StubBusWithSearchOrders(workOrder));
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.FindAll(".unassigned").Count.ShouldBe(0);
+        component.Markup.ShouldContain(assignee.GetFullName());
+    }
+
+    private sealed class StubBusWithSearchOrders(params WorkOrder[] orders) : IBus
+    {
+        private readonly StubBus _inner = new();
+
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
+        {
+            if (request is WorkOrderSpecificationQuery)
+            {
+                return Task.FromResult((TResponse)(object)orders);
+            }
+
+            return _inner.Send(request);
+        }
+
+        public Task<object?> Send(object request) => _inner.Send(request);
+
+        public Task Publish(INotification notification) => _inner.Publish(notification);
     }
 }
