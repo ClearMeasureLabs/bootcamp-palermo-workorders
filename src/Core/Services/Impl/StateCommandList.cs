@@ -23,7 +23,8 @@ public class StateCommandList
             new AssignedToInProgressCommand(workOrder, currentUser),
             new InProgressToAssignedCommand(workOrder, currentUser),
             new InProgressToCompleteCommand(workOrder, currentUser),
-            new AssignedToCancelledCommand(workOrder, currentUser)
+            new AssignedToCancelledCommand(workOrder, currentUser),
+            new CancelledToDraftCommand(workOrder, currentUser)
         };
 
         return commands.ToArray();
