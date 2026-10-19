@@ -178,6 +178,37 @@ public class MyWorkOrdersTests
         component.Instance.Count.ShouldBe(0);
     }
 
+    [Test]
+    public async Task ShouldIgnoreWorkOrderChangedEventFromOtherCreator()
+    {
+        await using var ctx = new BunitContext();
+
+        var currentUser = new Employee("jpalermo", "Jeffrey", "Palermo", "jeffrey@example.com");
+        var otherUser = new Employee("other", "Other", "User", "other@example.com");
+        var stubBus = new StubBusWithNoWorkOrders();
+        var stubUserSession = new StubUserSession(currentUser);
+        var stubUiBus = new StubUiBus();
+
+        ctx.Services.AddSingleton<IBus>(stubBus);
+        ctx.Services.AddSingleton<IUserSession>(stubUserSession);
+        ctx.Services.AddSingleton<IUiBus>(stubUiBus);
+
+        var component = ctx.Render<MyWorkOrders>();
+        component.Instance.Count.ShouldBe(0);
+
+        var foreignOrder = new WorkOrder
+        {
+            Number = "WO-999",
+            Title = "Someone else's order",
+            Status = WorkOrderStatus.Draft,
+            Creator = otherUser
+        };
+        var result = new StateCommandResult(foreignOrder, string.Empty);
+        component.Instance.Handle(new WorkOrderChangedEvent(result));
+
+        component.Instance.Count.ShouldBe(0);
+    }
+
     private class StubUserSession(Employee? currentUser = null) : IUserSession
     {
         private readonly Employee? _currentUser =

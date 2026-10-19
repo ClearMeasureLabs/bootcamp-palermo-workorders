@@ -21,6 +21,11 @@
     public void Handle(WorkOrderChangedEvent theEvent)
     {
         var order = theEvent.Result.WorkOrder;
+        if (_currentUser is null || order.Creator is null || order.Creator.UserName != _currentUser.UserName)
+        {
+            return;
+        }
+
         _myWorkOrders.Add(order);
         InvokeAsync(StateHasChanged);
     }
