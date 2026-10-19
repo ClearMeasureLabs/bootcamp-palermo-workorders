@@ -143,6 +143,20 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         UserOptions = items;
     }
 
+    private bool IsAssigneeSelectEnabled =>
+        Model.WorkOrder == null || Model.WorkOrder.CanReassign();
+
+    private async Task AssignToMeAsync()
+    {
+        var currentUser = await UserSession!.GetCurrentUserAsync();
+        if (currentUser == null)
+        {
+            return;
+        }
+
+        Model.AssignedToUserName = currentUser.UserName;
+    }
+
     private async Task HandleSubmit()
     {
         var currentUser = (await UserSession!.GetCurrentUserAsync())!;

@@ -34,6 +34,11 @@
                                     <option value="@user.Value">@user.Text</option>
                                 }
                             </InputSelect>
+                            @if (IsAssigneeSelectEnabled)
+                            {
+                                <button type="button" data-testid="@Elements.AssignToMe" class="btn btn-sm btn-outline-secondary"
+                                        @onclick="AssignToMeAsync">Assign to me</button>
+                            }
                         }
                         else
                         {
@@ -183,6 +188,7 @@
     public enum Elements
     {
         Assignee,
+        AssignToMe,
         Title,
         AssigneeFullName,
         RoomNumber,
