@@ -29,7 +29,7 @@ public class WorkOrderSummarizeTests
     [Test]
     public async Task ShouldShowSummaryUnderButton_WhenSummarizeClicked()
     {
-        using var ctx = CreateContext(new WorkOrderSummarizeResult("One paragraph about the sink."));
+        await using var ctx = CreateContext(new WorkOrderSummarizeResult("One paragraph about the sink."));
 
         var cut = ctx.Render<WorkOrderSummarize>(parameters => parameters
             .Add(p => p.Title, "Fix sink")
@@ -45,7 +45,7 @@ public class WorkOrderSummarizeTests
     [Test]
     public async Task ShouldShowFriendlyMessage_WhenLlmUnavailable()
     {
-        using var ctx = CreateContext(new WorkOrderSummarizeResult(
+        await using var ctx = CreateContext(new WorkOrderSummarizeResult(
             "AI summary is unavailable right now. Please try again later."));
 
         var cut = ctx.Render<WorkOrderSummarize>(parameters => parameters
