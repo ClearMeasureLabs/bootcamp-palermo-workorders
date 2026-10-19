@@ -17,6 +17,7 @@ public partial class WorkOrderSearch : AppComponentBase
     private string? _sortColumn;
     private bool _sortAscending = true;
     private bool _assignedToMe;
+    private string? _updatedAtText;
 
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
@@ -101,6 +102,17 @@ public partial class WorkOrderSearch : AppComponentBase
     }
 
 
+    private void CaptureUpdatedAt()
+    {
+        var local = TimeZoneInfo.ConvertTime(Clock.GetUtcNow(), ChurchTimeZone.Chicago);
+        _updatedAtText = $"Updated at {local.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+    }
+
+    private async Task HandleRefresh()
+    {
+        await SearchWorkOrders();
+    }
+
     private async Task SearchWorkOrders()
     {
         var creator = !string.IsNullOrWhiteSpace(Model.Filters.Creator)
@@ -124,6 +136,7 @@ public partial class WorkOrderSearch : AppComponentBase
         var workOrders = await Bus.Send(specification);
         Model.Results = workOrders.Select(MapSearchRow).ToArray();
         ApplySort();
+        CaptureUpdatedAt();
         StateHasChanged();
     }
 

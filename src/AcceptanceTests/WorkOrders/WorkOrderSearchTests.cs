@@ -784,6 +784,37 @@ public class WorkOrderSearchTests : AcceptanceTestBase
     }
 
     [Test, Retry(2)]
+    public async Task Refresh_ShouldShowWorkOrderCreatedInAnotherStep()
+    {
+        await Click(nameof(NavMenu.Elements.Search));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var creator = CurrentUser;
+        var order = Faker<WorkOrder>();
+        order.Creator = creator;
+        order.Title = $"[{TestTag}] refresh test";
+        await using (var context = TestHost.NewDbContext())
+        {
+            context.Attach(creator);
+            context.Add(order);
+            await context.SaveChangesAsync();
+        }
+
+        order.Number.ShouldNotBeNullOrWhiteSpace();
+
+        await Click(nameof(WorkOrderSearch.Elements.RefreshButton));
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var workOrderLink = Page.GetByTestId(nameof(WorkOrderSearch.Elements.WorkOrderLink) + order.Number);
+        await workOrderLink.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000
+        });
+        await Expect(Page.GetByTestId(nameof(WorkOrderSearch.Elements.UpdatedAt))).ToBeVisibleAsync();
+    }
+
+    [Test, Retry(2)]
     public async Task Should_ShowOverdueOnly_WhenToggleIsChecked()
     {
         // Arrange

@@ -1,6 +1,8 @@
+using System.Globalization;
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Services;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
@@ -18,12 +20,12 @@ public class WorkOrderSearchTests
     private const string CurrentUsername = "jpalermo";
 
     private static BunitContext CreateContext(IBus? bus = null, string loggedInAs = CurrentUsername,
-        WorkOrderSearchState? searchState = null)
+        WorkOrderSearchState? searchState = null, TimeProvider? timeProvider = null)
     {
         var ctx = new BunitContext();
         ctx.Services.AddSingleton(bus ?? new StubBus());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton(TimeProvider.System);
+        ctx.Services.AddSingleton(timeProvider ?? TimeProvider.System);
         ctx.Services.AddSingleton(searchState ?? new WorkOrderSearchState());
 
         var store = new StubUserSessionStore { Username = loggedInAs };
@@ -632,6 +634,52 @@ public class WorkOrderSearchTests
         var rows = component.FindAll("tbody tr");
         rows.Count.ShouldBe(1);
         rows[0].ClassName!.ShouldNotContain("overdue-row");
+    }
+
+    private sealed class StubTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        private DateTimeOffset _utcNow = utcNow;
+
+        public override DateTimeOffset GetUtcNow() => _utcNow;
+
+        public void SetUtcNow(DateTimeOffset value) => _utcNow = value;
+    }
+
+    [Test]
+    public async Task ShouldShowUpdatedAt_InChurchLocalTime_AfterResultsLoad()
+    {
+        var fixedUtc = new DateTimeOffset(2026, 6, 15, 17, 30, 0, TimeSpan.Zero);
+        await using var ctx = CreateContext(timeProvider: new StubTimeProvider(fixedUtc));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        var updatedAt = component.Find($"[data-testid='{WorkOrderSearch.Elements.UpdatedAt}']");
+        var local = TimeZoneInfo.ConvertTime(fixedUtc, ChurchTimeZone.Chicago);
+        var expected = $"Updated at {local.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+        updatedAt.TextContent.ShouldBe(expected);
+    }
+
+    [Test]
+    public async Task RefreshButton_ShouldReRunSearch_AndUpdateTimestamp()
+    {
+        var firstUtc = new DateTimeOffset(2026, 6, 15, 17, 30, 0, TimeSpan.Zero);
+        var secondUtc = new DateTimeOffset(2026, 6, 15, 18, 45, 0, TimeSpan.Zero);
+        var stubClock = new StubTimeProvider(firstUtc);
+        var bus = new StubBus();
+        await using var ctx = CreateContext(bus, timeProvider: stubClock);
+
+        var component = ctx.Render<WorkOrderSearch>();
+        var initialCalls = bus.SendCallCount;
+
+        stubClock.SetUtcNow(secondUtc);
+        var refresh = component.Find($"#{WorkOrderSearch.Elements.RefreshButton}");
+        await refresh.ClickAsync(new());
+
+        bus.SendCallCount.ShouldBeGreaterThan(initialCalls);
+        var updatedAt = component.Find($"[data-testid='{WorkOrderSearch.Elements.UpdatedAt}']");
+        var local = TimeZoneInfo.ConvertTime(secondUtc, ChurchTimeZone.Chicago);
+        var expected = $"Updated at {local.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+        updatedAt.TextContent.ShouldBe(expected);
     }
 
     [Test]

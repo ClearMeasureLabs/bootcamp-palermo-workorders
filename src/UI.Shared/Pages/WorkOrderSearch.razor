@@ -70,6 +70,13 @@
         <div class="results-card">
             <div class="results-header">
                 <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
+                @if (_updatedAtText != null)
+                {
+                    <span data-testid="@Elements.UpdatedAt" class="updated-at">@_updatedAtText</span>
+                }
+                <button id="@Elements.RefreshButton" type="button" class="btn btn-light btn-sm" data-testid="@Elements.RefreshButton" @onclick="HandleRefresh">
+                    Refresh
+                </button>
             </div>
 
             @if (Model.Results.Length == 0)
@@ -181,7 +188,9 @@
         SortByRoomButton,
         AssignedToMeCheckbox,
         SearchHint,
-        SearchHeadingTooltip
+        SearchHeadingTooltip,
+        UpdatedAt,
+        RefreshButton
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();
