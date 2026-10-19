@@ -58,10 +58,13 @@
                 @foreach (var status in StatusItems)
                 {
                     var count = _statusCounts.GetValueOrDefault(status.Key);
-                    <div class="status-card" data-testid="@(nameof(Elements.StatusCard) + status.Key)">
+                    <a href="/workorder/search?status=@status.Key"
+                       class="status-card"
+                       aria-label="@($"View {count} {status.FriendlyName} work orders")"
+                       data-testid="@(nameof(Elements.StatusCard) + status.Key)">
                         <div class="status-card-count" data-testid="@(nameof(Elements.StatusCardCount) + status.Key)">@count</div>
                         <div class="status-card-label">@status.FriendlyName</div>
-                    </div>
+                    </a>
                 }
             </div>
         </Authorized>
