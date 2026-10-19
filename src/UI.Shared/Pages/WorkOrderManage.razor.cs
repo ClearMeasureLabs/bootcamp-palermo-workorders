@@ -21,6 +21,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private WorkOrderAttachment[] _attachments = [];
     private string _preferredLanguage = "en-US";
     private DictationTarget _dictationTarget = DictationTarget.None;
+
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
