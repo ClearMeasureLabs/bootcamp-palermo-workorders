@@ -29,5 +29,21 @@
                 </div>
             </div>
         </section>
+
+        <section class="settings-section" aria-labelledby="language-heading">
+            <h2 id="language-heading" class="settings-section-title">Language</h2>
+            <div class="settings-card">
+                <label class="form-label" for="preferred-language-select">Preferred language</label>
+                <select id="preferred-language-select"
+                        class="form-select"
+                        data-testid="@nameof(Elements.PreferredLanguageSelect)"
+                        value="@_preferredLanguage"
+                        @onchange="OnPreferredLanguageChanged">
+                    <option value="en-US">en-US</option>
+                    <option value="es-ES">es-ES</option>
+                    <option value="fr-FR">fr-FR</option>
+                </select>
+            </div>
+        </section>
     </div>
 </div>

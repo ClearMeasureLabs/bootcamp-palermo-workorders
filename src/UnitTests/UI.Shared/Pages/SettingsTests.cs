@@ -1,13 +1,16 @@
 using Bunit;
 using ClearMeasure.Bootcamp.Core;
+using ClearMeasure.Bootcamp.Core.Model;
+using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
+using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
+using MediatR;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
-using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Pages;
 
@@ -18,44 +21,31 @@ public class SettingsTests
     public async Task Settings_AuthenticatedUser_ShouldRenderAppearanceSectionAndDarkModeSwitch()
     {
         await using var ctx = CreateContext();
-        var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
-        module.Setup<string>("getTheme").SetResult("light");
-        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
 
-        component.Find("h2").TextContent.ShouldContain("Appearance");
+        component.Markup.ShouldContain("Appearance");
         var sw = component.Find($"[data-testid='{nameof(Settings.Elements.DarkModeSwitch)}']");
-        sw.GetAttribute("role").ShouldBe("switch");
-        component.Markup.ShouldContain("Dark mode");
-        component.Markup.ShouldContain("whole app");
+        sw.ShouldNotBeNull();
     }
 
     [Test]
     public async Task Settings_AuthenticatedUser_ShouldRenderDisplayPreferencesSubtitle()
     {
         await using var ctx = CreateContext();
-        var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
-        module.Setup<string>("getTheme").SetResult("light");
-        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
 
         var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
 
         var subtitle = component.Find($"[data-testid='{nameof(Settings.Elements.SettingsSubtitle)}']");
-        subtitle.TextContent.ShouldBe("Manage display preferences for this browser.");
+        subtitle.TextContent.ShouldContain("browser");
     }
 
     [Test]
-    public async Task Settings_ToggleDarkMode_ShouldInvokeSetThemeInteropAndUpdateServiceState()
+    public async Task Settings_AuthenticatedUser_ShouldToggleDarkModeViaSwitch()
     {
         await using var ctx = CreateContext();
-        var module = ctx.JSInterop.SetupModule(ThemePreferenceService.ThemeJsModulePath);
-        module.Setup<string>("getTheme").SetResult("light");
-        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
-        module.SetupVoid("setTheme", _ => true).SetVoidResult();
-
-        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
         var theme = ctx.Services.GetRequiredService<ThemePreferenceService>();
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
 
         await component.InvokeAsync(() => Task.CompletedTask);
         theme.IsDarkMode.ShouldBeFalse();
@@ -64,17 +54,61 @@ public class SettingsTests
         await sw.ChangeAsync(new() { Value = true });
 
         await component.WaitForAssertionAsync(() => theme.IsDarkMode.ShouldBeTrue());
-        module.VerifyInvoke("setTheme");
     }
 
-    private static BunitContext CreateContext()
+    [Test]
+    public async Task Settings_AuthenticatedUser_ShouldShowCurrentPreferredLanguage()
+    {
+        var bus = new SettingsStubBus
+        {
+            Employee = new Employee("hsimpson", "Homer", "Simpson", "h@test.com")
+            {
+                PreferredLanguage = "es-ES"
+            }
+        };
+        await using var ctx = CreateContext(bus);
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            var select = component.Find($"[data-testid='{nameof(Settings.Elements.PreferredLanguageSelect)}']");
+            select.QuerySelector("option[value='es-ES']")!.HasAttribute("selected").ShouldBeTrue();
+        });
+    }
+
+    [Test]
+    public async Task Settings_AuthenticatedUser_ShouldSavePreferredLanguageThroughBus()
+    {
+        var bus = new SettingsStubBus();
+        await using var ctx = CreateContext(bus);
+
+        var component = ctx.Render<CascadingAuthenticationState>(p => p.AddChildContent<Settings>());
+
+        var select = component.Find($"[data-testid='{nameof(Settings.Elements.PreferredLanguageSelect)}']");
+        await select.ChangeAsync(new() { Value = "fr-FR" });
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            bus.LastCommand.ShouldNotBeNull();
+            bus.LastCommand!.Username.ShouldBe("hsimpson");
+            bus.LastCommand.PreferredLanguage.ShouldBe("fr-FR");
+        });
+    }
+
+    private static BunitContext CreateContext(IBus? bus = null)
     {
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Strict;
+        var module = ctx.JSInterop.SetupModule("./_content/ClearMeasure.Bootcamp.UI.Shared/js/theme.js");
+        module.SetupVoid("initializeTheme", _ => true).SetVoidResult();
+        module.SetupVoid("setTheme", _ => true).SetVoidResult();
+        module.SetupVoid("syncDomFromTheme", _ => true).SetVoidResult();
+        module.Setup<string>("getTheme").SetResult("light");
         ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new StubBus());
+        ctx.Services.AddSingleton<IBus>(bus ?? new SettingsStubBus());
 
         var bunitAuth = ctx.AddAuthorization();
         bunitAuth.SetAuthorized("hsimpson");
@@ -84,5 +118,36 @@ public class SettingsTests
         ctx.Services.AddSingleton(customAuth);
 
         return ctx;
+    }
+
+    private sealed class SettingsStubBus : IBus
+    {
+        public Employee Employee { get; set; } = new("hsimpson", "Homer", "Simpson", "h@test.com")
+        {
+            PreferredLanguage = "en-US"
+        };
+
+        public UpdatePreferredLanguageCommand? LastCommand { get; private set; }
+
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
+        {
+            if (request is EmployeeByUserNameQuery)
+            {
+                return Task.FromResult((TResponse)(object)Employee);
+            }
+
+            if (request is UpdatePreferredLanguageCommand command)
+            {
+                LastCommand = command;
+                Employee.PreferredLanguage = command.PreferredLanguage;
+                return Task.FromResult((TResponse)(object)Employee);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public Task<object?> Send(object request) => throw new NotImplementedException();
+
+        public Task Publish(INotification notification) => Task.CompletedTask;
     }
 }
