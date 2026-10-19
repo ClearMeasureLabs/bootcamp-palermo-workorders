@@ -201,7 +201,7 @@ public partial class WorkOrderSearch : AppComponentBase
     /// <summary>
     /// Per-status counts for the current result set, in workflow order; zero counts omitted.
     /// </summary>
-    internal string StatusSummaryText =>
+    private string StatusSummaryText =>
         string.Join(" · ",
             WorkOrderStatus.GetAllItems()
                 .Select(status => (status, Count: Model.Results.Count(row => row.Status == status)))
