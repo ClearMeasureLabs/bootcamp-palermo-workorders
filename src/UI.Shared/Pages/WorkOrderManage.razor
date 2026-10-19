@@ -163,6 +163,10 @@
             else
             {
                 <div class="action-buttons">
+                    @if (HasUnsavedChanges)
+                    {
+                        <span data-testid="@Elements.UnsavedChangesBadge" class="badge text-bg-warning">Unsaved changes</span>
+                    }
                     @foreach (var command in ValidCommands)
                     {
                         var buttonTestId = Elements.CommandButton + command.TransitionVerbPresentTense;
@@ -210,6 +214,7 @@
         DictateDescription,
         DescriptionCharCount,
         RequiredFieldsNote,
-        ManageHeadingTooltip
+        ManageHeadingTooltip,
+        UnsavedChangesBadge
     }
 }

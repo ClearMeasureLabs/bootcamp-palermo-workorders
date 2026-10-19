@@ -21,6 +21,10 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private WorkOrderAttachment[] _attachments = [];
     private string _preferredLanguage = "en-US";
     private DictationTarget _dictationTarget = DictationTarget.None;
+    private string? _loadedTitle;
+    private string? _loadedDescription;
+    private string? _loadedInstructions;
+    private string? _loadedRoomNumber;
     [Inject] public IWorkOrderBuilder? WorkOrderBuilder { get; set; }
     [Inject] public IUserSession? UserSession { get; set; }
     [Inject] private NavigationManager? NavigationManager { get; set; }
@@ -39,6 +43,12 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
     private string? CurrentDueDateUrgencyText =>
         DueDateUrgencyCalculator.ScreenReaderText(CurrentDueDateUrgency);
+
+    private bool HasUnsavedChanges =>
+        IsFieldDirty(Model.Title, _loadedTitle)
+        || IsFieldDirty(Model.Description, _loadedDescription)
+        || IsFieldDirty(Model.Instructions, _loadedInstructions)
+        || IsFieldDirty(Model.RoomNumber, _loadedRoomNumber);
 
     public WorkOrderManageModel Model { get; set; } = new();
     private List<SelectListItem> UserOptions { get; set; } = new();
@@ -99,6 +109,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         }
 
         Model = CreateViewModel(CurrentMode, workOrder);
+        CaptureLoadedValues();
         var commandList = new StateCommandList();
         Model.IsReadOnly = !commandList.GetValidStateCommands(workOrder, currentUser).Any();
         ValidCommands = commandList.GetValidStateCommands(workOrder, currentUser);
@@ -176,9 +187,21 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
         var result = await Bus.Send(matchingCommand);
         EventBus.Notify(new WorkOrderChangedEvent(result));
+        CaptureLoadedValues();
 
         NavigationManager!.NavigateTo("/workorder/search");
     }
+
+    private void CaptureLoadedValues()
+    {
+        _loadedTitle = Model.Title;
+        _loadedDescription = Model.Description;
+        _loadedInstructions = Model.Instructions;
+        _loadedRoomNumber = Model.RoomNumber;
+    }
+
+    private static bool IsFieldDirty(string? current, string? loaded) =>
+        !string.Equals(current ?? string.Empty, loaded ?? string.Empty, StringComparison.Ordinal);
 
     private async Task SpeakTitleAsync()
     {
