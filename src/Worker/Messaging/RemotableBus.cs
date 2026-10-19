@@ -49,10 +49,8 @@ public class RemotableBus(HttpClient httpClient, string apiUrl) : IBus
     private async Task<WebServiceMessage?> PostMessage(object payload)
     {
         var message = new WebServiceMessage(payload);
-        using var request = new HttpRequestMessage(HttpMethod.Post, apiUrl)
-        {
-            Content = JsonContent.Create(message)
-        };
+        using var request = new HttpRequestMessage(HttpMethod.Post, apiUrl);
+        request.Content = JsonContent.Create(message);
         request.Headers.TryAddWithoutValidation(
             CorrelationIdConstants.HeaderName,
             Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString());
