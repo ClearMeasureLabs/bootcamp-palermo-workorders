@@ -72,7 +72,7 @@ public partial class WorkOrderSearch : AppComponentBase
             Model.Filters.Assignee = Assignee;
         }
 
-        if (!string.IsNullOrEmpty(Status))
+        if (IsKnownStatus(Status))
         {
             Model.Filters.Status = Status;
         }
@@ -82,6 +82,10 @@ public partial class WorkOrderSearch : AppComponentBase
             Model.Filters.OverdueOnly = OverdueOnly;
         }
     }
+
+    private static bool IsKnownStatus(string? status) =>
+        !string.IsNullOrEmpty(status) &&
+        WorkOrderStatus.GetAllItems().Any(s => s.Key == status);
 
     private async Task HandleAssignedToMeChanged()
     {
@@ -112,7 +116,7 @@ public partial class WorkOrderSearch : AppComponentBase
             : null;
 
         var status = !string.IsNullOrWhiteSpace(Model.Filters.Status)
-            ? WorkOrderStatus.FromKey(Model.Filters.Status)
+            ? WorkOrderStatus.GetAllItems().FirstOrDefault(s => s.Key == Model.Filters.Status)
             : null;
 
         var specification = new WorkOrderSpecificationQuery();

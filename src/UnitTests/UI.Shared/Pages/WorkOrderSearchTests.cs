@@ -681,4 +681,29 @@ public class WorkOrderSearchTests
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
     }
+
+    [Test]
+    public async Task ShouldIgnore_UnknownStatus_QueryParameter()
+    {
+        await using var ctx = CreateContext();
+        var nav = ctx.Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo(nav.GetUriWithQueryParameter("Status", "Open"));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.Instance.Model.Filters.Status.ShouldBeNullOrEmpty();
+        component.Find($"[data-testid='{WorkOrderSearch.Elements.SearchHint}']");
+    }
+
+    [Test]
+    public async Task ShouldApply_KnownStatus_QueryParameter()
+    {
+        await using var ctx = CreateContext();
+        var nav = ctx.Services.GetRequiredService<NavigationManager>();
+        nav.NavigateTo(nav.GetUriWithQueryParameter("Status", WorkOrderStatus.Draft.Key));
+
+        var component = ctx.Render<WorkOrderSearch>();
+
+        component.Instance.Model.Filters.Status.ShouldBe(WorkOrderStatus.Draft.Key);
+    }
 }
