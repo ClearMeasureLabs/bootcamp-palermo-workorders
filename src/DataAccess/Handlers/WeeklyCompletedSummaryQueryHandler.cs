@@ -13,15 +13,25 @@ public class WeeklyCompletedSummaryQueryHandler(DataContext context) :
         CancellationToken cancellationToken = default)
     {
         var weekAgo = DateTime.UtcNow.AddDays(-7);
-        return await CountCompletedSinceAsync(weekAgo, cancellationToken);
+        var completedDates = await context.Set<WorkOrder>()
+            .AsNoTracking()
+            .Select(wo => wo.CompletedDate)
+            .ToListAsync(cancellationToken);
+        return CountCompletedSince(completedDates, weekAgo);
     }
 
-    private async Task<int> CountCompletedSinceAsync(DateTime since, CancellationToken cancellationToken)
+    /// <summary>
+    /// Counts completed dates on or after <paramref name="since"/>.
+    /// </summary>
+    public static int CountCompletedSince(IEnumerable<DateTime?> completedDates, DateTime since)
     {
-        return await context.Set<WorkOrder>()
-            .AsNoTracking()
-            .CountAsync(
-                wo => wo.CompletedDate != null && wo.CompletedDate >= since,
-                cancellationToken);
+        var count = 0;
+        foreach (var completedDate in completedDates)
+        {
+            if (completedDate != null && completedDate >= since)
+                count++;
+        }
+
+        return count;
     }
 }
