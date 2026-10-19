@@ -104,7 +104,8 @@ public class SettingsTests
         ctx.Services.AddSingleton(ctx.JSInterop.JSRuntime);
         ctx.Services.AddSingleton<ThemePreferenceService>();
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(bus ?? new SettingsStubBus());
+        IBus resolvedBus = bus ?? new SettingsStubBus();
+        ctx.Services.AddSingleton(resolvedBus);
 
         var bunitAuth = ctx.AddAuthorization();
         bunitAuth.SetAuthorized("hsimpson");
