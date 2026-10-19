@@ -241,7 +241,7 @@ public abstract class AcceptanceTestBase
         await TakeScreenshotAsync();
         // Assert: Should be redirected to home and see welcome message
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
-        await Expect(welcomeTextLocator).ToContainTextAsync($"Welcome {CurrentUser.UserName}");
+        await Expect(welcomeTextLocator).ToContainTextAsync($"Signed in as {CurrentUser.UserName}");
         await welcomeTextLocator.DblClickAsync(); // causes the browser to finish DOM loading - HACK
     }
 

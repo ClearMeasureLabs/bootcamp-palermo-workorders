@@ -37,7 +37,7 @@ public class SaturdayMowSchedulingAgentTests : AcceptanceTestBase
         await Click(nameof(Login.Elements.LovejoyShortcut));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome tlovejoy!");
+            .ToHaveTextAsync("Signed in as tlovejoy!");
 
         await Click(nameof(NavMenu.Elements.AiAgent));
         await Page.WaitForURLAsync("**/ai-agent");

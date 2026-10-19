@@ -161,7 +161,7 @@ public class McpCreateWorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
         await Click(nameof(Login.Elements.LovejoyShortcut));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome tlovejoy!");
+            .ToHaveTextAsync("Signed in as tlovejoy!");
     }
 
     private async Task NavigateToManageEditAsync(string workOrderNumber)

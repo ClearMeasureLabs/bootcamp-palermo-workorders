@@ -19,7 +19,7 @@ namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Components;
 public class LogoutTests
 {
     [Test]
-    public async Task ShouldDisplayWelcomeMessageWithUsername()
+    public async Task ShouldDisplaySignedInAsMessageWithUsername()
     {
         await using var ctx = new BunitContext();
 
@@ -34,7 +34,7 @@ public class LogoutTests
         var component = ctx.Render<Logout>();
 
         var welcomeSpan = component.Find("span");
-        welcomeSpan.TextContent.ShouldContain("Welcome");
+        welcomeSpan.TextContent.ShouldContain("Signed in as");
         welcomeSpan.TextContent.ShouldContain("hsimpson");
     }
 
@@ -55,7 +55,7 @@ public class LogoutTests
         var component = ctx.Render<Logout>();
 
         var welcomeSpan = component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']");
-        NormalizeWhitespace(welcomeSpan.TextContent).ShouldBe("Welcome Homer Jay Simpson!");
+        NormalizeWhitespace(welcomeSpan.TextContent).ShouldBe("Signed in as Homer Jay Simpson!");
     }
 
     [Test]
@@ -75,7 +75,7 @@ public class LogoutTests
         var component = ctx.Render<Logout>();
 
         var welcomeSpan = component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']");
-        NormalizeWhitespace(welcomeSpan.TextContent).ShouldBe("Welcome hsimpson!");
+        NormalizeWhitespace(welcomeSpan.TextContent).ShouldBe("Signed in as hsimpson!");
     }
 
     [Test]
@@ -98,7 +98,7 @@ public class LogoutTests
 
         await component.WaitForAssertionAsync(() =>
             NormalizeWhitespace(component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']").TextContent)
-                .ShouldBe("Welcome Homer Jay Simpson!"));
+                .ShouldBe("Signed in as Homer Jay Simpson!"));
     }
 
     [Test]
@@ -117,7 +117,7 @@ public class LogoutTests
         var component = ctx.Render<Logout>();
 
         var welcomeSpan = component.Find($"[data-testid='{nameof(Logout.Elements.WelcomeText)}']");
-        NormalizeWhitespace(welcomeSpan.TextContent).ShouldBe("Welcome hsimpson!");
+        NormalizeWhitespace(welcomeSpan.TextContent).ShouldBe("Signed in as hsimpson!");
     }
 
     [Test]

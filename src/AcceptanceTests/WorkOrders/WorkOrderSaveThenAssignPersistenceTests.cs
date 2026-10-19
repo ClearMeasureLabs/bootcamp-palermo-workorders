@@ -194,7 +194,7 @@ public class WorkOrderSaveThenAssignPersistenceTests : AcceptanceTestBase
         await Click(nameof(Login.Elements.LovejoyShortcut));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome tlovejoy!");
+            .ToHaveTextAsync("Signed in as tlovejoy!");
     }
 
     private async Task LoginAsGwillieAsync()
@@ -205,6 +205,6 @@ public class WorkOrderSaveThenAssignPersistenceTests : AcceptanceTestBase
         await Click(nameof(Login.Elements.LoginButton));
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome gwillie!");
+            .ToHaveTextAsync("Signed in as gwillie!");
     }
 }

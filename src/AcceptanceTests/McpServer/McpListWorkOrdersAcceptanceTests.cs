@@ -258,7 +258,7 @@ public class McpListWorkOrdersAcceptanceTests : AcceptanceTestBase
         await Expect(Page.GetByTestId(nameof(Login.Elements.LovejoyShortcut))).ToBeVisibleAsync();
         await Click(nameof(Login.Elements.LovejoyShortcut));
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome tlovejoy!");
+            .ToHaveTextAsync("Signed in as tlovejoy!");
         await Click(nameof(NavMenu.Elements.Search));
         await Page.WaitForURLAsync("**/workorder/search");
         await Expect(Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}")).ToBeVisibleAsync();

@@ -5,12 +5,12 @@
 @inject IUserSession UserSession
 @implements IListener<UserLoggedInEvent>
 
-<span data-testid="@Elements.WelcomeText">
-    Welcome
+<span data-testid="@Elements.WelcomeText" class="current-account-notice" title="Shared laptop — confirm this is your account">
+    Signed in as
     @{
         var userIdentity = AuthStateProvider.GetUsername();
     }
-    @(HasMiddleName(_currentEmployee) ? _currentEmployee!.GetFullName() : userIdentity)!
+    <strong>@(HasMiddleName(_currentEmployee) ? _currentEmployee!.GetFullName() : userIdentity)!</strong>
 </span>
 <button type="button" data-testid="@Elements.LogoutLink" title="Sign out of the application" @onclick="HandleLogout" class="btn btn-link ms-3 p-0 align-baseline">Logout</button>
 

@@ -77,7 +77,7 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
-        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
+        await Expect(welcomeTextLocator).ToHaveTextAsync("Signed in as hsimpson!");
         await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
     }
 
@@ -106,7 +106,7 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
-        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome First Middle Last!");
+        await Expect(welcomeTextLocator).ToHaveTextAsync("Signed in as First Middle Last!");
     }
 
     [Test, Retry(2)]
@@ -232,7 +232,7 @@ public class LoginTests : AcceptanceTestBase
         await TakeScreenshotAsync(4);
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
-        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome hsimpson!");
+        await Expect(welcomeTextLocator).ToHaveTextAsync("Signed in as hsimpson!");
         await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
     }
 
@@ -268,12 +268,12 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
-        await Expect(welcomeTextLocator).ToHaveTextAsync("Welcome tlovejoy!");
+        await Expect(welcomeTextLocator).ToHaveTextAsync("Signed in as tlovejoy!");
         await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]
-    public async Task Should_RetainWelcomeTlovejoy_WhenPageReloadedAfterLovejoyLogin()
+    public async Task Should_RetainSignedInAsTlovejoy_WhenPageReloadedAfterLovejoyLogin()
     {
         await LoginAsLovejoyViaShortcutAsync();
 
@@ -281,14 +281,14 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome tlovejoy!");
+            .ToHaveTextAsync("Signed in as tlovejoy!");
         await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
         await Expect(Page.GetByTestId(nameof(NavMenu.Elements.NewWorkOrder))).ToBeVisibleAsync();
     }
 
     [Test, Retry(2)]
-    public async Task Should_RetainWelcomeTlovejoy_WhenHardNavigatingHomeAfterLovejoyLogin()
+    public async Task Should_RetainSignedInAsTlovejoy_WhenHardNavigatingHomeAfterLovejoyLogin()
     {
         await LoginAsLovejoyViaShortcutAsync();
 
@@ -296,13 +296,13 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome tlovejoy!");
+            .ToHaveTextAsync("Signed in as tlovejoy!");
         await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
     }
 
     [Test, Retry(2)]
-    public async Task Should_RetainWelcomeTlovejoy_WhenHardNavigatingHomeAfterHealthcheck()
+    public async Task Should_RetainSignedInAsTlovejoy_WhenHardNavigatingHomeAfterHealthcheck()
     {
         await LoginAsLovejoyViaShortcutAsync();
 
@@ -312,7 +312,7 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome tlovejoy!");
+            .ToHaveTextAsync("Signed in as tlovejoy!");
         await Expect(Page.GetByTestId(nameof(Logout.Elements.LogoutLink))).ToBeVisibleAsync();
         await Expect(Page.GetByTestId(nameof(LoginLink.Elements.LoginLink))).ToHaveCountAsync(0);
     }
@@ -395,16 +395,16 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome gwillie!");
+            .ToHaveTextAsync("Signed in as gwillie!");
         (await GetPersistedUsernameAsync()).ShouldBe("gwillie");
 
         await Page.GotoAsync(ServerFixture.ApplicationBaseUrl + "/");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome gwillie!");
+            .ToHaveTextAsync("Signed in as gwillie!");
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .Not.ToHaveTextAsync("Welcome tlovejoy!");
+            .Not.ToHaveTextAsync("Signed in as tlovejoy!");
         (await GetPersistedUsernameAsync()).ShouldBe("gwillie");
     }
 
@@ -437,7 +437,7 @@ public class LoginTests : AcceptanceTestBase
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
         await Expect(Page.GetByTestId(nameof(Logout.Elements.WelcomeText)))
-            .ToHaveTextAsync("Welcome tlovejoy!");
+            .ToHaveTextAsync("Signed in as tlovejoy!");
     }
 
     private async Task EnsureAnonymousHomeAsync()
@@ -501,7 +501,7 @@ public class LoginTests : AcceptanceTestBase
 
         var welcomeTextLocator = Page.GetByTestId(nameof(Logout.Elements.WelcomeText));
         await Expect(welcomeTextLocator).ToHaveTextAsync(
-            "Welcome tlovejoy!",
+            "Signed in as tlovejoy!",
             new LocatorAssertionsToHaveTextOptions { Timeout = 60_000 });
     }
 }
