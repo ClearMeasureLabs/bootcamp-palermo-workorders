@@ -34,6 +34,7 @@ internal class BogusOverrides : AutoGeneratorOverride
                 break;
             case Employee employee:
                 employee.MiddleName = null;
+                employee.PhoneNumber = employee.PhoneNumber?.ClampLength(1, 20);
                 employee.PreferredLanguage = context.Faker.PickRandom("en-US", "es-ES", "fr-FR", "de-DE", "pt-BR");
                 break;
         }
