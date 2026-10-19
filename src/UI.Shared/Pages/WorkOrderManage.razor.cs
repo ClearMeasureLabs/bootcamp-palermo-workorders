@@ -124,6 +124,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Description = workOrder.Description,
             Instructions = workOrder.Instructions,
             RoomNumber = workOrder.RoomNumber,
+            BudgetCode = workOrder.BudgetCode,
             CreatedDate = workOrder.CreatedDate?.ToString("G", CultureInfo.CurrentCulture),
             AssignedDate = workOrder.AssignedDate?.ToString("G", CultureInfo.CurrentCulture),
             CompletedDate = workOrder.CompletedDate?.ToString("G", CultureInfo.CurrentCulture),
@@ -169,6 +170,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
         workOrder.Description = Model.Description;
         workOrder.Instructions = Model.Instructions;
         workOrder.RoomNumber = Model.RoomNumber;
+        workOrder.BudgetCode = Model.BudgetCode;
         workOrder.DueDate = Model.DueDateInput;
 
         var matchingCommand = new StateCommandList()

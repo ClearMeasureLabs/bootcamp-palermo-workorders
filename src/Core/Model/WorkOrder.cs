@@ -21,6 +21,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public const int InstructionsMaxLength = 4000;
 
+    /// <summary>
+    /// Maximum length of <see cref="BudgetCode"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int BudgetCodeMaxLength = 12;
+
     public string? Title { get; set; } = "";
 
     public string? Description
@@ -36,6 +41,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     } = "";
 
     public string? RoomNumber { get; set; }
+
+    /// <summary>
+    /// Optional budget code the church office charges the repair to.
+    /// </summary>
+    public string? BudgetCode { get; set; }
 
     public WorkOrderStatus Status { get; set; } = WorkOrderStatus.Draft;
 

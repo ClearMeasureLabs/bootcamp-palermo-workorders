@@ -376,6 +376,7 @@ public class WorkOrderTools
         Instructions = wo.Instructions ?? "",
         Status = wo.Status.FriendlyName,
         wo.RoomNumber,
+        wo.BudgetCode,
         Creator = wo.Creator?.GetFullName(),
         CreatorUsername = wo.Creator?.UserName,
         Assignee = wo.Assignee?.GetFullName(),
