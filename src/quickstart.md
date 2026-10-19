@@ -1,3 +1,6 @@
+Local SQLite (no Docker): see [Local (SQLite, no Docker)](../docs/environments.md#local-sqlite-no-docker)
+in `docs/environments.md` for `DATABASE_ENGINE=SQLite`, where `ChurchBulletin.db` is created, and how to run the build and integration tests.
+
 Pre-work:
 
 Create one-time-setup Resource Group
