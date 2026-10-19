@@ -6,6 +6,7 @@ using ClearMeasure.Bootcamp.UI.Shared.Authentication;
 using ClearMeasure.Bootcamp.UI.Shared.Pages;
 using ClearMeasure.Bootcamp.UI.Shared.Services;
 using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
+using System.Text.Json;
 using MediatR;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -674,11 +675,11 @@ public class WorkOrderSearchTests
     [Test]
     public void ShouldRemotableRequest_RoundTrip_OverdueOnly()
     {
-        var query = new ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery();
+        var query = new WorkOrderSpecificationQuery();
         query.MatchOverdueOnly(true);
 
-        var json = System.Text.Json.JsonSerializer.Serialize(query);
-        var rehydrated = System.Text.Json.JsonSerializer.Deserialize<ClearMeasure.Bootcamp.Core.Queries.WorkOrderSpecificationQuery>(json);
+        var json = JsonSerializer.Serialize(query);
+        var rehydrated = JsonSerializer.Deserialize<WorkOrderSpecificationQuery>(json);
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
