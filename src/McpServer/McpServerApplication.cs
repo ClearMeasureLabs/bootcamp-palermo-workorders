@@ -34,6 +34,9 @@ public static class McpServerApplication
 
         builder.Host.UseLamar(registry => { registry.IncludeRegistry<McpServiceRegistry>(); });
 
+        builder.Services.Configure<McpServerOptions>(
+            builder.Configuration.GetSection(McpServerOptions.SectionName));
+
         var mcpBuilder = builder.Services
             .AddMcpServer(options =>
             {

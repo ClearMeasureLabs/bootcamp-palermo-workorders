@@ -6,6 +6,7 @@ using ClearMeasure.Bootcamp.Core.Model;
 using ClearMeasure.Bootcamp.Core.Model.StateCommands;
 using ClearMeasure.Bootcamp.Core.Queries;
 using ClearMeasure.Bootcamp.Core.Services;
+using Microsoft.Extensions.Options;
 using ModelContextProtocol.Server;
 
 namespace ClearMeasure.Bootcamp.McpServer.Tools;
@@ -18,7 +19,8 @@ public class WorkOrderTools
         IBus bus,
         [Description("Optional status filter (Draft, Assigned, InProgress, Complete)")] string? status = null,
         [Description("Optional creator username filter")] string? creatorUsername = null,
-        [Description("Optional assignee username filter")] string? assigneeUsername = null)
+        [Description("Optional assignee username filter")] string? assigneeUsername = null,
+        IOptions<McpServerOptions>? options = null)
     {
         var query = new WorkOrderSpecificationQuery();
         if (!string.IsNullOrWhiteSpace(status))
@@ -49,8 +51,35 @@ public class WorkOrderTools
         }
 
         var workOrders = await bus.Send(query);
-        return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
-            new JsonSerializerOptions { WriteIndented = true });
+        return FormatCappedWorkOrderList(workOrders, ResolveMaxListResults(options));
+    }
+
+    /// <summary>
+    /// Orders work orders newest-first, applies the list cap, and serializes the result.
+    /// When the cap cuts results, the JSON object includes <c>truncated: true</c>.
+    /// </summary>
+    public static string FormatCappedWorkOrderList(IEnumerable<WorkOrder> workOrders, int maxListResults)
+    {
+        var ordered = workOrders.OrderByDescending(wo => wo.CreatedDate).ToArray();
+        var truncated = ordered.Length > maxListResults;
+        var page = ordered.Take(maxListResults).Select(FormatWorkOrderSummary).ToArray();
+        var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+        if (truncated)
+        {
+            return JsonSerializer.Serialize(new { workOrders = page, truncated = true }, jsonOptions);
+        }
+
+        return JsonSerializer.Serialize(page, jsonOptions);
+    }
+
+    private static int ResolveMaxListResults(IOptions<McpServerOptions>? options)
+    {
+        if (options != null)
+        {
+            return options.Value.MaxListResults;
+        }
+
+        return new McpServerOptions().MaxListResults;
     }
 
     [McpServerTool(Name = "get-work-order"), Description("Retrieves a single work order by its number, including full details.")]
