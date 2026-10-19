@@ -14,7 +14,7 @@ Method: same as rounds 27/28. `measure_transcript.py` (bytes/4 over the full inp
 | c64 | trap (due before) | 10746 | 785.7k | 37 | 3 | 0 | 0 | 0 (16.4 min, full output) | 20 min | GREEN | 11 files, Bogus rule added |
 
 - **Total:** 6,947.1k
-- **Average:** 868.4k/item; 493.0k without c60
+- **Average:** 868.4k/item; 494.1k without c60
 - **Median:** 465.4k
 - **Round 28 comparison:** average 1,689.4k, median 727.3k.
 - **Results:** 8/8 real GREEN and 8/8 RESULT lines. However, **only 5/8 PRs are a correct delivery**: c61 and c62 changed nothing, and c60 deleted an existing test file's contents.
