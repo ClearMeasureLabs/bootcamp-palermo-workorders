@@ -27,9 +27,37 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Status { get; set; }
     [SupplyParameterFromQuery] public bool OverdueOnly { get; set; }
 
+    /// <summary>
+    /// CSV export URL for the current status, creator, and assignee filters.
+    /// </summary>
+    public string ExportCsvUrl => BuildExportCsvUrl();
+
     protected override async Task OnParametersSetAsync()
     {
         await InitializeAsync();
+    }
+
+    private string BuildExportCsvUrl()
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrEmpty(Model.Filters.Status))
+        {
+            parts.Add($"status={Uri.EscapeDataString(Model.Filters.Status)}");
+        }
+
+        if (!string.IsNullOrEmpty(Model.Filters.Creator))
+        {
+            parts.Add($"creator={Uri.EscapeDataString(Model.Filters.Creator)}");
+        }
+
+        if (!string.IsNullOrEmpty(Model.Filters.Assignee))
+        {
+            parts.Add($"assignee={Uri.EscapeDataString(Model.Filters.Assignee)}");
+        }
+
+        return parts.Count == 0
+            ? "/api/workorders/export"
+            : "/api/workorders/export?" + string.Join("&", parts);
     }
 
     private async Task InitializeAsync()

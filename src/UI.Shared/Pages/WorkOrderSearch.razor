@@ -70,6 +70,7 @@
         <div class="results-card">
             <div class="results-header">
                 <i class="bi bi-list-task" aria-hidden="true"></i> Search Results (@Model.Results.Length work orders)
+                <a href="@ExportCsvUrl" data-testid="@nameof(Elements.ExportCsvLink)">Export CSV</a>
             </div>
 
             @if (Model.Results.Length == 0)
@@ -181,7 +182,8 @@
         SortByRoomButton,
         AssignedToMeCheckbox,
         SearchHint,
-        SearchHeadingTooltip
+        SearchHeadingTooltip,
+        ExportCsvLink
     }
 
     public WorkOrderSearchModel Model { get; set; } = new();
