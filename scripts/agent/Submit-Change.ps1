@@ -18,16 +18,23 @@ New-Item -ItemType Directory -Force $tools | Out-Null; Copy-Item "$PSScriptRoot/
 $srcChg = git status --porcelain -uall -- src; $nonSrc = @(git status --porcelain -uall -- .github docs ':(glob)*.ps1' | ForEach-Object { $_.Substring(3) })
 $nonCode = -not $srcChg -and $nonSrc
 if (-not $srcChg -and -not $nonSrc) { 'NO_CHANGES: you edited nothing. Make the change the criteria need (Get-Context -File/-Find to read the target), then Submit. If the criteria are already met, reply RESULT=ALREADY_DONE <file:line evidence>'; exit 0 }  # v43g: round 29 c61/c62
-if ($nonCode) {
+# v45g: tree-hash stamp: a rerun of the exact tree whose local checks already passed skips straight to publish + wait
+# (round 31: 7 long calls lost their result; c75 reran a 6-min Submit, c73 went to background runs + terminal-file polling)
+$stamp = Join-Path ([IO.Path]::GetTempPath()) "agent-submit-$Issue.txt"; $ix = Join-Path ([IO.Path]::GetTempPath()) 'agent-submit-index'
+Remove-Item $ix -ErrorAction SilentlyContinue; $env:GIT_INDEX_FILE = $ix
+git read-tree HEAD; git add -A -- src .github docs ':(glob)*.ps1' 2>$null; $tree = "$(git write-tree) risk=$([bool]$IgnoreRisk)"; Remove-Item env:GIT_INDEX_FILE
+$cached = $Issue -and -not $VerifyOnly -and (Test-Path $stamp) -and ((Get-Content $stamp -Raw).Trim() -eq $tree)
+if ($cached) { 'CACHED: local checks already passed for this exact change; publishing and waiting' }
+if ($nonCode -and -not $cached) {
   python3 -c 'import yaml' 2>$null; $hasYaml = $LASTEXITCODE -eq 0
   foreach ($p in $nonSrc | Where-Object { Test-Path $_ }) {
     if ($p -like '*.ps1') { $e = $null; [void][Management.Automation.Language.Parser]::ParseFile((Resolve-Path $p), [ref]$null, [ref]$e); if ($e) { "SYNTAX_FAIL ${p}: $($e[0].Message) line $($e[0].Extent.StartLineNumber)"; exit 0 } }
     if ($p -match '\.ya?ml$' -and $hasYaml) { $y = python3 -c "import sys,yaml;yaml.safe_load(open(sys.argv[1]))" $p 2>&1; if ($LASTEXITCODE) { "SYNTAX_FAIL ${p}: $($y | Select-Object -Last 1)"; exit 0 } } }
   'NON_CODE: syntax OK; .NET build/tests skipped' }
-if (git status --porcelain -- 'src/**/*.proto') { & "$tools/Update-GrpcGenerated.ps1" }
-$risk = if ($nonCode) { @() } else { @(& "$tools/Test-ChangeRisk.ps1") }
+if (-not $cached -and (git status --porcelain -- 'src/**/*.proto')) { & "$tools/Update-GrpcGenerated.ps1" }
+$risk = if ($nonCode -or $cached) { @() } else { @(& "$tools/Test-ChangeRisk.ps1") }
 if ($risk -and -not $IgnoreRisk) { $risk; 'RISK=FIX (fix these, rerun; -IgnoreRisk only if clearly false)'; exit 0 }
-if (-not $nonCode) {
+if (-not $nonCode -and -not $cached) {
 $f = if ($Filter) { $Filter } else { 'FullyQualifiedName!~__none__' }
 $u = @(& "$tools/Invoke-AgentBuildTest.ps1" -Filter $f); if ($LASTEXITCODE) { $u | Where-Object { $_ -notmatch '^(BUILD=OK)$' }; 'SUBMIT=FAIL (fix the items above, rerun Submit)'; exit 0 }
 $b = dotnet build src/IntegrationTests/IntegrationTests.csproj -c Release -warnaserror -p:NuGetAudit=false -v q -nologo -clp:NoSummary 2>&1
@@ -51,6 +58,7 @@ if ($it) {
   # v40g: local InspectCode on changed lines (Qodana REDs were found only in CI: round 26 c40 x2, c34, c25, c26)
   if (-not $IgnoreRisk) { $ins = @(& "$tools/Invoke-LocalInspect.ps1"); if ($ins -match '^INSPECT=FIX') { $ins; 'SUBMIT=FIX (fix the FIX lines, rerun Submit; -IgnoreRisk only if clearly false)'; exit 0 }; $ins | Where-Object { $_ -match '^INSPECT=SKIPPED' } }
 }
+if ($Issue -and -not $cached) { Set-Content $stamp $tree }  # v45g: every local check passed for this tree
 if ($VerifyOnly) { 'VERIFY=OK'; exit 0 }
 if (-not $Issue -or -not $Branch) { 'need -Issue and -Branch to publish'; exit 1 }
 $title = gh api "repos/$Repo/issues/$Issue" --jq .title

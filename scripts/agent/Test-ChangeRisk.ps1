@@ -75,6 +75,14 @@ foreach ($ns in git diff --numstat $base -- src) { $add, $del, $tf = $ns -split 
   if ($tf -notmatch 'Tests' -or $del -eq '-') { continue }
   $orig = @(git show "${base}:$tf" 2>$null).Count; $shrink = [int]$del - [int]$add
   if ($orig -and ($shrink -gt 100 -or $shrink -gt $orig / 2)) { "TEST_DELETE_RISK $tf : shrinks by $shrink lines (-$del +$add of $orig); existing tests were removed or the file was overwritten. Keep the existing tests and add yours (append after the last test)" } }
+# v45g: a new public type that no non-test code uses delivers nothing to users (round 31 c77: WorkOrderStatusGuide + tests only,
+# shown nowhere). Framework-discovered kinds (controllers, handlers, validators, MCP tools, state commands) are exempt.
+foreach ($nf in git status --porcelain -uall -- src/Core src/UI.Shared src/UI.Client src/UI/Server | Where-Object { $_ -match '^(\?\?|A |AM| A)' } | ForEach-Object { $_.Substring(3) }) {
+  if ($nf -notmatch '\.cs$' -or $nf -match 'Tests|Generated|Validation/|StateCommands/|Controllers/|Handler\.cs$|Validator\.cs$' -or -not (Test-Path $nf)) { continue }
+  $txt = Get-Content $nf -Raw; if (-not $txt) { continue }
+  foreach ($tm in [regex]::Matches($txt, '(?m)^\s*public\s+(?:(?:static|sealed|abstract|partial|readonly)\s+)*(?:class|record|interface|enum|struct)\s+(\w+)')) { $tn = $tm.Groups[1].Value
+    $use = @(rg -l -w -e $tn src --glob '*.cs' --glob '*.razor' --glob '!**/*Tests*/**' --glob '!**/bin/**' --glob '!**/obj/**' 2>$null | Where-Object { ($_ -replace '\\', '/') -ne $nf })
+    if (-not $use) { "UNUSED_RISK $nf : new type '$tn' is used only by tests; wire it into the page/API/tool the issue is about so users see the change" } } }
 foreach ($f in $changed.Keys) {
   if ($f -notmatch '\.cs$' -or $f -match 'Tests' -or -not (Test-Path $f)) { continue }
   $src = @(Get-Content $f); $set = [Collections.Generic.HashSet[int]]::new([int[]]$changed[$f])
