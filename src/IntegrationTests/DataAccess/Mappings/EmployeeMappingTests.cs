@@ -77,6 +77,26 @@ public class EmployeeMappingTests
     }
 
     [Test]
+    public void ShouldPersistPhoneNumber()
+    {
+        new DatabaseTests().Clean();
+
+        var emp = new Employee("userphone", "First", "Last", "emailphone@example.com") { PhoneNumber = "555-0100" };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(emp);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydrated = context.Set<Employee>().Single(e => e.Id == emp.Id);
+            rehydrated.PhoneNumber.ShouldBe("555-0100");
+        }
+    }
+
+    [Test]
     public void ShouldPersistNullMiddleName()
     {
         new DatabaseTests().Clean();

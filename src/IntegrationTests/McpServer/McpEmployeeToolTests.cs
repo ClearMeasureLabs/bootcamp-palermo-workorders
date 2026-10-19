@@ -86,4 +86,34 @@ public class McpEmployeeToolTests
 
         result.ShouldContain("No employee found");
     }
+
+    [Test]
+    public async Task ShouldIncludePhoneNumber_WhenGettingEmployeeByUsername()
+    {
+        var emp = new Employee("phonedoe", "Pat", "Doe", "pat@test.com") { PhoneNumber = "555-0199" };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.GetEmployee(bus, "phonedoe");
+
+        result.ShouldContain("\"PhoneNumber\": \"555-0199\"");
+    }
+
+    [Test]
+    public async Task ShouldIncludePhoneNumber_WhenListingEmployees()
+    {
+        var emp = new Employee("listphone", "Lee", "Phone", "lee@test.com") { PhoneNumber = "555-0188" };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(emp);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus);
+
+        result.ShouldContain("\"PhoneNumber\": \"555-0188\"");
+    }
 }

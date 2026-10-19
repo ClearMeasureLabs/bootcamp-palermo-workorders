@@ -39,6 +39,10 @@
                         {
                             <span data-testid="@Elements.AssigneeFullName" class="value">@Model.WorkOrder?.Assignee?.GetFullName()</span>
                         }
+                        @if (!string.IsNullOrWhiteSpace(Model.WorkOrder?.Assignee?.PhoneNumber))
+                        {
+                            <a data-testid="@Elements.AssigneePhone" href="tel:@Model.WorkOrder.Assignee.PhoneNumber">@Model.WorkOrder.Assignee.PhoneNumber</a>
+                        }
                     </div>
                 </div>
 
@@ -185,6 +189,7 @@
         Assignee,
         Title,
         AssigneeFullName,
+        AssigneePhone,
         RoomNumber,
         Description,
         Instructions,
