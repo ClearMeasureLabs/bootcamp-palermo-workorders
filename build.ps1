@@ -45,6 +45,19 @@ if ([string]::IsNullOrEmpty($projectConfig)) { $projectConfig = "Release" }
 
 # ── Main Functions ──────────────────────────────────────────────────────────────
 
+Function Invoke-TimedStep {
+	param(
+		[Parameter(Mandatory = $true)]
+		[string]$Name,
+		[Parameter(Mandatory = $true)]
+		[scriptblock]$Action
+	)
+	$sw = [Diagnostics.Stopwatch]::StartNew()
+	& $Action
+	$sw.Stop()
+	Write-Host ("{0} took {1}" -f $Name, $sw.Elapsed.ToString("mm\:ss"))
+}
+
 Function Init {
 	$pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
 	if (-not $pwshPath) {
@@ -173,24 +186,25 @@ Function IntegrationTest {
 }
 
 Function Package-Everything{
+	Invoke-TimedStep Package {
+		# Allow Octopus.DotNet.Cli (targets net6.0) to run on the current .NET SDK
+		$env:DOTNET_ROLL_FORWARD = "LatestMajor"
 
-	# Allow Octopus.DotNet.Cli (targets net6.0) to run on the current .NET SDK
-	$env:DOTNET_ROLL_FORWARD = "LatestMajor"
+		dotnet tool install --global Octopus.DotNet.Cli 2>$null # prevents red 'already installed' message
 
-	dotnet tool install --global Octopus.DotNet.Cli 2>$null # prevents red 'already installed' message
+		# Ensure dotnet tools are in PATH
+		$dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
+		$pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
+		$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
+		if (-not $dotnetToolsPathPresent) {
+			$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+		}
 
-	# Ensure dotnet tools are in PATH
-	$dotnetToolsPath = [System.IO.Path]::Combine([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::UserProfile), ".dotnet", "tools")
-	$pathEntries = $env:PATH -split [System.IO.Path]::PathSeparator
-	$dotnetToolsPathPresent = $pathEntries | Where-Object { $_.Trim().ToLowerInvariant() -eq $dotnetToolsPath.Trim().ToLowerInvariant() }
-	if (-not $dotnetToolsPathPresent) {
-		$env:PATH = "$dotnetToolsPath$([System.IO.Path]::PathSeparator)$env:PATH"
+		PackageUI
+		PackageDatabase
+		PackageAcceptanceTests
+		PackageScript
 	}
-
-	PackageUI
-	PackageDatabase
-	PackageAcceptanceTests
-	PackageScript
 }
 
 Function Build {
@@ -220,11 +234,11 @@ Function Build {
 
 	$script:buildStopwatch = [Diagnostics.Stopwatch]::StartNew()
 
-	Init
-	Compile
-	UnitTests
+	Invoke-TimedStep Init { Init }
+	Invoke-TimedStep Compile { Compile }
+	Invoke-TimedStep UnitTests { UnitTests }
 	Setup-DatabaseForBuild
-	IntegrationTest
+	Invoke-TimedStep IntegrationTest { IntegrationTest }
 
 	$script:buildStopwatch.Stop()
 	$elapsed = $script:buildStopwatch.Elapsed.ToString()
@@ -245,11 +259,11 @@ Function Invoke-CIBuild {
 
 	$script:buildStopwatch = [Diagnostics.Stopwatch]::StartNew()
 
-	Init
-	Compile
-	UnitTests
+	Invoke-TimedStep Init { Init }
+	Invoke-TimedStep Compile { Compile }
+	Invoke-TimedStep UnitTests { UnitTests }
 	Setup-DatabaseForBuild
-	IntegrationTest
+	Invoke-TimedStep IntegrationTest { IntegrationTest }
 
 	$script:buildStopwatch.Stop()
 	$elapsed = $script:buildStopwatch.Elapsed.ToString()
@@ -415,10 +429,10 @@ Function Invoke-AcceptanceTests {
 		$script:databaseName = Get-ResolvedDatabaseName -explicitName $databaseName -baseName $projectName -onLinux (Test-IsLinux) -localBuild (Test-IsLocalBuild)
 	}
 
-	Init
-	Compile
+	Invoke-TimedStep Init { Init }
+	Invoke-TimedStep Compile { Compile }
 	Setup-DatabaseForBuild
-	AcceptanceTests
+	Invoke-TimedStep Acceptance { AcceptanceTests }
 
 	$sw.Stop()
 	$elapsed = $sw.Elapsed.ToString()
