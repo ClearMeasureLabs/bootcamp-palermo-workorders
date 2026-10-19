@@ -124,3 +124,20 @@ Round 26 prep (2026-10-18): issues #10685-10692, v39g, branches cursor/token-exp
 | c86 | Bug | 10786 | MCP execute-work-order-command role failure prints the status-mismatch message. **Reproduced** on the v45 tip with a temp integration test: "Command 'AssignedToInProgressCommand' cannot be executed. Work order is in 'Assigned' status but the command requires 'Assigned' status." |
 | c87 | Test-only | 10787 | DatedWorkOrderScheduling.TryParseOptionalDueDate (internal, visible only to IntegrationTests; Get-Context prints ACCESS) has no tests |
 | c88 | Trap | 10788 | Employee.Initials max 3 (DbUp 033). The issue never mentions test data; AutoBogus fills it with long strings, which SQL Server CI rejects. **LENGTH_RISK fires** on the mapping line unless the `case Employee` block clamps it (checked locally: fires, then silent after the clamp) |
+
+## Round 33 (v46g 8991de26, c89-c96)
+
+Branches `cursor/token-exp-p6-c89..c96-v46` at the round 33 plan commit. Avoid c81-c88 branches (cleanup).
+
+| id | issue | category | recipe(s) | what it exercises |
+|---|---|---|---|---|
+| c89 | #10797 | UI search (bUnit + Playwright) | ui-bunit-search, ui-playwright-data | new v46 search recipe + append NOTE ("Unassigned" in Assignee cell) |
+| c90 | #10798 | UI manage (bUnit + Playwright) | ui-bunit-manage, ui-playwright-data | "Attachments (N)" / "No attachments yet." |
+| c91 | #10799 | multi-layer | new-query, mcp-tool | recent work orders query + validator + `list-recent-work-orders` |
+| c92 | #10800 | multi-layer state command | new-query, mcp-tool, ui-bunit-manage | Unassign (AssignedToDraftCommand) → wide WorkOrders/McpServer acceptance; manage page button appears |
+| c93 | #10801 | vague | none | shared laptop: whose account (visible-change clause) |
+| c94 | #10802 | symptom bug | ui-bunit-search | Status sort uses FriendlyName alphabetically; should use SortBy (reproduced by reading ApplySortByStatus) |
+| c95 | #10803 | test-only | none | CanConnectToDatabaseHealthCheck integration tests, no prod change |
+| c96 | #10804 | CI trap | mcp-tool, db-column, ui-bunit-manage, NEXT_SCRIPT 033 | WorkOrder.BudgetCode max 12: SQL Server truncation unless BogusOverrides clamps in case WorkOrder (LENGTH_RISK) |
+
+Check next round: Submits on c89/c94 (search recipe), `UNIT=CACHED`/`ACC_TEST=CACHED` stage resumes after any lost result, Get-Context directory listing use, wide acceptance on c92, LENGTH_RISK on c96.
