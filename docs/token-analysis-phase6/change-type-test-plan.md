@@ -86,3 +86,15 @@ Round 23 prep (2026-10-18): issues #10636-10643, v36g, branches cursor/token-exp
 Round 24 prep (2026-10-18): issues #10653-10660, v37g, branches cursor/token-exp-p6-cNN-v37. c20 is docs-only and exercises the NON_CODE path.
 Round 25 prep (2026-10-18): issues #10669-10676, v38g, branches cursor/token-exp-p6-cNN-v38.
 Round 26 prep (2026-10-18): issues #10685-10692, v39g, branches cursor/token-exp-p6-cNN-v39. Prep lesson from c25: check every later migration, not just the CREATE script.
+
+## Round 27 (v40g, extension: expensive types) — issues #10701-10708, branches cursor/token-exp-p6-cNN-v40
+| id | cat | title | validated against code (incl. later migrations) |
+|---|---|---|---|
+| c41 | UI | Shareable search link (bUnit + Playwright) | search reads creator/assignee/status/overdueOnly from the query string; no share link exists |
+| c42 | UI | Unsaved-changes badge on the manage form (bUnit + Playwright) | no dirty tracking in WorkOrderManage |
+| c43 | UI | Home status cards link to /workorder/search?status=Key (bUnit + Playwright) | cards are plain divs; search route /workorder/search; status keys from WorkOrderStatus.GetAllItems |
+| c44 | ML | Employee.IsActive (DbUp 033, EF, entity, assignee dropdown, MCP list-employees includeInactive) | latest script is 032; no IsActive |
+| c45 | ML | WorkOrder priority Low/Normal/High (DbUp, EF, entity, manage select, search column, MCP create arg) | no priority on WorkOrder or in scripts |
+| c46 | ML | GET /api/workorders/export CSV plus a search "Export CSV" link | no export endpoint (only bulk import) |
+| c47 | Vague | "Technicians say it's hard to know what to work on next." | — |
+| c48 | Bug | "A search link with an unknown status shows the error screen" | ApplyQueryParameterOverrides copies ?status into Filters.Status; SearchWorkOrders calls WorkOrderStatus.FromKey, which throws ArgumentOutOfRangeException |
