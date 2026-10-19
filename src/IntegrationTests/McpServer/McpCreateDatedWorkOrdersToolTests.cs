@@ -164,6 +164,40 @@ public class McpCreateDatedWorkOrdersToolTests
         ]);
     }
 
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void TryParseOptionalDueDate_WhenNullEmptyOrWhitespace_ReturnsTrueWithNullParsed(string? dueDate)
+    {
+        var ok = DatedWorkOrderScheduling.TryParseOptionalDueDate(dueDate, out var parsed, out var error);
+
+        ok.ShouldBeTrue();
+        parsed.ShouldBeNull();
+        error.ShouldBeNull();
+    }
+
+    [TestCase("2026-11-07")]
+    [TestCase(" 2026-11-07 ")]
+    public void TryParseOptionalDueDate_WhenIsoDate_ReturnsTrueWithParsedDate(string dueDate)
+    {
+        var ok = DatedWorkOrderScheduling.TryParseOptionalDueDate(dueDate, out var parsed, out var error);
+
+        ok.ShouldBeTrue();
+        parsed.ShouldBe(new DateOnly(2026, 11, 7));
+        error.ShouldBeNull();
+    }
+
+    [TestCase("11/07/2026")]
+    [TestCase("2026-13-01")]
+    public void TryParseOptionalDueDate_WhenInvalidFormat_ReturnsFalseWithError(string dueDate)
+    {
+        var ok = DatedWorkOrderScheduling.TryParseOptionalDueDate(dueDate, out var parsed, out var error);
+
+        ok.ShouldBeFalse();
+        parsed.ShouldBeNull();
+        error.ShouldBe($"Invalid due date '{dueDate}'. Use yyyy-MM-dd.");
+    }
+
     private static async Task SeedLovejoyAndWillieAsync()
     {
         var creator = new Employee("tlovejoy", "Timothy", "Lovejoy", "t@test.com");
