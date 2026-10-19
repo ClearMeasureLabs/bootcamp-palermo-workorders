@@ -44,6 +44,8 @@ if ($File) {
   $max = if ($used -ge 3) { 79 } else { 119 }; $lines = 0
   foreach ($part in $parts | Select-Object -First 5) {
   $fp, $rg = $part -split ':'; if (-not (Test-Path $fp)) { "NO_FILE $fp (use -Find to locate it)"; continue }
+  # v46g: a directory lists its source files instead of crashing with no output (round 32 c83: 2 calls lost)
+  if (Test-Path $fp -PathType Container) { "== $fp DIRECTORY (pass a file: -File '$fp/<Name>.cs')"; $ls = @(Get-ChildItem $fp -Recurse -File -Include *.cs, *.razor | Where-Object { $_.FullName -notmatch '[/\\](bin|obj)[/\\]' } | Select-Object -First 40 | ForEach-Object { '  ' + (Resolve-Path -Relative $_.FullName) }); $ls; $lines += $ls.Count; continue }
   $all = @(Get-Content $fp); $a = 1; $b = $all.Count
   if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min([Math]::Min($b, $all.Count), $a + $max) }
   elseif ($all.Count -gt 120) {
@@ -75,6 +77,7 @@ if ($Issue -and -not $Find) {
     $parts = $r -split "`t"; if ($parts.Count -gt 3 -and @($parts[3] -split ',' | Where-Object { $names -contains $_ })) { continue }
     $Max = 1; $Cap = 2500  # recipe already shows the pattern; keep the outline small
     "RECIPE $($parts[0]) (complete; copy this shape, don't re-read these):"
+    if ($parts.Count -gt 4 -and $parts[4]) { "  NOTE: $($parts[4])" }  # v46g: optional 5th column
     foreach ($spec in $parts[2] -split '\s+') { $fp, $rg = $spec -split ':'; if (-not (Test-Path $fp)) { continue }
       $all = @(Get-Content $fp); $a = 1; $b = $all.Count; if ($rg) { $a, $b = [int[]]($rg -split '-'); $b = [Math]::Min($b, $all.Count) }
       "== $fp $a-$b of $($all.Count)"

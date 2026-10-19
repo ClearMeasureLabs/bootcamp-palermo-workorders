@@ -25,6 +25,11 @@ Remove-Item $ix -ErrorAction SilentlyContinue; $env:GIT_INDEX_FILE = $ix
 git read-tree HEAD; git add -A -- src .github docs ':(glob)*.ps1' 2>$null; $tree = "$(git write-tree) risk=$([bool]$IgnoreRisk)"; Remove-Item env:GIT_INDEX_FILE
 $cached = $Issue -and -not $VerifyOnly -and (Test-Path $stamp) -and ((Get-Content $stamp -Raw).Trim() -eq $tree)
 if ($cached) { 'CACHED: local checks already passed for this exact change; publishing and waiting' }
+# v46g: per-stage stamps for the same tree, so a rerun after a lost result resumes after the last passed stage (round 32 c83: a
+# Submit lost at 4.0 min, after unit + wide acceptance passed, reran all of it for 7.8 min)
+$stages = Join-Path ([IO.Path]::GetTempPath()) "agent-submit-$Issue-stages.txt"
+function Test-Stage([string]$n) { $Issue -and (Test-Path $stages) -and (@(Get-Content $stages) -contains "$tree $n") }
+function Set-Stage([string]$n) { if ($Issue) { Add-Content $stages "$tree $n" } }
 if ($nonCode -and -not $cached) {
   python3 -c 'import yaml' 2>$null; $hasYaml = $LASTEXITCODE -eq 0
   foreach ($p in $nonSrc | Where-Object { Test-Path $_ }) {
@@ -36,7 +41,9 @@ $risk = if ($nonCode -or $cached) { @() } else { @(& "$tools/Test-ChangeRisk.ps1
 if ($risk -and -not $IgnoreRisk) { $risk; 'RISK=FIX (fix these, rerun; -IgnoreRisk only if clearly false)'; exit 0 }
 if (-not $nonCode -and -not $cached) {
 $f = if ($Filter) { $Filter } else { 'FullyQualifiedName!~__none__' }
+if ((Test-Stage unit) -and -not $Filter) { 'UNIT=CACHED' } else {
 $u = @(& "$tools/Invoke-AgentBuildTest.ps1" -Filter $f); if ($LASTEXITCODE) { $u | Where-Object { $_ -notmatch '^(BUILD=OK)$' }; 'SUBMIT=FAIL (fix the items above, rerun Submit)'; exit 0 }
+if (-not $Filter) { Set-Stage unit } }
 $b = dotnet build src/IntegrationTests/IntegrationTests.csproj -c Release -warnaserror -p:NuGetAudit=false -v q -nologo -clp:NoSummary 2>&1
 if ($LASTEXITCODE) { $b | Select-String 'error' | Select-Object -First 10; 'IT_BUILD=FAIL'; exit 0 }
 $it = @(git status --porcelain -uall -- src/IntegrationTests | ForEach-Object { $_.Substring(3) } | Where-Object { $_ -like '*.cs' } |
@@ -45,18 +52,20 @@ $it = @(git status --porcelain -uall -- src/IntegrationTests | ForEach-Object { 
 # test asserted the old behavior and only failed in CI)
 $types = @(git status --porcelain -uall -- src | ForEach-Object { $_.Substring(3) } | Where-Object { $_ -like '*.cs' -and $_ -notmatch 'Tests[/\\]|Generated' } | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) })
 if ($types) { $it = @(@($it) + @(rg -l -w @($types | ForEach-Object { '-e'; $_ }) --glob '*Tests.cs' src/IntegrationTests 2>$null | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) }) | Where-Object { $_ } | Select-Object -Unique -First 8) }
+if ($it -and (Test-Stage it)) { 'IT_TEST=CACHED'; $it = @() }
 if ($it) {
   $db = Join-Path ([IO.Path]::GetTempPath()) 'agent-it.db'; Remove-Item $db -ErrorAction SilentlyContinue
   $env:DATABASE_ENGINE = 'SQLite'; $env:ConnectionStrings__SqlConnectionString = "Data Source=$db"
   $r = dotnet test src/IntegrationTests/IntegrationTests.csproj -c Release --no-build --nologo -v q --logger 'console;verbosity=minimal' --filter (($it | ForEach-Object { "FullyQualifiedName~$_" }) -join '|') 2>&1
   $code = $LASTEXITCODE; Remove-Item env:DATABASE_ENGINE, env:ConnectionStrings__SqlConnectionString
   if ($code) { $r | Select-String 'Failed |Assert|Expected|Exception|error|Status' | Select-Object -First 20; 'IT_TEST=FAIL (SQLite)'; exit 0 }
-  'IT_TEST=OK'
+  'IT_TEST=OK'; Set-Stage it
 }
   # v41g: AcceptanceTests build + affected acceptance classes on SQLite/Playwright (round 27 c41-c43: acceptance REDs only in CI)
-  $acc = @(& "$tools/Invoke-LocalAcceptance.ps1"); if ($acc -match '^ACC_(BUILD=FAIL|TEST=FIX)') { $acc; 'SUBMIT=FIX (fix the FIX lines, rerun Submit)'; exit 0 }; $acc
+  if (Test-Stage acc) { 'ACC_TEST=CACHED' } else {
+  $acc = @(& "$tools/Invoke-LocalAcceptance.ps1"); if ($acc -match '^ACC_(BUILD=FAIL|TEST=FIX)') { $acc; 'SUBMIT=FIX (fix the FIX lines, rerun Submit)'; exit 0 }; $acc; Set-Stage acc }
   # v40g: local InspectCode on changed lines (Qodana REDs were found only in CI: round 26 c40 x2, c34, c25, c26)
-  if (-not $IgnoreRisk) { $ins = @(& "$tools/Invoke-LocalInspect.ps1"); if ($ins -match '^INSPECT=FIX') { $ins; 'SUBMIT=FIX (fix the FIX lines, rerun Submit; -IgnoreRisk only if clearly false)'; exit 0 }; $ins | Where-Object { $_ -match '^INSPECT=SKIPPED' } }
+  if (-not $IgnoreRisk -and (Test-Stage inspect)) { 'INSPECT=CACHED' } elseif (-not $IgnoreRisk) { $ins = @(& "$tools/Invoke-LocalInspect.ps1"); if ($ins -match '^INSPECT=FIX') { $ins; 'SUBMIT=FIX (fix the FIX lines, rerun Submit; -IgnoreRisk only if clearly false)'; exit 0 }; $ins | Where-Object { $_ -match '^INSPECT=SKIPPED' }; Set-Stage inspect }
 }
 if ($Issue -and -not $cached) { Set-Content $stamp $tree }  # v45g: every local check passed for this tree
 if ($VerifyOnly) { 'VERIFY=OK'; exit 0 }
