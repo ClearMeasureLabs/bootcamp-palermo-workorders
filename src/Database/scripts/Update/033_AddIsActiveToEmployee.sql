@@ -1,0 +1,13 @@
+BEGIN TRY
+	BEGIN TRANSACTION
+	PRINT N'Adding IsActive column to [dbo].[Employee]'
+	ALTER TABLE [dbo].[Employee] ADD [IsActive] BIT NOT NULL CONSTRAINT [DF_Employee_IsActive] DEFAULT (1)
+	PRINT 'The database update succeeded'
+	COMMIT TRANSACTION
+END TRY
+BEGIN CATCH
+	IF @@TRANCOUNT > 0
+		ROLLBACK TRANSACTION
+	THROW
+END CATCH
+GO

@@ -17,6 +17,42 @@ public class McpEmployeeToolTests
     }
 
     [Test]
+    public async Task ShouldListOnlyActiveEmployeesByDefault()
+    {
+        var active = new Employee("user1", "John", "Doe", "john@test.com");
+        var inactive = new Employee("user2", "Jane", "Doe", "jane@test.com") { IsActive = false };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(active);
+        context.Add(inactive);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus);
+
+        result.ShouldContain("user1");
+        result.ShouldNotContain("user2");
+    }
+
+    [Test]
+    public async Task ShouldListInactiveEmployeesWhenIncludeInactiveIsTrue()
+    {
+        var active = new Employee("user1", "John", "Doe", "john@test.com");
+        var inactive = new Employee("user2", "Jane", "Doe", "jane@test.com") { IsActive = false };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(active);
+        context.Add(inactive);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await EmployeeTools.ListEmployees(bus, includeInactive: true);
+
+        result.ShouldContain("user1");
+        result.ShouldContain("user2");
+    }
+
+    [Test]
     public async Task ShouldListAllEmployees()
     {
         var emp1 = new Employee("jdoe", "John", "Doe", "john@test.com");

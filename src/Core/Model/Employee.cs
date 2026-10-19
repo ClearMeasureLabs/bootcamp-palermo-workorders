@@ -36,6 +36,9 @@ public class Employee : EntityBase<Employee>, IComparable<Employee>
 
     public string PreferredLanguage { get; set; } = "en-US";
 
+    // ReSharper disable once PropertyCanBeMadeInitOnly.Global
+    public bool IsActive { get; set; } = true;
+
     public ISet<Role> Roles { get; init; } = new HashSet<Role>();
 
     public int CompareTo(Employee? other)

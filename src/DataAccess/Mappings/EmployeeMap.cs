@@ -22,6 +22,7 @@ public class EmployeeMap : IEntityFrameworkMapping
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(120);
             entity.Property(e => e.EmailAddress).IsRequired().HasMaxLength(255);
             entity.Property(e => e.PreferredLanguage).IsRequired().HasMaxLength(10).HasDefaultValue("en-US");
+            entity.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
 
             // Configure Roles collection
             entity.HasMany(e => e.Roles)

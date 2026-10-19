@@ -57,6 +57,30 @@ public class EmployeeMappingTests
     }
 
     [Test]
+    public void ShouldPersistIsActiveAndDefaultToTrue()
+    {
+        new DatabaseTests().Clean();
+
+        var active = new Employee("useractive", "First", "Last", "emailactive@example.com");
+        var inactive = new Employee("userinactive", "First", "Last", "emailinactive@example.com") { IsActive = false };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(active);
+            context.Add(inactive);
+            context.SaveChanges();
+        }
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            var rehydratedActive = context.Set<Employee>().Single(e => e.Id == active.Id);
+            var rehydratedInactive = context.Set<Employee>().Single(e => e.Id == inactive.Id);
+            rehydratedActive.IsActive.ShouldBeTrue();
+            rehydratedInactive.IsActive.ShouldBeFalse();
+        }
+    }
+
+    [Test]
     public void ShouldPersistMiddleName()
     {
         new DatabaseTests().Clean();

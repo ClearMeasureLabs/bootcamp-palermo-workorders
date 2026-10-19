@@ -16,8 +16,7 @@ namespace ClearMeasure.Bootcamp.UI.Shared.Pages;
 [Route("/workorder/manage/{id?}")]
 public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 {
-    private WorkOrder? _workOrder;
-    private WorkOrder? _lastNotifiedWorkOrder;
+    private WorkOrder? _workOrder;    private WorkOrder? _lastNotifiedWorkOrder;
     private WorkOrderAttachment[] _attachments = [];
     private string _preferredLanguage = "en-US";
     private DictationTarget _dictationTarget = DictationTarget.None;
@@ -135,10 +134,20 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
     private static string? FormatDueDateDisplay(DateOnly? dueDate) =>
         dueDate?.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
 
+    public static IEnumerable<Employee> FilterAssigneeEmployees(
+        IEnumerable<Employee> employees,
+        string? currentAssigneeUserName)
+    {
+        return employees.Where(e => e.IsActive || e.UserName == currentAssigneeUserName);
+    }
+
     private async Task LoadUserOptions()
     {
         var employees = await Bus.Send(new EmployeeGetAllQuery());
-        var items = employees.Select(e => new SelectListItem(e.UserName, e.GetFullName())).ToList();
+        var assigneeUserName = _workOrder?.Assignee?.UserName;
+        var items = FilterAssigneeEmployees(employees, assigneeUserName)
+            .Select(e => new SelectListItem(e.UserName, e.GetFullName()))
+            .ToList();
         items.Insert(0, new SelectListItem("", ""));
         UserOptions = items;
     }

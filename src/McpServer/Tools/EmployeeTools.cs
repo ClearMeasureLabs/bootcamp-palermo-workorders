@@ -11,9 +11,16 @@ namespace ClearMeasure.Bootcamp.McpServer.Tools;
 public class EmployeeTools
 {
     [McpServerTool(Name = "list-employees"), Description("Lists all employees in the system with their username, name, email, and roles.")]
-    public static async Task<string> ListEmployees(IBus bus)
+    public static async Task<string> ListEmployees(
+        IBus bus,
+        [Description("When true, include inactive employees")] bool includeInactive = false)
     {
         var employees = await bus.Send(new EmployeeGetAllQuery());
+        if (!includeInactive)
+        {
+            employees = employees.Where(e => e.IsActive).ToArray();
+        }
+
         return JsonSerializer.Serialize(employees.Select(FormatEmployee).ToArray(),
             new JsonSerializerOptions { WriteIndented = true });
     }
