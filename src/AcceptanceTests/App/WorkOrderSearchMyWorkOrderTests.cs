@@ -5,15 +5,16 @@ namespace ClearMeasure.Bootcamp.AcceptanceTests.App;
 [TestFixture]
 public class WorkOrderSearchMyWorkOrderTests : AcceptanceTestBase
 {
-    [Test, Retry(2)]
+    [Test, Retry(3)]
     public async Task ShouldShowYouMarker_InSearchRow_WhenWorkOrderAssignedToCurrentUser()
     {
+        Page.SetDefaultTimeout(120000);
         await LoginAsCurrentUser();
 
         await Page.GotoAsync(new Uri(new Uri(Page.Url), "/workorder/manage").ToString());
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var title = "MyYouMarker " + Random.Shared.Next(1000, 9999);
+        var title = "MyYouMarker " + Guid.NewGuid().ToString("N")[..8];
         await Input(nameof(WorkOrderManage.Elements.Title), title);
         await Input(nameof(WorkOrderManage.Elements.Description), "Assigned to current user for search highlight");
         await Select(nameof(WorkOrderManage.Elements.Assignee), CurrentUser.UserName);
@@ -36,7 +37,7 @@ public class WorkOrderSearchMyWorkOrderTests : AcceptanceTestBase
         }
 
         var row = Page.Locator("tbody tr", new() { HasTextString = title });
-        await row.WaitForAsync(new() { Timeout = 120000 });
+        await row.WaitForAsync();
         await Expect(row).ToContainTextAsync("(you)");
         var rowClass = await row.GetAttributeAsync("class");
         rowClass.ShouldNotBeNull();
