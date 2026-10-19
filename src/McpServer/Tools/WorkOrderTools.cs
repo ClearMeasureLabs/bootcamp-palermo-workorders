@@ -53,6 +53,16 @@ public class WorkOrderTools
             new JsonSerializerOptions { WriteIndented = true });
     }
 
+    [McpServerTool(Name = "list-stale-work-orders"), Description("Lists work orders in Assigned or In Progress status whose AssignedDate is more than the given number of days ago, oldest first. Same summary shape as list-work-orders.")]
+    public static async Task<string> ListStaleWorkOrders(
+        IBus bus,
+        [Description("Days since assignment to count as stale (1-90); default 14")] int days = 14)
+    {
+        var workOrders = await bus.Send(new StaleWorkOrdersQuery(days));
+        return JsonSerializer.Serialize(workOrders.Select(FormatWorkOrderSummary).ToArray(),
+            new JsonSerializerOptions { WriteIndented = true });
+    }
+
     [McpServerTool(Name = "get-work-order"), Description("Retrieves a single work order by its number, including full details.")]
     public static async Task<string> GetWorkOrder(
         IBus bus,

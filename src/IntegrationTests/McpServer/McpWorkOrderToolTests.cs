@@ -62,6 +62,48 @@ public class McpWorkOrderToolTests
     }
 
     [Test]
+    public async Task ShouldListStaleWorkOrdersWithSameSummaryShape()
+    {
+        var employee = new Employee("user1", "John", "Doe", "john@test.com");
+        var now = DateTime.UtcNow;
+        var stale = new WorkOrder
+        {
+            Creator = employee,
+            Assignee = employee,
+            Number = "WO-001",
+            Title = "Old leak",
+            Status = WorkOrderStatus.Assigned,
+            AssignedDate = now.AddDays(-20)
+        };
+        var fresh = new WorkOrder
+        {
+            Creator = employee,
+            Assignee = employee,
+            Number = "WO-002",
+            Title = "New paint",
+            Status = WorkOrderStatus.Assigned,
+            AssignedDate = now.AddDays(-2)
+        };
+
+        await using var context = TestHost.GetRequiredService<DbContext>();
+        context.Add(employee);
+        context.Add(stale);
+        context.Add(fresh);
+        await context.SaveChangesAsync();
+
+        var bus = TestHost.GetRequiredService<IBus>();
+        var result = await WorkOrderTools.ListStaleWorkOrders(bus);
+
+        result.ShouldContain("WO-001");
+        result.ShouldContain("Old leak");
+        result.ShouldNotContain("WO-002");
+        result.ShouldContain("Number");
+        result.ShouldContain("Status");
+        result.ShouldContain("Creator");
+        result.ShouldContain("Assignee");
+    }
+
+    [Test]
     public async Task ShouldFilterWorkOrdersByCreatorUsername()
     {
         await SeedFilterWorkOrders();
