@@ -209,6 +209,21 @@ public class WorkOrderManageDictationTests
         });
     }
 
+    [Test]
+    public async Task ShouldExposeCompactLayoutMarkerForSmallScreens()
+    {
+        await using var ctx = CreateTestContext();
+
+        var component = ctx.Render<WorkOrderManage>();
+
+        await component.WaitForAssertionAsync(() =>
+        {
+            var element = component.Find($"[data-testid='{WorkOrderManage.Elements.CompactLayout}']");
+            element.ShouldNotBeNull();
+            element.GetAttribute("class").ShouldNotBeNull().ShouldContain("work-order-container");
+        });
+    }
+
     private static BunitContext CreateTestContext()
     {
         var ctx = new BunitContext();
