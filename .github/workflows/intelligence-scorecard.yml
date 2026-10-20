@@ -114,13 +114,9 @@ jobs:
               dump "${cmis}" "${cmd}" "${sub}"
             done
           done
-          cat "${help_file}"
-          {
-            echo "## cmis help (${tag} / ${asset})"
-            echo
-            echo '```'
-            cat "${help_file}"
-            echo '```'
-          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "===== connect guidance GitHub ====="
+          "${cmis}" connect guidance --tracker GitHub --json || true
+          echo "===== binary strings: octopus / GitHubDelivery / coordinate keys ====="
+          strings "${cmis}" | grep -i -E 'octopus|GitHubDelivery|coordinate' | sort -u | head -n 120 || true
           echo "Help captured. Harvest is wired in a follow-up commit."
           exit 1
