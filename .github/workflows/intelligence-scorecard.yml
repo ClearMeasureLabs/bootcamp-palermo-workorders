@@ -175,8 +175,9 @@ jobs:
           sed -n '380,480p' "${def}"
           echo "===== ConnectionProviderFactory 140-260 ====="
           sed -n '140,260p' "${factory}"
-          echo "===== cli html / render output ====="
-          grep -R -n --include='*.cs' -E 'html|Render\(' "${root}/Scorecard.Cli" | head -n 80 || true
-          true
+          echo "===== ownerType and env var naming ====="
+          grep -R -n --include='*.cs' -E 'ownerType|ToEnvironmentVariableName' "${root}/Scorecard.Core" "${root}/Scorecard.Cli" "${root}/Scorecard.AppServices" || true
+          echo "===== presentation render signature ====="
+          grep -R -n --include='*.cs' -E 'Render\(|\.html|text/html' "${root}/Scorecard.Presentation" | head -n 40 || true
           echo "Probe captured."
           exit 1
