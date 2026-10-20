@@ -159,9 +159,15 @@ jobs:
             --dry-run --json \
             --workspace "${probe}/ws" \
             --store "${probe}/store" || true
-          echo "===== octopus-related user strings ====="
-          strings "${cmis}" | grep -i octopus | grep -v -E 'Scorecard\.Octopus|EC_POINT|EC_KEY|libssl|affine' | sort -u | head -n 200 || true
-          echo "===== html markers ====="
-          strings "${cmis}" | grep -F -e '<!DOCTYPE' -e 'text/html' -e '.html' | sort -u | head -n 40 || true
+          echo "===== source search ====="
+          src="${dest}/src"
+          mkdir -p "${src}"
+          gh release download "${tag}" --repo "${SCORECARD_REPO}" --archive tar.gz --dir "${src}" --clobber
+          tar -xzf "${src}"/*.tar.gz -C "${src}"
+          root=$(find "${src}" -mindepth 1 -maxdepth 1 -type d -print -quit)
+          echo "source=${root}"
+          grep -R -n --include='*.cs' -E 'OctopusServer|OctopusSpace|OctopusProject|RequireOctopusKey|RequiredCoordinateKeys' "${root}" || true
+          echo "===== html render sites ====="
+          grep -R -n --include='*.cs' -E 'text/html|RenderHtml|ToHtml' "${root}" || true
           echo "Probe captured."
           exit 1
