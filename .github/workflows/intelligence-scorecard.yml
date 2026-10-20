@@ -151,6 +151,31 @@ jobs:
             cp "${out}" "${RUNNER_TEMP}/cmis-${label// /-}.json"
           }
 
+          # cmis puts octopusSpace straight into /api/{space}/... Octopus accepts a space id
+          # there. The repository variable is the space name the Octopus actions use, so
+          # resolve that name (or an id or slug already stored in the variable) to the id.
+          spaces_json="${RUNNER_TEMP}/octopus-spaces.json"
+          octopus_root="${OCTOPUS_URL%/}"
+          if ! curl -fsS -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" "${octopus_root}/api/spaces/all" -o "${spaces_json}"; then
+            echo "::error::Octopus auth failed calling ${octopus_root}/api/spaces/all. Check OCTOPUS_URL and OCTO_API_KEY."
+            exit 1
+          fi
+          octopus_space_id=$(OCTOPUS_SPACE="${OCTOPUS_SPACE}" python3 - "${spaces_json}" << 'PY'
+          import json, os, sys
+          payload = json.load(open(sys.argv[1]))
+          spaces = payload if isinstance(payload, list) else payload.get("Items") or payload.get("items") or []
+          wanted = os.environ["OCTOPUS_SPACE"]
+          for space in spaces:
+              if wanted in (space.get("Id"), space.get("Name"), space.get("Slug")):
+                  print(space["Id"])
+                  raise SystemExit(0)
+          names = ", ".join(sorted(space.get("Name") or space.get("Id") or "?" for space in spaces))
+          print(f"No Octopus space matches '{wanted}'. Spaces: {names}", file=sys.stderr)
+          raise SystemExit(1)
+          PY
+          )
+          echo "Octopus space id: ${octopus_space_id}"
+
           cmis_ok "add-board" connections add \
             --id bootcamp-board \
             --name "Project board" \
@@ -168,19 +193,10 @@ jobs:
             --coordinate "owner=${owner}" \
             --coordinate "repo=${repo}" \
             --coordinate "octopusServer=${OCTOPUS_URL}" \
-            --coordinate "octopusSpace=${OCTOPUS_SPACE}" \
+            --coordinate "octopusSpace=${octopus_space_id}" \
             --coordinate "octopusProject=${OCTOPUS_PROJECT}" \
             --coordinate "environments=auto" \
             "${common[@]}"
-
-          echo "===== Octopus client URL ====="
-          src="${RUNNER_TEMP}/cmis-src"
-          mkdir -p "${src}"
-          gh release download "${tag}" --repo "${SCORECARD_REPO}" --archive tar.gz --dir "${src}" --clobber
-          tar -xzf "${src}"/*.tar.gz -C "${src}"
-          root=$(find "${src}" -mindepth 1 -maxdepth 1 -type d -print -quit)
-          grep -n -E 'api/|Space|space' "${root}/Scorecard.Octopus/"*.cs | head -n 80 || true
-          echo "===== end Octopus client URL ====="
 
           cmis_ok "harvest" connections harvest \
             --since "${since}" \
