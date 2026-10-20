@@ -116,7 +116,23 @@ jobs:
           done
           echo "===== connect guidance GitHub ====="
           "${cmis}" connect guidance --tracker GitHub --json || true
-          echo "===== binary strings: octopus / GitHubDelivery / coordinate keys ====="
-          strings "${cmis}" | grep -i -E 'octopus|GitHubDelivery|coordinate' | sort -u | head -n 120 || true
-          echo "Help captured. Harvest is wired in a follow-up commit."
+          probe="${dest}/probe"
+          mkdir -p "${probe}/ws" "${probe}/store"
+          for tracker in GitHub GitHubDelivery Octopus; do
+            echo "===== connections add --tracker ${tracker} --dry-run ====="
+            "${cmis}" connections add \
+              --tracker "${tracker}" \
+              --id "probe-${tracker}" \
+              --dry-run \
+              --json \
+              --workspace "${probe}/ws" \
+              --store "${probe}/store" || true
+          done
+          echo "===== Scorecard.Octopus.dll strings ====="
+          strings "${dest}/tool/Scorecard.Octopus.dll" | grep -E 'server|space|project|apiKey|ApiKey|Octopus|coordinate|Required' | sort -u | head -n 200 || true
+          echo "===== Scorecard.GitHub.dll coordinate-like strings ====="
+          strings "${dest}/tool/Scorecard.GitHub.dll" | grep -E 'owner|repository|organization|project|RequiredCoordinate|GitHubDelivery|board' | sort -u | head -n 200 || true
+          echo "===== Presentation html strings ====="
+          strings "${dest}/tool/Scorecard.Presentation.dll" | grep -E -i 'html|<!DOCTYPE|\.html' | sort -u | head -n 80 || true
+          echo "Probe captured."
           exit 1
