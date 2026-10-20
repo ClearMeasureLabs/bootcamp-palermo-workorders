@@ -1,187 +1,305 @@
-# Daily Clear Measure Intelligence Scorecard for this repository.
-# Installs the latest cmis release, harvests GitHub and Octopus delivery data,
-# and publishes an HTML report. Discovery of the installer and CLI surface is
-# logged on the first runs; harvest is wired from that help output.
+# Daily delivery scorecard for this repository.
+#
+# Installs the newest cmis build that ships a linux CLI asset. GitHub's Latest
+# release of ClearMeasure/Clear-Measure-Intelligence-Scorecard is the Excel
+# add-in installer and does not contain cmis. The CLI is the newest release,
+# including delivery prereleases, whose assets include cmis-*-linux-x64.tar.gz.
+#
+# Commands and coordinates are the ones cmis --help and connections add report:
+#   cmis connections add --tracker GitHub --coordinate owner, ownerType, repo, projectNumber
+#   cmis connections add --tracker GitHubDelivery --coordinate owner, repo,
+#       octopusProject, octopusServer, octopusSpace, environments
+#   cmis connections harvest --since --until --on-failure strict
+#   cmis scorecards add --set --period --connection
+#   cmis scorecards render --id
+# Credentials are environment variables CMIS_<KEY>_TOKEN (hyphen becomes underscore).
+# A GitHubDelivery connection reads the GitHub token as CMIS_<ID>_TOKEN and the
+# Octopus API key as CMIS_<ID>_OCTOPUS_TOKEN.
 name: Intelligence Scorecard
 
 on:
   schedule:
     - cron: "17 11 * * *"
   workflow_dispatch:
-  # Lets this workflow run on the PR branch before it exists on the default branch.
-  # Removed once workflow_dispatch on the branch is confirmed, if GitHub accepts it.
+  # Runs this workflow on the PR branch before the file exists on the default
+  # branch, which is when workflow_dispatch can see it. Harmless after merge:
+  # the branch receives no further pushes.
   push:
     branches:
       - cursor/daily-cmis-scorecard-22a1
 
 permissions:
   contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+
+concurrency:
+  group: intelligence-scorecard
+  cancel-in-progress: false
 
 jobs:
   scorecard:
     name: Delivery scorecard
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    env:
+      SCORECARD_REPO: ClearMeasure/Clear-Measure-Intelligence-Scorecard
+      CMIS_GITHUB_TOKEN: ${{ secrets.CMIS_GITHUB_TOKEN }}
+      COPILOT_PAT: ${{ secrets.COPILOT_PAT }}
+      GITHUB_TOKEN_FALLBACK: ${{ secrets.GITHUB_TOKEN }}
+      OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+      OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+      OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+      OCTOPUS_PROJECT: ${{ vars.OCTOPUS_PROJECT }}
     steps:
-      - name: Install latest cmis and print command help
-        env:
-          CMIS_GITHUB_TOKEN: ${{ secrets.CMIS_GITHUB_TOKEN }}
-          COPILOT_PAT: ${{ secrets.COPILOT_PAT }}
-          SCORECARD_REPO: ClearMeasure/Clear-Measure-Intelligence-Scorecard
+      - name: Install cmis, harvest, and publish the HTML scorecard
         run: |
           set -euo pipefail
+
           if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
-            echo "Release token: CMIS_GITHUB_TOKEN"
-            export GH_TOKEN="${CMIS_GITHUB_TOKEN}"
+            echo "GitHub token: CMIS_GITHUB_TOKEN"
+            harvest_token="${CMIS_GITHUB_TOKEN}"
           elif [ -n "${COPILOT_PAT}" ]; then
-            echo "Release token: COPILOT_PAT (CMIS_GITHUB_TOKEN is not set)"
-            export GH_TOKEN="${COPILOT_PAT}"
+            echo "GitHub token: COPILOT_PAT (CMIS_GITHUB_TOKEN is not set)"
+            harvest_token="${COPILOT_PAT}"
+          elif [ -n "${GITHUB_TOKEN_FALLBACK}" ]; then
+            echo "GitHub token: GITHUB_TOKEN (cannot read the internal cmis release)"
+            harvest_token="${GITHUB_TOKEN_FALLBACK}"
           else
-            echo "::error::No token can read ${SCORECARD_REPO}. Add repository secret CMIS_GITHUB_TOKEN with contents:read on that repository."
+            echo "::error::No GitHub token is available. Add repository secret CMIS_GITHUB_TOKEN."
             exit 1
           fi
 
+          if [ -z "${OCTOPUS_URL}" ] || [ -z "${OCTOPUS_API_KEY}" ]; then
+            echo "::error::Octopus auth is missing. Repository secrets OCTOPUS_URL and OCTO_API_KEY are required."
+            exit 1
+          fi
+          if [ -z "${OCTOPUS_SPACE}" ] || [ -z "${OCTOPUS_PROJECT}" ]; then
+            echo "::error::Octopus target is missing. Repository variables OCTOPUS_SPACE and OCTOPUS_PROJECT are required."
+            exit 1
+          fi
+
+          export GH_TOKEN="${harvest_token}"
           dest="${RUNNER_TEMP}/cmis-release"
           mkdir -p "${dest}"
-          echo "Resolving GitHub Latest release of ${SCORECARD_REPO}"
-          gh release view --repo "${SCORECARD_REPO}" --json tagName,name,isDraft,isPrerelease,assets,body \
-            > "${dest}/release.json"
-          echo "tag=$(jq -r .tagName "${dest}/release.json")"
-          echo "name=$(jq -r .name "${dest}/release.json")"
-          echo "assets:"
-          jq -r '.assets[] | "\(.name)\t\(.size)\t\(.content_type)"' "${dest}/release.json"
-          echo "----- release body -----"
-          jq -r .body "${dest}/release.json"
-          echo "----- end release body -----"
-
-          echo "===== cmis assets across recent releases ====="
           gh api --paginate "repos/${SCORECARD_REPO}/releases?per_page=100" \
-            --jq '.[] | select(any(.assets[]; .name | test("cmis";"i"))) | {tag:.tag_name, prerelease, assets:[.assets[].name]}' \
+            --jq '.[] | select(any(.assets[]; .name | test("linux-x64\\.tar\\.gz$"))) | {tag:.tag_name, prerelease, assets:[.assets[].name]}' \
             > "${dest}/cmis-releases.jsonl"
-          cat "${dest}/cmis-releases.jsonl"
-
           tag=$(jq -s -r '.[0].tag // empty' "${dest}/cmis-releases.jsonl")
-          asset=$(jq -s -r '[.[0].assets[] | select(test("linux-x64"))][0] // empty' "${dest}/cmis-releases.jsonl")
-          if [ -z "${tag}" ] || [ "${tag}" = "null" ] || [ -z "${asset}" ]; then
-            echo "::error::No linux-x64 cmis asset found on ${SCORECARD_REPO} releases."
+          asset=$(jq -s -r '[.[0].assets[] | select(test("linux-x64\\.tar\\.gz$"))][0] // empty' "${dest}/cmis-releases.jsonl")
+          if [ -z "${tag}" ] || [ -z "${asset}" ]; then
+            echo "::error::No linux-x64 cmis asset on ${SCORECARD_REPO}."
             exit 1
           fi
           echo "Installing ${asset} from ${tag}"
-          gh release download "${tag}" --repo "${SCORECARD_REPO}" --pattern "${asset}" --dir "${dest}" --clobber
-          mkdir -p "${dest}/tool"
-          tar -xzf "${dest}/${asset}" -C "${dest}/tool"
-          find "${dest}/tool" -maxdepth 3 -printf '%y %p\n'
-          cmis=$(find "${dest}/tool" -type f -name cmis | head -n 1)
-          if [ -z "${cmis}" ]; then
-            echo "::error::cmis binary not found inside ${asset}"
+          gh release download "${tag}" --repo "${SCORECARD_REPO}" \
+            --pattern "${asset}" --pattern "SHA256SUMS.txt" \
+            --dir "${dest}" --clobber
+          if [ -f "${dest}/SHA256SUMS.txt" ] && grep -F -q "${asset}" "${dest}/SHA256SUMS.txt"; then
+            grep -F "${asset}" "${dest}/SHA256SUMS.txt" | (cd "${dest}" && sha256sum -c -)
+          else
+            echo "::error::SHA256SUMS.txt does not list ${asset}. Refusing to run an unverified binary."
             exit 1
           fi
-          chmod +x "${cmis}"
-          echo "binary=${cmis}"
-          "${cmis}" --version || true
+          mkdir -p "${dest}/tool"
+          tar -xzf "${dest}/${asset}" -C "${dest}/tool"
+          cmis="${dest}/tool/cmis"
+          if [ ! -x "${cmis}" ]; then
+            chmod +x "${cmis}"
+          fi
+          if [ ! -f "${cmis}" ]; then
+            echo "::error::cmis binary missing from ${asset}"
+            exit 1
+          fi
+          "${cmis}" --version
 
-          help_file="${dest}/help.txt"
-          : > "${help_file}"
-          dump() {
-            echo "===== $* --help =====" | tee -a "${help_file}"
-            set +e
-            "$@" --help >> "${help_file}" 2>&1
-            local code=$?
-            set -e
-            echo "exit=${code}" | tee -a "${help_file}"
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          since=$(date -u -d '30 days ago' +%F)
+          until=$(date -u +%F)
+          workspace="${RUNNER_TEMP}/cmis-workspace"
+          store="${RUNNER_TEMP}/cmis-store"
+          mkdir -p "${workspace}" "${store}" "${GITHUB_WORKSPACE}/scorecard-report"
+          report="${GITHUB_WORKSPACE}/scorecard-report/intelligence-scorecard.html"
+          render_json="${RUNNER_TEMP}/scorecard-render.json"
+          harvest_json="${RUNNER_TEMP}/harvest.json"
+
+          # Connection id "bootcamp" -> CMIS_BOOTCAMP_TOKEN and CMIS_BOOTCAMP_OCTOPUS_TOKEN.
+          # Connection id "bootcamp-board" -> CMIS_BOOTCAMP_BOARD_TOKEN.
+          export CMIS_BOOTCAMP_TOKEN="${harvest_token}"
+          export CMIS_BOOTCAMP_BOARD_TOKEN="${harvest_token}"
+          export CMIS_BOOTCAMP_OCTOPUS_TOKEN="${OCTOPUS_API_KEY}"
+
+          common=(--json --workspace "${workspace}" --store "${store}")
+
+          cmis_ok() {
+            local label="$1"
+            shift
+            local out="${RUNNER_TEMP}/cmis-last.json"
+            echo "----- ${label} -----"
+            if ! "${cmis}" "$@" > "${out}"; then
+              echo "::error::${label} exited non-zero."
+              cat "${out}" || true
+              exit 1
+            fi
+            if [ "$(jq -r '.ok' "${out}")" != "true" ]; then
+              echo "::error::${label} failed: $(jq -r '.error.code // "error"'): $(jq -r '.error.cause // .error.message // "unknown"')"
+              jq -c '.error' "${out}" || true
+              exit 1
+            fi
+            cp "${out}" "${RUNNER_TEMP}/cmis-${label// /-}.json"
           }
-          dump "${cmis}"
-          # One level of subcommands, parsed from the top-level help, then one more level.
-          mapfile -t commands < <(awk '
-            tolower($0) ~ /^commands:/ { in_cmds=1; next }
-            in_cmds && /^$/ { exit }
-            in_cmds && /^[[:space:]]+[A-Za-z0-9]/ { print $1 }
-          ' "${help_file}")
-          echo "top-level commands: ${commands[*]:-none}"
-          for cmd in "${commands[@]}"; do
-            dump "${cmis}" "${cmd}"
-          done
-          # Second level: look at each subcommand help for a Commands: section.
-          for cmd in "${commands[@]}"; do
-            mapfile -t nested < <(            awk -v section="===== ${cmis} ${cmd} --help =====" '
-              $0 == section { on=1; next }
-              on && /^===== / { exit }
-              on && tolower($0) ~ /^commands:/ { in_cmds=1; next }
-              on && in_cmds && /^$/ { exit }
-              on && in_cmds && /^[[:space:]]+[A-Za-z0-9]/ { print $1 }
-            ' "${help_file}")
-            for sub in "${nested[@]}"; do
-              dump "${cmis}" "${cmd}" "${sub}"
-            done
-          done
-          echo "===== connect guidance GitHub ====="
-          "${cmis}" connect guidance --tracker GitHub --json || true
-          probe="${dest}/probe"
-          mkdir -p "${probe}/ws" "${probe}/store"
-          for tracker in GitHub GitHubDelivery Octopus; do
-            echo "===== connections add --tracker ${tracker} --dry-run ====="
-            "${cmis}" connections add \
-              --tracker "${tracker}" \
-              --id "probe-${tracker}" \
-              --dry-run \
-              --json \
-              --workspace "${probe}/ws" \
-              --store "${probe}/store" || true
-          done
-          echo "===== unknown coordinate (GitHubDelivery) ====="
-          "${cmis}" connections add \
-            --tracker GitHubDelivery \
-            --id probe-delivery \
-            --coordinate owner=ClearMeasureLabs \
-            --coordinate repo=bootcamp-palermo-workorders \
-            --coordinate notAKey=1 \
-            --dry-run --json \
-            --workspace "${probe}/ws" \
-            --store "${probe}/store" || true
-          echo "===== unknown coordinate (GitHub) ====="
-          "${cmis}" connections add \
+
+          cmis_ok "add-board" connections add \
+            --id bootcamp-board \
+            --name "Project board" \
             --tracker GitHub \
-            --id probe-gh \
-            --coordinate owner=ClearMeasureLabs \
-            --coordinate ownerType=organization \
-            --coordinate repo=bootcamp-palermo-workorders \
-            --coordinate projectNumber=1 \
-            --coordinate notAKey=1 \
-            --dry-run --json \
-            --workspace "${probe}/ws" \
-            --store "${probe}/store" || true
-          echo "===== valid GitHubDelivery dry-run ====="
-          "${cmis}" connections add \
+            --coordinate "owner=${owner}" \
+            --coordinate "ownerType=organization" \
+            --coordinate "repo=${repo}" \
+            --coordinate "projectNumber=1" \
+            "${common[@]}"
+
+          cmis_ok "add-delivery" connections add \
+            --id bootcamp \
+            --name "Delivery" \
             --tracker GitHubDelivery \
-            --id probe-delivery-ok \
-            --coordinate owner=ClearMeasureLabs \
-            --coordinate repo=bootcamp-palermo-workorders \
-            --dry-run --json \
-            --workspace "${probe}/ws" \
-            --store "${probe}/store" || true
-          echo "===== source search ====="
-          src="${dest}/src"
-          mkdir -p "${src}"
-          gh release download "${tag}" --repo "${SCORECARD_REPO}" --archive tar.gz --dir "${src}" --clobber
-          tar -xzf "${src}"/*.tar.gz -C "${src}"
-          root=$(find "${src}" -mindepth 1 -maxdepth 1 -type d -print -quit)
-          echo "source=${root}"
-          grep -R -n --include='*.cs' -E 'OctopusServer|OctopusSpace|OctopusProject|RequireOctopusKey|RequiredCoordinateKeys' "${root}" || true
-          def="${root}/Scorecard.Core/DeliveryProcess/DeliveryProcessDefinition.cs"
-          factory="${root}/Scorecard.AppServices/Cmis/ConnectionProviderFactory.cs"
-          echo "===== DeliveryProcessDefinition 90-180 ====="
-          sed -n '90,180p' "${def}"
-          echo "===== DeliveryProcessDefinition 380-480 ====="
-          sed -n '380,480p' "${def}"
-          echo "===== ConnectionProviderFactory 140-260 ====="
-          sed -n '140,260p' "${factory}"
-          echo "===== ConnectionKey.cs ====="
-          sed -n '1,120p' "${root}/Scorecard.AppServices/Connect/ConnectionKey.cs"
-          echo "===== ownerType comparisons ====="
-          grep -R -n --include='*.cs' -E 'ownerType|OwnerType' "${root}/Scorecard.GitHub" "${root}/Scorecard.AppServices" | grep -v '/obj/' || true
-          echo "===== PresentationService.Render ====="
-          sed -n '300,460p' "${root}/Scorecard.AppServices/Cmis/PresentationService.cs"
-          echo "===== ScorecardRenderResult ====="
-          grep -R -n --include='*.cs' 'record ScorecardRenderResult\|class ScorecardRenderResult\|sealed record Scorecard' "${root}/Scorecard.AppServices" "${root}/Scorecard.Core" || true
-          echo "Probe captured."
-          exit 1
+            --coordinate "owner=${owner}" \
+            --coordinate "repo=${repo}" \
+            --coordinate "octopusServer=${OCTOPUS_URL}" \
+            --coordinate "octopusSpace=${OCTOPUS_SPACE}" \
+            --coordinate "octopusProject=${OCTOPUS_PROJECT}" \
+            --coordinate "environments=auto" \
+            "${common[@]}"
+
+          cmis_ok "harvest" connections harvest \
+            --since "${since}" \
+            --until "${until}" \
+            --on-failure strict \
+            "${common[@]}"
+          cp "${RUNNER_TEMP}/cmis-last.json" "${harvest_json}"
+
+          cmis_ok "add-scorecard" scorecards add \
+            --id delivery \
+            --name "Delivery" \
+            --connection bootcamp \
+            --connection bootcamp-board \
+            --period week \
+            --since "${since}" \
+            --until "${until}" \
+            --set Delivery \
+            "${common[@]}"
+
+          cmis_ok "render" scorecards render --id delivery "${common[@]}"
+          cp "${RUNNER_TEMP}/cmis-last.json" "${render_json}"
+
+          python3 - "${render_json}" "${harvest_json}" "${report}" "${since}" "${until}" "${tag}" "${asset}" << 'PY'
+          import html
+          import json
+          import os
+          import sys
+
+          render_path, harvest_path, report_path, since, until, tag, asset = sys.argv[1:]
+          render = json.load(open(render_path))
+          harvest = json.load(open(harvest_path))
+          if render.get("ok") is not True:
+              sys.exit("render envelope is not ok")
+          data = render.get("data") or {}
+          sections = data.get("sections") or []
+          if not sections:
+              print(json.dumps(list(data.keys()) if isinstance(data, dict) else type(data).__name__))
+              sys.exit("scorecards render returned no sections; refusing an empty report")
+
+          def esc(value):
+              return html.escape("" if value is None else str(value))
+
+          def rows_of(section):
+              if not isinstance(section, dict):
+                  return [], []
+              for key in ("rows", "periods", "points", "values"):
+                  value = section.get(key)
+                  if isinstance(value, list) and value and isinstance(value[0], dict):
+                      columns = []
+                      for row in value:
+                          for column in row.keys():
+                              if column not in columns:
+                                  columns.append(column)
+                      return columns, value
+              return [], []
+
+          parts = []
+          summary_lines = [
+              "## Intelligence scorecard",
+              "",
+              f"- Repository: `{os.environ.get('GITHUB_REPOSITORY', '')}`",
+              f"- Window: `{since}` through `{until}` (UTC)",
+              f"- cmis: `{tag}` (`{asset}`)",
+              f"- Scorecard: `{data.get('name') or data.get('id') or 'delivery'}`",
+              "",
+          ]
+          table_count = 0
+          for section in sections:
+              title = section.get("name") or section.get("id") or "Section" if isinstance(section, dict) else "Section"
+              columns, rows = rows_of(section)
+              parts.append(f"<h2>{esc(title)}</h2>")
+              if not rows:
+                  parts.append("<pre>" + esc(json.dumps(section, indent=2)[:8000]) + "</pre>")
+                  summary_lines.append(f"- {title}: no tabular rows")
+                  continue
+              table_count += 1
+              summary_lines.append(f"- {title}: {len(rows)} rows")
+              parts.append("<table><thead><tr>" + "".join(f"<th>{esc(col)}</th>" for col in columns) + "</tr></thead><tbody>")
+              for row in rows:
+                  parts.append("<tr>" + "".join(f"<td>{esc(row.get(col))}</td>" for col in columns) + "</tr>")
+              parts.append("</tbody></table>")
+
+          if table_count == 0:
+              sample = sections[0] if sections else None
+              keys = list(sample.keys()) if isinstance(sample, dict) else type(sample).__name__
+              print("section keys:", keys)
+              sys.exit("scorecards render sections had no rows; refusing an empty report")
+
+          semantics = data.get("semantics")
+          semantics_html = ""
+          if semantics is not None:
+              semantics_html = "<h2>Semantics</h2><pre>" + esc(json.dumps(semantics, indent=2)[:12000]) + "</pre>"
+
+          document = f"""<!DOCTYPE html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <title>Intelligence scorecard {esc(os.environ.get('GITHUB_REPOSITORY', ''))}</title>
+          <style>
+            body {{ font-family: sans-serif; margin: 2rem; color: #1a1a1a; }}
+            table {{ border-collapse: collapse; margin: 0 0 2rem; }}
+            th, td {{ border: 1px solid #ccc; padding: 0.35rem 0.6rem; text-align: left; }}
+            th {{ background: #f4f4f4; }}
+            pre {{ white-space: pre-wrap; background: #fafafa; padding: 1rem; }}
+          </style>
+          </head>
+          <body>
+          <h1>Intelligence scorecard</h1>
+          <p>{esc(os.environ.get('GITHUB_REPOSITORY', ''))} · {esc(since)} through {esc(until)} UTC · cmis {esc(tag)}</p>
+          {''.join(parts)}
+          {semantics_html}
+          </body>
+          </html>
+          """
+          with open(report_path, "w", encoding="utf-8") as handle:
+              handle.write(document)
+          if os.path.getsize(report_path) < 200:
+              sys.exit("HTML report is empty")
+          summary_path = os.environ["GITHUB_STEP_SUMMARY"]
+          with open(summary_path, "a", encoding="utf-8") as handle:
+              handle.write("\n".join(summary_lines) + "\n")
+          print(f"Wrote {report_path} ({os.path.getsize(report_path)} bytes)")
+          PY
+
+      - name: Upload HTML scorecard
+        uses: actions/upload-artifact@v4
+        with:
+          name: intelligence-scorecard
+          path: scorecard-report/intelligence-scorecard.html
+          if-no-files-found: error
+          retention-days: 30
