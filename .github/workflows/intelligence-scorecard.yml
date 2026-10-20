@@ -167,7 +167,16 @@ jobs:
           root=$(find "${src}" -mindepth 1 -maxdepth 1 -type d -print -quit)
           echo "source=${root}"
           grep -R -n --include='*.cs' -E 'OctopusServer|OctopusSpace|OctopusProject|RequireOctopusKey|RequiredCoordinateKeys' "${root}" || true
-          echo "===== html render sites ====="
-          grep -R -n --include='*.cs' -E 'text/html|RenderHtml|ToHtml' "${root}" || true
+          def="${root}/Scorecard.Core/DeliveryProcess/DeliveryProcessDefinition.cs"
+          factory="${root}/Scorecard.AppServices/Cmis/ConnectionProviderFactory.cs"
+          echo "===== DeliveryProcessDefinition 90-180 ====="
+          sed -n '90,180p' "${def}"
+          echo "===== DeliveryProcessDefinition 380-480 ====="
+          sed -n '380,480p' "${def}"
+          echo "===== ConnectionProviderFactory 140-260 ====="
+          sed -n '140,260p' "${factory}"
+          echo "===== cli html / render output ====="
+          grep -R -n --include='*.cs' -E 'html|Render\(' "${root}/Scorecard.Cli" | head -n 80 || true
+          true
           echo "Probe captured."
           exit 1
