@@ -54,42 +54,73 @@ jobs:
           jq -r .body "${dest}/release.json"
           echo "----- end release body -----"
 
-          echo "===== recent releases ====="
-          gh release list --repo "${SCORECARD_REPO}" --limit 40
-          echo "===== release assets (last 15, including non-latest) ====="
-          gh api "repos/${SCORECARD_REPO}/releases?per_page=15" \
-            --jq '.[] | {tag:.tag_name, name:.name, draft, prerelease, assets:[.assets[].name]}'
+          echo "===== cmis assets across recent releases ====="
+          gh api --paginate "repos/${SCORECARD_REPO}/releases?per_page=100" \
+            --jq '.[] | select(any(.assets[]; .name | test("cmis";"i"))) | {tag:.tag_name, prerelease, assets:[.assets[].name]}' \
+            > "${dest}/cmis-releases.jsonl"
+          cat "${dest}/cmis-releases.jsonl"
 
-          # Source stays on the runner. Do not upload it. Print only install/CLI docs.
-          src="${dest}/src"
-          mkdir -p "${src}"
-          gh release download --repo "${SCORECARD_REPO}" --archive tar.gz --dir "${src}" --clobber
-          tar -xzf "${src}"/*.tar.gz -C "${src}"
-          root=$(find "${src}" -mindepth 1 -maxdepth 1 -type d | head -1)
-          echo "source root: ${root}"
-          echo "===== top level ====="
-          ls -la "${root}"
-          echo "===== docs and readmes ====="
-          find "${root}" -type f \( -iname 'README*' -o -iname '*.md' \) \
-            ! -path '*/.git/*' | head -120
-          echo "===== root README and CLI-looking docs (capped) ====="
-          while IFS= read -r -d '' doc; do
-            echo "##### ${doc#${root}/}"
-            head -c 60000 "${doc}" || true
-            echo
-          done < <(find "${root}" -type f \
-            \( -iname 'README.md' -o -iname '*cli*.md' -o -iname '*install*.md' -o -iname '*cmis*.md' \) \
-            ! -path '*/node_modules/*' -print0 | head -z -n 12)
+          tag=$(jq -s -r '.[0].tag // empty' "${dest}/cmis-releases.jsonl")
+          asset=$(jq -s -r '[.[0].assets[] | select(test("linux-x64"))][0] // empty' "${dest}/cmis-releases.jsonl")
+          if [ -z "${tag}" ] || [ "${tag}" = "null" ] || [ -z "${asset}" ]; then
+            echo "::error::No linux-x64 cmis asset found on ${SCORECARD_REPO} releases."
+            exit 1
+          fi
+          echo "Installing ${asset} from ${tag}"
+          gh release download "${tag}" --repo "${SCORECARD_REPO}" --pattern "${asset}" --dir "${dest}" --clobber
+          mkdir -p "${dest}/tool"
+          tar -xzf "${dest}/${asset}" -C "${dest}/tool"
+          find "${dest}/tool" -maxdepth 3 -printf '%y %p\n'
+          cmis=$(find "${dest}/tool" -type f -name cmis | head -n 1)
+          if [ -z "${cmis}" ]; then
+            echo "::error::cmis binary not found inside ${asset}"
+            exit 1
+          fi
+          chmod +x "${cmis}"
+          echo "binary=${cmis}"
+          "${cmis}" --version || true
 
+          help_file="${dest}/help.txt"
+          : > "${help_file}"
+          dump() {
+            echo "===== $* --help =====" | tee -a "${help_file}"
+            set +e
+            "$@" --help >> "${help_file}" 2>&1
+            local code=$?
+            set -e
+            echo "exit=${code}" | tee -a "${help_file}"
+          }
+          dump "${cmis}"
+          # One level of subcommands, parsed from the top-level help, then one more level.
+          mapfile -t commands < <(awk '
+            tolower($0) ~ /^commands:/ { in_cmds=1; next }
+            in_cmds && /^$/ { exit }
+            in_cmds && /^[[:space:]]+[A-Za-z0-9]/ { print $1 }
+          ' "${help_file}")
+          echo "top-level commands: ${commands[*]:-none}"
+          for cmd in "${commands[@]}"; do
+            dump "${cmis}" "${cmd}"
+          done
+          # Second level: look at each subcommand help for a Commands: section.
+          for cmd in "${commands[@]}"; do
+            mapfile -t nested < <(            awk -v section="===== ${cmis} ${cmd} --help =====" '
+              $0 == section { on=1; next }
+              on && /^===== / { exit }
+              on && tolower($0) ~ /^commands:/ { in_cmds=1; next }
+              on && in_cmds && /^$/ { exit }
+              on && in_cmds && /^[[:space:]]+[A-Za-z0-9]/ { print $1 }
+            ' "${help_file}")
+            for sub in "${nested[@]}"; do
+              dump "${cmis}" "${cmd}" "${sub}"
+            done
+          done
+          cat "${help_file}"
           {
-            echo "## cmis release discovery"
-            echo
-            echo "GitHub Latest tag \`$(jq -r .tagName "${dest}/release.json")\` assets:"
+            echo "## cmis help (${tag} / ${asset})"
             echo
             echo '```'
-            jq -r '.assets[] | "\(.name)\t\(.size)"' "${dest}/release.json"
+            cat "${help_file}"
             echo '```'
           } >> "${GITHUB_STEP_SUMMARY}"
-
-          echo "Discovery complete. Harvest is not wired until the installer and cmis help are known."
+          echo "Help captured. Harvest is wired in a follow-up commit."
           exit 1
