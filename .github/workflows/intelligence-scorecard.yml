@@ -1,0 +1,85 @@
+# Daily Clear Measure Intelligence Scorecard for this repository.
+# Installs the latest cmis release, harvests GitHub and Octopus delivery data,
+# and publishes an HTML report. Discovery of the installer and CLI surface is
+# logged on the first runs; harvest is wired from that help output.
+name: Intelligence Scorecard
+
+on:
+  schedule:
+    - cron: "17 11 * * *"
+  workflow_dispatch:
+  # Lets this workflow run on the PR branch before it exists on the default branch.
+  # Removed once workflow_dispatch on the branch is confirmed, if GitHub accepts it.
+  push:
+    branches:
+      - cursor/daily-cmis-scorecard-22a1
+
+permissions:
+  contents: read
+
+jobs:
+  scorecard:
+    name: Delivery scorecard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Install latest cmis and print command help
+        env:
+          CMIS_GITHUB_TOKEN: ${{ secrets.CMIS_GITHUB_TOKEN }}
+          COPILOT_PAT: ${{ secrets.COPILOT_PAT }}
+          SCORECARD_REPO: ClearMeasure/Clear-Measure-Intelligence-Scorecard
+        run: |
+          set -euo pipefail
+          if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
+            echo "Release token: CMIS_GITHUB_TOKEN"
+            export GH_TOKEN="${CMIS_GITHUB_TOKEN}"
+          elif [ -n "${COPILOT_PAT}" ]; then
+            echo "Release token: COPILOT_PAT (CMIS_GITHUB_TOKEN is not set)"
+            export GH_TOKEN="${COPILOT_PAT}"
+          else
+            echo "::error::No token can read ${SCORECARD_REPO}. Add repository secret CMIS_GITHUB_TOKEN with contents:read on that repository."
+            exit 1
+          fi
+
+          dest="${RUNNER_TEMP}/cmis-release"
+          mkdir -p "${dest}"
+          echo "Resolving GitHub Latest release of ${SCORECARD_REPO}"
+          gh release view --repo "${SCORECARD_REPO}" --json tagName,name,isDraft,isPrerelease,assets,body \
+            > "${dest}/release.json"
+          echo "tag=$(jq -r .tagName "${dest}/release.json")"
+          echo "name=$(jq -r .name "${dest}/release.json")"
+          echo "assets:"
+          jq -r '.assets[] | "\(.name)\t\(.size)\t\(.content_type)"' "${dest}/release.json"
+          echo "----- release body -----"
+          jq -r .body "${dest}/release.json"
+          echo "----- end release body -----"
+
+          gh release download --repo "${SCORECARD_REPO}" --dir "${dest}/assets" --clobber
+          echo "downloaded:"
+          find "${dest}/assets" -maxdepth 2 -printf '%s %p\n' | sort
+
+          {
+            echo "## cmis latest release"
+            echo
+            echo "- Tag: \`$(jq -r .tagName "${dest}/release.json")\`"
+            echo "- Name: $(jq -r .name "${dest}/release.json")"
+            echo
+            echo '```'
+            jq -r '.assets[] | "\(.name)\t\(.size)"' "${dest}/release.json"
+            echo '```'
+            echo
+            echo "### Release notes"
+            echo
+            jq -r .body "${dest}/release.json"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          # Show installer/readme text so the next revision can follow the real install contract.
+          while IFS= read -r -d '' doc; do
+            echo "===== ${doc} ====="
+            # Cap log size. Installer scripts and notes are the contract; binaries are skipped.
+            head -c 80000 "${doc}" || true
+            echo
+          done < <(find "${dest}/assets" -type f \( -name '*.md' -o -name '*.txt' -o -name '*.sh' -o -name '*.ps1' -o -name '*.json' -o -name 'LICENSE*' \) -print0)
+
+          echo "Discovery complete. Harvest is not wired until the installer and cmis help are known."
+          exit 1
