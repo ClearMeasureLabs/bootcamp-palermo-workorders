@@ -179,7 +179,9 @@ jobs:
           sed -n '1,120p' "${root}/Scorecard.AppServices/Connect/ConnectionKey.cs"
           echo "===== ownerType comparisons ====="
           grep -R -n --include='*.cs' -E 'ownerType|OwnerType' "${root}/Scorecard.GitHub" "${root}/Scorecard.AppServices" | grep -v '/obj/' || true
-          echo "===== scorecard Render methods ====="
-          grep -R -n --include='*.cs' 'Render(' "${root}/Scorecard.Presentation" "${root}/Scorecard.AppServices" | grep -v '/obj/' | grep -v Test || true
+          echo "===== PresentationService.Render ====="
+          sed -n '300,460p' "${root}/Scorecard.AppServices/Cmis/PresentationService.cs"
+          echo "===== ScorecardRenderResult ====="
+          grep -R -n --include='*.cs' 'record ScorecardRenderResult\|class ScorecardRenderResult\|sealed record Scorecard' "${root}/Scorecard.AppServices" "${root}/Scorecard.Core" || true
           echo "Probe captured."
           exit 1
