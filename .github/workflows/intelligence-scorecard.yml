@@ -173,6 +173,15 @@ jobs:
             --coordinate "environments=auto" \
             "${common[@]}"
 
+          echo "===== Octopus client URL ====="
+          src="${RUNNER_TEMP}/cmis-src"
+          mkdir -p "${src}"
+          gh release download "${tag}" --repo "${SCORECARD_REPO}" --archive tar.gz --dir "${src}" --clobber
+          tar -xzf "${src}"/*.tar.gz -C "${src}"
+          root=$(find "${src}" -mindepth 1 -maxdepth 1 -type d -print -quit)
+          grep -n -E 'api/|Space|space' "${root}/Scorecard.Octopus/"*.cs | head -n 80 || true
+          echo "===== end Octopus client URL ====="
+
           cmis_ok "harvest" connections harvest \
             --since "${since}" \
             --until "${until}" \
