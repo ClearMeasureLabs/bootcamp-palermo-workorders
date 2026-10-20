@@ -128,11 +128,40 @@ jobs:
               --workspace "${probe}/ws" \
               --store "${probe}/store" || true
           done
-          echo "===== Scorecard.Octopus.dll strings ====="
-          strings "${dest}/tool/Scorecard.Octopus.dll" | grep -E 'server|space|project|apiKey|ApiKey|Octopus|coordinate|Required' | sort -u | head -n 200 || true
-          echo "===== Scorecard.GitHub.dll coordinate-like strings ====="
-          strings "${dest}/tool/Scorecard.GitHub.dll" | grep -E 'owner|repository|organization|project|RequiredCoordinate|GitHubDelivery|board' | sort -u | head -n 200 || true
-          echo "===== Presentation html strings ====="
-          strings "${dest}/tool/Scorecard.Presentation.dll" | grep -E -i 'html|<!DOCTYPE|\.html' | sort -u | head -n 80 || true
+          echo "===== unknown coordinate (GitHubDelivery) ====="
+          "${cmis}" connections add \
+            --tracker GitHubDelivery \
+            --id probe-delivery \
+            --coordinate owner=ClearMeasureLabs \
+            --coordinate repo=bootcamp-palermo-workorders \
+            --coordinate notAKey=1 \
+            --dry-run --json \
+            --workspace "${probe}/ws" \
+            --store "${probe}/store" || true
+          echo "===== unknown coordinate (GitHub) ====="
+          "${cmis}" connections add \
+            --tracker GitHub \
+            --id probe-gh \
+            --coordinate owner=ClearMeasureLabs \
+            --coordinate ownerType=organization \
+            --coordinate repo=bootcamp-palermo-workorders \
+            --coordinate projectNumber=1 \
+            --coordinate notAKey=1 \
+            --dry-run --json \
+            --workspace "${probe}/ws" \
+            --store "${probe}/store" || true
+          echo "===== valid GitHubDelivery dry-run ====="
+          "${cmis}" connections add \
+            --tracker GitHubDelivery \
+            --id probe-delivery-ok \
+            --coordinate owner=ClearMeasureLabs \
+            --coordinate repo=bootcamp-palermo-workorders \
+            --dry-run --json \
+            --workspace "${probe}/ws" \
+            --store "${probe}/store" || true
+          echo "===== octopus-related user strings ====="
+          strings "${cmis}" | grep -i octopus | grep -v -E 'Scorecard\.Octopus|EC_POINT|EC_KEY|libssl|affine' | sort -u | head -n 200 || true
+          echo "===== html markers ====="
+          strings "${cmis}" | grep -F -e '<!DOCTYPE' -e 'text/html' -e '.html' | sort -u | head -n 40 || true
           echo "Probe captured."
           exit 1
