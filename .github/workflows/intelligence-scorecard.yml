@@ -54,32 +54,42 @@ jobs:
           jq -r .body "${dest}/release.json"
           echo "----- end release body -----"
 
-          gh release download --repo "${SCORECARD_REPO}" --dir "${dest}/assets" --clobber
-          echo "downloaded:"
-          find "${dest}/assets" -maxdepth 2 -printf '%s %p\n' | sort
+          echo "===== recent releases ====="
+          gh release list --repo "${SCORECARD_REPO}" --limit 40
+          echo "===== release assets (last 15, including non-latest) ====="
+          gh api "repos/${SCORECARD_REPO}/releases?per_page=15" \
+            --jq '.[] | {tag:.tag_name, name:.name, draft, prerelease, assets:[.assets[].name]}'
+
+          # Source stays on the runner. Do not upload it. Print only install/CLI docs.
+          src="${dest}/src"
+          mkdir -p "${src}"
+          gh release download --repo "${SCORECARD_REPO}" --archive tar.gz --dir "${src}" --clobber
+          tar -xzf "${src}"/*.tar.gz -C "${src}"
+          root=$(find "${src}" -mindepth 1 -maxdepth 1 -type d | head -1)
+          echo "source root: ${root}"
+          echo "===== top level ====="
+          ls -la "${root}"
+          echo "===== docs and readmes ====="
+          find "${root}" -type f \( -iname 'README*' -o -iname '*.md' \) \
+            ! -path '*/.git/*' | head -120
+          echo "===== root README and CLI-looking docs (capped) ====="
+          while IFS= read -r -d '' doc; do
+            echo "##### ${doc#${root}/}"
+            head -c 60000 "${doc}" || true
+            echo
+          done < <(find "${root}" -type f \
+            \( -iname 'README.md' -o -iname '*cli*.md' -o -iname '*install*.md' -o -iname '*cmis*.md' \) \
+            ! -path '*/node_modules/*' -print0 | head -z -n 12)
 
           {
-            echo "## cmis latest release"
+            echo "## cmis release discovery"
             echo
-            echo "- Tag: \`$(jq -r .tagName "${dest}/release.json")\`"
-            echo "- Name: $(jq -r .name "${dest}/release.json")"
+            echo "GitHub Latest tag \`$(jq -r .tagName "${dest}/release.json")\` assets:"
             echo
             echo '```'
             jq -r '.assets[] | "\(.name)\t\(.size)"' "${dest}/release.json"
             echo '```'
-            echo
-            echo "### Release notes"
-            echo
-            jq -r .body "${dest}/release.json"
           } >> "${GITHUB_STEP_SUMMARY}"
-
-          # Show installer/readme text so the next revision can follow the real install contract.
-          while IFS= read -r -d '' doc; do
-            echo "===== ${doc} ====="
-            # Cap log size. Installer scripts and notes are the contract; binaries are skipped.
-            head -c 80000 "${doc}" || true
-            echo
-          done < <(find "${dest}/assets" -type f \( -name '*.md' -o -name '*.txt' -o -name '*.sh' -o -name '*.ps1' -o -name '*.json' -o -name 'LICENSE*' \) -print0)
 
           echo "Discovery complete. Harvest is not wired until the installer and cmis help are known."
           exit 1
