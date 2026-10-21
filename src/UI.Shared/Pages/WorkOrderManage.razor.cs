@@ -120,6 +120,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
             Status = workOrder.Status.FriendlyName,
             CreatorFullName = workOrder.Creator!.GetFullName(),
             AssignedToUserName = workOrder.Assignee?.UserName,
+            CustomerRep = workOrder.CustomerRep,
             Title = workOrder.Title,
             Description = workOrder.Description,
             Instructions = workOrder.Instructions,
@@ -165,6 +166,7 @@ public partial class WorkOrderManage : AppComponentBase, IAsyncDisposable
 
         workOrder.Number = Model.WorkOrderNumber;
         workOrder.Assignee = assignee;
+        workOrder.CustomerRep = Model.CustomerRep;
         workOrder.Title = Model.Title;
         workOrder.Description = Model.Description;
         workOrder.Instructions = Model.Instructions;

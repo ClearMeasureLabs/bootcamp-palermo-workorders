@@ -18,6 +18,9 @@ public class WorkOrderManageModel
 
     public string? AssignedToUserName { get; set; }
 
+    [StringLength(WorkOrder.CustomerRepMaxLength, ErrorMessage = "Customer Rep cannot exceed 50 characters.")]
+    public string? CustomerRep { get; set; }
+
     [Required] public string? Title { get; set; }
 
     [Required] public string? Description { get; set; }
