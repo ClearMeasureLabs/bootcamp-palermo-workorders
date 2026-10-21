@@ -824,6 +824,8 @@ jobs:
             scorecard-report/cmis-verify-*.err
             scorecard-report/cmis-guidance-*.json
             scorecard-report/cmis-*-help.txt
+            scorecard-report/cmis-strings-hints.txt
+            scorecard-report/octopus-deep-probes.json
           if-no-files-found: ignore
           retention-days: 30
 
@@ -832,30 +834,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Private cmis release download vs harvest credentials are split on purpose:
-          # COPILOT_PAT can install the CLI but has been returning Delivery-only 403s
-          # under load while curl probes still pass (secondary/abuse limit pattern).
+          # cmis connect verify requires a classic PAT with repo + read:project.
+          # GITHUB_TOKEN fails that check. Prefer CMIS_GITHUB_TOKEN, else COPILOT_PAT.
           if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
             install_token="${CMIS_GITHUB_TOKEN}"
-            echo "Install token: CMIS_GITHUB_TOKEN"
+            harvest_token="${CMIS_GITHUB_TOKEN}"
+            echo "Token: CMIS_GITHUB_TOKEN (install + harvest)"
           elif [ -n "${COPILOT_PAT}" ]; then
             install_token="${COPILOT_PAT}"
-            echo "Install token: COPILOT_PAT"
-          else
-            echo "::error::Need CMIS_GITHUB_TOKEN or COPILOT_PAT to download the private cmis release."
-            exit 1
-          fi
-          if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
-            harvest_token="${CMIS_GITHUB_TOKEN}"
-            echo "Harvest token: CMIS_GITHUB_TOKEN"
-          elif [ -n "${GITHUB_TOKEN_FALLBACK}" ]; then
-            harvest_token="${GITHUB_TOKEN_FALLBACK}"
-            echo "Harvest token: GITHUB_TOKEN (preferred over COPILOT_PAT for API harvest)"
-          elif [ -n "${COPILOT_PAT}" ]; then
             harvest_token="${COPILOT_PAT}"
-            echo "Harvest token: COPILOT_PAT (fallback)"
+            echo "Token: COPILOT_PAT (install + harvest; CMIS_GITHUB_TOKEN unset)"
           else
-            echo "::error::No GitHub harvest token is available."
+            echo "::error::Need repository secret CMIS_GITHUB_TOKEN (classic PAT with repo + read:project) or COPILOT_PAT."
             exit 1
           fi
 
