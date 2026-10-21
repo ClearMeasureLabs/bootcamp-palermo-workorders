@@ -21,12 +21,6 @@ on:
   schedule:
     - cron: "17 11 * * *"
   workflow_dispatch:
-  # Runs this workflow on the PR branch before the file exists on the default
-  # branch, which is when workflow_dispatch can see it. Harmless after merge:
-  # the branch receives no further pushes.
-  push:
-    branches:
-      - cursor/daily-cmis-scorecard-22a1
 
 permissions:
   contents: read
@@ -42,7 +36,9 @@ jobs:
   scorecard:
     name: Delivery scorecard
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Two calendar years of GitHub + Octopus harvest can take longer than a
+    # trailing-month run. Hosted runners allow up to six hours.
+    timeout-minutes: 360
     env:
       SCORECARD_REPO: ClearMeasure/Clear-Measure-Intelligence-Scorecard
       CMIS_GITHUB_TOKEN: ${{ secrets.CMIS_GITHUB_TOKEN }}
@@ -116,8 +112,10 @@ jobs:
 
           owner="${GITHUB_REPOSITORY%%/*}"
           repo="${GITHUB_REPOSITORY#*/}"
-          since=$(date -u -d '30 days ago' +%F)
+          # Last two calendar years: 1 Jan of the previous UTC year through today.
           until=$(date -u +%F)
+          since="$(date -u -d "$(date -u +%Y)-01-01 -1 year" +%F)"
+          echo "Scorecard window: ${since} through ${until} (UTC)"
           workspace="${RUNNER_TEMP}/cmis-workspace"
           store="${RUNNER_TEMP}/cmis-store"
           mkdir -p "${workspace}" "${store}" "${GITHUB_WORKSPACE}/scorecard-report"
@@ -236,22 +234,44 @@ jobs:
               print(json.dumps(list(data.keys()) if isinstance(data, dict) else type(data).__name__))
               sys.exit("scorecards render returned no sections; refusing an empty report")
 
+          # scorecards render has no column-order flag. Weeks are period rows in the
+          # JSON; they are transposed here so each week is a column, newest on the left.
+          WEEK_KEYS = ("periodStart", "label", "period", "periodLabel", "name")
+          METRIC_SKIP = set(WEEK_KEYS) | {"periodEnd", "period_end", "id"}
+
           def esc(value):
               return html.escape("" if value is None else str(value))
 
-          def rows_of(section):
+          def period_rows(section):
               if not isinstance(section, dict):
-                  return [], []
+                  return []
               for key in ("rows", "periods", "points", "values"):
                   value = section.get(key)
                   if isinstance(value, list) and value and isinstance(value[0], dict):
-                      columns = []
-                      for row in value:
-                          for column in row.keys():
-                              if column not in columns:
-                                  columns.append(column)
-                      return columns, value
-              return [], []
+                      return value
+              return []
+
+          def week_sort_key(row):
+              return str(row.get("periodStart") or row.get("label") or row.get("periodLabel") or "")
+
+          def week_label(row):
+              return str(row.get("label") or row.get("periodLabel") or row.get("periodStart") or row.get("name") or "?")
+
+          def metric_names(rows):
+              names = []
+              for row in rows:
+                  for key in row.keys():
+                      if key in METRIC_SKIP or key in names:
+                          continue
+                      names.append(key)
+              return names
+
+          def format_cell(value):
+              if value is None:
+                  return ""
+              if isinstance(value, float):
+                  return f"{value:.4g}"
+              return str(value)
 
           parts = []
           summary_lines = [
@@ -261,23 +281,51 @@ jobs:
               f"- Window: `{since}` through `{until}` (UTC)",
               f"- cmis: `{tag}` (`{asset}`)",
               f"- Scorecard: `{data.get('name') or data.get('id') or 'delivery'}`",
+              f"- Week columns: newest on the left",
               "",
           ]
           table_count = 0
+          last_week_labels = []
           for section in sections:
-              title = section.get("name") or section.get("id") or "Section" if isinstance(section, dict) else "Section"
-              columns, rows = rows_of(section)
+              title = (section.get("name") or section.get("id") or "Section") if isinstance(section, dict) else "Section"
+              rows = period_rows(section)
               parts.append(f"<h2>{esc(title)}</h2>")
               if not rows:
                   parts.append("<pre>" + esc(json.dumps(section, indent=2)[:8000]) + "</pre>")
-                  summary_lines.append(f"- {title}: no tabular rows")
+                  summary_lines.append(f"- {title}: no period rows")
                   continue
+
+              weeks = sorted(rows, key=week_sort_key, reverse=True)
+              metrics = metric_names(weeks)
+              if not metrics:
+                  parts.append("<pre>" + esc(json.dumps(section, indent=2)[:8000]) + "</pre>")
+                  summary_lines.append(f"- {title}: no metrics")
+                  continue
+
               table_count += 1
-              summary_lines.append(f"- {title}: {len(rows)} rows")
-              parts.append("<table><thead><tr>" + "".join(f"<th>{esc(col)}</th>" for col in columns) + "</tr></thead><tbody>")
-              for row in rows:
-                  parts.append("<tr>" + "".join(f"<td>{esc(row.get(col))}</td>" for col in columns) + "</tr>")
-              parts.append("</tbody></table>")
+              week_labels = [week_label(week) for week in weeks]
+              last_week_labels = week_labels
+              summary_lines.append(f"### {title}")
+              summary_lines.append("")
+              summary_lines.append(f"{len(weeks)} weeks · newest `{week_labels[0]}` · oldest `{week_labels[-1]}`")
+              summary_lines.append("")
+              header = "| Metric | " + " | ".join(f"`{label}`" for label in week_labels) + " |"
+              sep = "| --- | " + " | ".join(["---"] * len(week_labels)) + " |"
+              summary_lines.append(header)
+              summary_lines.append(sep)
+              for metric in metrics:
+                  cells = [format_cell(week.get(metric)) for week in weeks]
+                  summary_lines.append("| " + " | ".join([f"`{metric}`"] + cells) + " |")
+              summary_lines.append("")
+
+              parts.append('<div class="scroll"><table><thead><tr><th>Metric</th>')
+              parts.append("".join(f"<th>{esc(label)}</th>" for label in week_labels))
+              parts.append("</tr></thead><tbody>")
+              for metric in metrics:
+                  parts.append(f"<tr><th scope=\"row\">{esc(metric)}</th>")
+                  parts.append("".join(f"<td>{esc(format_cell(week.get(metric)))}</td>" for week in weeks))
+                  parts.append("</tr>")
+              parts.append("</tbody></table></div>")
 
           if table_count == 0:
               sample = sections[0] if sections else None
@@ -285,10 +333,14 @@ jobs:
               print("section keys:", keys)
               sys.exit("scorecards render sections had no rows; refusing an empty report")
 
-          semantics = data.get("semantics")
-          semantics_html = ""
-          if semantics is not None:
-              semantics_html = "<h2>Semantics</h2><pre>" + esc(json.dumps(semantics, indent=2)[:12000]) + "</pre>"
+          harvest_data = harvest.get("data") if isinstance(harvest, dict) else None
+          if isinstance(harvest_data, dict):
+              summary_lines.append(
+                  f"- Harvest: `{harvest_data.get('totalRawItems')}` raw items, "
+                  f"`{harvest_data.get('totalRowsAdded')}` normalized rows, "
+                  f"`{harvest_data.get('failedCount')}` failed connections"
+              )
+              summary_lines.append("")
 
           document = f"""<!DOCTYPE html>
           <html lang="en">
@@ -297,17 +349,17 @@ jobs:
           <title>Intelligence scorecard {esc(os.environ.get('GITHUB_REPOSITORY', ''))}</title>
           <style>
             body {{ font-family: sans-serif; margin: 2rem; color: #1a1a1a; }}
-            table {{ border-collapse: collapse; margin: 0 0 2rem; }}
-            th, td {{ border: 1px solid #ccc; padding: 0.35rem 0.6rem; text-align: left; }}
-            th {{ background: #f4f4f4; }}
-            pre {{ white-space: pre-wrap; background: #fafafa; padding: 1rem; }}
+            .scroll {{ overflow-x: auto; max-width: 100%; margin: 0 0 2rem; }}
+            table {{ border-collapse: collapse; }}
+            th, td {{ border: 1px solid #ccc; padding: 0.35rem 0.6rem; text-align: left; white-space: nowrap; }}
+            thead th {{ background: #f4f4f4; position: sticky; top: 0; }}
+            tbody th {{ background: #fafafa; text-align: left; }}
           </style>
           </head>
           <body>
           <h1>Intelligence scorecard</h1>
-          <p>{esc(os.environ.get('GITHUB_REPOSITORY', ''))} · {esc(since)} through {esc(until)} UTC · cmis {esc(tag)}</p>
+          <p>{esc(os.environ.get('GITHUB_REPOSITORY', ''))} · {esc(since)} through {esc(until)} UTC · cmis {esc(tag)} · weeks newest on the left</p>
           {''.join(parts)}
-          {semantics_html}
           </body>
           </html>
           """
@@ -319,6 +371,13 @@ jobs:
           with open(summary_path, "a", encoding="utf-8") as handle:
               handle.write("\n".join(summary_lines) + "\n")
           print(f"Wrote {report_path} ({os.path.getsize(report_path)} bytes)")
+          if last_week_labels:
+              print(
+                  "Week columns (newest first): "
+                  + ", ".join(last_week_labels[:3])
+                  + (" ..." if len(last_week_labels) > 3 else "")
+                  + (f" ... {last_week_labels[-1]}" if len(last_week_labels) > 3 else "")
+              )
           PY
 
       - name: Upload HTML scorecard
