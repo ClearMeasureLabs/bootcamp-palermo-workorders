@@ -614,11 +614,21 @@ jobs:
           PY
           )
 
-          echo "----- cmis connect / set-token help -----"
+          echo "----- cmis connect / set-token / verify / guidance help -----"
           "${cmis}" connect --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-connect-help.txt" 2>&1 || true
           "${cmis}" connect set-token --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt" 2>&1 || true
+          "${cmis}" connect verify --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-help.txt" 2>&1 || true
+          "${cmis}" connect guidance --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-guidance-help.txt" 2>&1 || true
           "${cmis}" connections harvest --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-harvest-help.txt" 2>&1 || true
           head -n 80 "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt" || true
+          head -n 80 "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-help.txt" || true
+          # Tracker-specific credential guidance (often names required scopes / env keys).
+          for tracker in GitHub GitHubDelivery Octopus; do
+            "${cmis}" connect guidance --tracker "${tracker}" --json \
+              > "${GITHUB_WORKSPACE}/scorecard-report/cmis-guidance-${tracker}.json" 2>&1 || true
+          done
+          echo "----- guidance GitHubDelivery -----"
+          cat "${GITHUB_WORKSPACE}/scorecard-report/cmis-guidance-GitHubDelivery.json" || true
 
           # Matrix: which credential wiring / project coordinate cmis accepts.
           # Curl probes already proved GitHub+Octopus APIs return 200 with these secrets.
@@ -681,6 +691,18 @@ jobs:
 
             "${cmis}" connections inventory --json "${common[@]}" \
               > "${RUNNER_TEMP}/cmis-repro-inventory-${case_id}.json" || true
+
+            # verify names which credential identity succeeded/failed before harvest.
+            set +e
+            "${cmis}" connect verify --connection bootcamp --json "${common[@]}" \
+              > "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.json" 2>"${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.err"
+            verify_code=$?
+            set -e
+            echo "verify ${case_id}: exit=${verify_code}"
+            cat "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.json" || true
+            if [ -s "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.err" ]; then
+              echo "verify stderr:"; cat "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.err" || true
+            fi
 
             set +e
             "${cmis}" connections harvest \
@@ -759,6 +781,9 @@ jobs:
             scorecard-report/harvest-auth-diagnose.json
             scorecard-report/cmis-repro-*.json
             scorecard-report/cmis-repro-*.err
+            scorecard-report/cmis-verify-*.json
+            scorecard-report/cmis-verify-*.err
+            scorecard-report/cmis-guidance-*.json
             scorecard-report/cmis-*-help.txt
           if-no-files-found: ignore
           retention-days: 30
