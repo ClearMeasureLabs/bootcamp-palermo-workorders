@@ -149,30 +149,122 @@ jobs:
             cp "${out}" "${RUNNER_TEMP}/cmis-${label// /-}.json"
           }
 
-          # cmis puts octopusSpace straight into /api/{space}/... Octopus accepts a space id
-          # there. The repository variable is the space name the Octopus actions use, so
-          # resolve that name (or an id or slug already stored in the variable) to the id.
-          spaces_json="${RUNNER_TEMP}/octopus-spaces.json"
+          # cmis puts octopusSpace / octopusProject into /api/{space}/projects/{project}.
+          # Repository variables are the names the Octopus Deploy actions use; resolve
+          # both to ids, and wait out transient Octopus 403/503 answers.
           octopus_root="${OCTOPUS_URL%/}"
-          if ! curl -fsS -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" "${octopus_root}/api/spaces/all" -o "${spaces_json}"; then
-            echo "::error::Octopus auth failed calling ${octopus_root}/api/spaces/all. Check OCTOPUS_URL and OCTO_API_KEY."
-            exit 1
-          fi
-          octopus_space_id=$(OCTOPUS_SPACE="${OCTOPUS_SPACE}" python3 - "${spaces_json}" << 'PY'
-          import json, os, sys
-          payload = json.load(open(sys.argv[1]))
+          octopus_resolve="${RUNNER_TEMP}/octopus-resolve.json"
+          octopus_attempt=1
+          octopus_max=8
+          octopus_sleep=20
+          while true; do
+            echo "----- Octopus preflight attempt ${octopus_attempt}/${octopus_max} -----"
+            set +e
+            curl -sS -w "\nHTTP_STATUS:%{http_code}\n" \
+              -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" \
+              "${octopus_root}/api/spaces/all" > "${RUNNER_TEMP}/octopus-spaces.raw"
+            spaces_curl=$?
+            set -e
+            spaces_status=$(awk -F: '/^HTTP_STATUS:/ {print $2}' "${RUNNER_TEMP}/octopus-spaces.raw" | tr -d '\r')
+            sed '/^HTTP_STATUS:/d' "${RUNNER_TEMP}/octopus-spaces.raw" > "${RUNNER_TEMP}/octopus-spaces.json"
+            if [ "${spaces_curl}" -eq 0 ] && [ "${spaces_status}" = "200" ]; then
+              if OCTOPUS_SPACE="${OCTOPUS_SPACE}" OCTOPUS_PROJECT="${OCTOPUS_PROJECT}" \
+                python3 - "${RUNNER_TEMP}/octopus-spaces.json" "${octopus_root}" "${OCTOPUS_API_KEY}" "${octopus_resolve}" << 'PY'
+          import json, os, sys, urllib.request
+
+          spaces_path, root, api_key, out_path = sys.argv[1:]
+          payload = json.load(open(spaces_path))
           spaces = payload if isinstance(payload, list) else payload.get("Items") or payload.get("items") or []
-          wanted = os.environ["OCTOPUS_SPACE"]
-          for space in spaces:
-              if wanted in (space.get("Id"), space.get("Name"), space.get("Slug")):
-                  print(space["Id"])
-                  raise SystemExit(0)
-          names = ", ".join(sorted(space.get("Name") or space.get("Id") or "?" for space in spaces))
-          print(f"No Octopus space matches '{wanted}'. Spaces: {names}", file=sys.stderr)
-          raise SystemExit(1)
-          PY
+          wanted_space = os.environ["OCTOPUS_SPACE"]
+          space = next(
+              (s for s in spaces if wanted_space in (s.get("Id"), s.get("Name"), s.get("Slug"))),
+              None,
           )
+          if space is None:
+              names = ", ".join(sorted(s.get("Name") or s.get("Id") or "?" for s in spaces))
+              print(f"No Octopus space matches '{wanted_space}'. Spaces: {names}", file=sys.stderr)
+              raise SystemExit(2)
+
+          space_id = space["Id"]
+          wanted_project = os.environ["OCTOPUS_PROJECT"]
+          req = urllib.request.Request(
+              f"{root.rstrip('/')}/api/{space_id}/projects/all",
+              headers={"X-Octopus-ApiKey": api_key, "Accept": "application/json"},
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=60) as response:
+                  projects = json.load(response)
+          except Exception as exc:
+              print(f"Octopus projects list failed: {exc}", file=sys.stderr)
+              raise SystemExit(3)
+
+          if isinstance(projects, dict):
+              projects = projects.get("Items") or projects.get("items") or []
+          project = next(
+              (
+                  p
+                  for p in projects
+                  if wanted_project in (p.get("Id"), p.get("Name"), p.get("Slug"))
+              ),
+              None,
+          )
+          if project is None:
+              names = ", ".join(sorted(p.get("Name") or p.get("Id") or "?" for p in projects)[:40])
+              print(
+                  f"No Octopus project matches '{wanted_project}' in {space_id}. Projects: {names}",
+                  file=sys.stderr,
+              )
+              raise SystemExit(4)
+
+          # Confirm the direct project route cmis will call.
+          project_id = project["Id"]
+          check = urllib.request.Request(
+              f"{root.rstrip('/')}/api/{space_id}/projects/{project_id}",
+              headers={"X-Octopus-ApiKey": api_key, "Accept": "application/json"},
+          )
+          try:
+              with urllib.request.urlopen(check, timeout=60) as response:
+                  if response.status != 200:
+                      print(f"Octopus project GET status {response.status}", file=sys.stderr)
+                      raise SystemExit(5)
+          except Exception as exc:
+              print(f"Octopus project GET failed: {exc}", file=sys.stderr)
+              raise SystemExit(5)
+
+          result = {
+              "spaceId": space_id,
+              "spaceName": space.get("Name"),
+              "projectId": project_id,
+              "projectName": project.get("Name"),
+              "projectSlug": project.get("Slug"),
+          }
+          json.dump(result, open(out_path, "w"))
+          print(json.dumps(result))
+          PY
+              then
+                break
+              fi
+              resolve_code=$?
+              echo "::warning::Octopus resolve failed (exit ${resolve_code})"
+            else
+              echo "::warning::Octopus spaces/all returned status=${spaces_status:-curl-${spaces_curl}}"
+            fi
+            if [ "${octopus_attempt}" -ge "${octopus_max}" ]; then
+              echo "::error::Octopus did not become ready for space '${OCTOPUS_SPACE}' project '${OCTOPUS_PROJECT}'."
+              exit 1
+            fi
+            echo "Sleeping ${octopus_sleep}s before Octopus retry"
+            sleep "${octopus_sleep}"
+            octopus_attempt=$((octopus_attempt + 1))
+            octopus_sleep=$((octopus_sleep * 2))
+            if [ "${octopus_sleep}" -gt 300 ]; then
+              octopus_sleep=300
+            fi
+          done
+          octopus_space_id=$(jq -r .spaceId "${octopus_resolve}")
+          octopus_project_id=$(jq -r .projectId "${octopus_resolve}")
           echo "Octopus space id: ${octopus_space_id}"
+          echo "Octopus project id: ${octopus_project_id} ($(jq -r .projectName "${octopus_resolve}"))"
 
           cmis_ok "add-board" connections add \
             --id bootcamp-board \
@@ -192,20 +284,31 @@ jobs:
             --coordinate "repo=${repo}" \
             --coordinate "octopusServer=${OCTOPUS_URL}" \
             --coordinate "octopusSpace=${octopus_space_id}" \
-            --coordinate "octopusProject=${OCTOPUS_PROJECT}" \
+            --coordinate "octopusProject=${octopus_project_id}" \
             --coordinate "environments=auto" \
             "${common[@]}"
 
-          # Harvest one connection at a time. A two-year GitHubDelivery pull can
-          # hit a transient 403 (rate / abuse) after a large board harvest; retry
-          # with backoff, and harvest delivery before the board so it gets a
-          # fresh rate-limit budget.
+          # Store credentials in the workspace secret store as well as env vars.
+          # GitHubDelivery reads CMIS_BOOTCAMP_TOKEN and CMIS_BOOTCAMP_OCTOPUS_TOKEN;
+          # set-token writes the same keys cmis resolves for harvest.
+          printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
+            --connection bootcamp --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-bootcamp.json"
+          jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-bootcamp.json" >/dev/null
+          printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
+            --connection bootcamp-octopus --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-octopus.json"
+          jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-octopus.json" >/dev/null
+          printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
+            --connection bootcamp-board --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-board.json"
+          jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-board.json" >/dev/null
+
+          # Harvest one connection at a time. Octopus has returned transient 403/503
+          # on the two-year GitHubDelivery pull; retry with backoff. Delivery first
+          # so it gets a fresh GitHub rate-limit budget before the board harvest.
           cmis_harvest_one() {
-            local label="$1"
             local connection="$1"
             local attempt=1
-            local max_attempts=5
-            local sleep_s=30
+            local max_attempts=8
+            local sleep_s=45
             while true; do
               echo "----- harvest ${connection} attempt ${attempt}/${max_attempts} -----"
               local out="${RUNNER_TEMP}/cmis-last.json"
@@ -224,7 +327,7 @@ jobs:
                 return 0
               fi
               echo "::warning::harvest ${connection} attempt ${attempt} failed (exit ${code})"
-              jq -c '{ok, error, warnings}' "${out}" || true
+              jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error}]})}' "${out}" || true
               if [ "${attempt}" -ge "${max_attempts}" ]; then
                 echo "::error::harvest ${connection} failed after ${max_attempts} attempts."
                 cat "${out}" || true
@@ -234,8 +337,8 @@ jobs:
               sleep "${sleep_s}"
               attempt=$((attempt + 1))
               sleep_s=$((sleep_s * 2))
-              if [ "${sleep_s}" -gt 480 ]; then
-                sleep_s=480
+              if [ "${sleep_s}" -gt 600 ]; then
+                sleep_s=600
               fi
             done
           }
