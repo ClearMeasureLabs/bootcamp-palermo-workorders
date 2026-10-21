@@ -628,13 +628,12 @@ jobs:
           "${cmis}" connections harvest --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-harvest-help.txt" 2>&1 || true
           head -n 80 "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt" || true
           head -n 80 "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-help.txt" || true
-          # Tracker-specific credential guidance (often names required scopes / env keys).
-          for tracker in GitHub GitHubDelivery Octopus; do
-            "${cmis}" connect guidance --tracker "${tracker}" --json \
-              > "${GITHUB_WORKSPACE}/scorecard-report/cmis-guidance-${tracker}.json" 2>&1 || true
-          done
-          echo "----- guidance GitHubDelivery -----"
-          cat "${GITHUB_WORKSPACE}/scorecard-report/cmis-guidance-GitHubDelivery.json" || true
+          "${cmis}" connect guidance --tracker GitHub --json \
+            > "${GITHUB_WORKSPACE}/scorecard-report/cmis-guidance-GitHub.json" 2>&1 || true
+          echo "----- strings: env keys / octopus paths inside cmis -----"
+          strings "${cmis}" | rg -i 'CMIS_.*TOKEN|OCTOPUS|_OCTOPUS|/api/|User-Agent|GitHubDelivery' \
+            | sort -u | head -n 200 \
+            | tee "${GITHUB_WORKSPACE}/scorecard-report/cmis-strings-hints.txt" || true
 
           # Matrix: harvest token source × project coordinate. Octopus key is constant.
           summary_json="${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-matrix.json"
@@ -736,10 +735,59 @@ jobs:
               break
             fi
           done <<EOF
-          ghtoken-name|${OCTOPUS_PROJECT}|GITHUB_TOKEN
-          ghtoken-id|${octopus_project_id}|GITHUB_TOKEN
           copilot-name|${OCTOPUS_PROJECT}|COPILOT_PAT
+          copilot-id|${octopus_project_id}|COPILOT_PAT
           EOF
+
+          # When GitHub verify is green but harvest 403s, the failure is not the GitHub PAT.
+          # Probe additional Octopus routes that Delivery may call (beyond the diagnose GETs).
+          echo "----- deep Octopus probes with OCTO_API_KEY -----"
+          deep_json="${GITHUB_WORKSPACE}/scorecard-report/octopus-deep-probes.json"
+          OCTOPUS_URL="${OCTOPUS_URL}" OCTOPUS_API_KEY="${OCTOPUS_API_KEY}" \
+          OCTOPUS_SPACE_ID="${octopus_space_id}" OCTOPUS_PROJECT_ID="${octopus_project_id}" \
+          OUT="${deep_json}" python3 << 'PY'
+          import json, os, urllib.error, urllib.request
+          root = os.environ["OCTOPUS_URL"].rstrip("/")
+          key = os.environ["OCTOPUS_API_KEY"]
+          space = os.environ["OCTOPUS_SPACE_ID"]
+          project = os.environ["OCTOPUS_PROJECT_ID"]
+          paths = [
+              f"/api/{space}/deployments?projects={project}&take=100&skip=0",
+              f"/api/{space}/deployments?projects={project}&take=100&skip=100",
+              f"/api/{space}/releases?projectId={project}&take=50",
+              f"/api/{space}/projects/{project}/runbooks",
+              f"/api/{space}/tasks?take=30&project={project}",
+              f"/api/{space}/events?regarding={project}&from=2026-10-01T00:00:00Z&to=2026-10-21T23:59:59Z&take=50",
+              f"/api/{space}/projects/{project}/summary",
+              f"/api/{space}/dashboard?projectId={project}",
+              f"/api/{space}/progression?projectId={project}",
+              f"/api/users/me",
+              "/api",
+          ]
+          rows = []
+          for path in paths:
+              url = root + path
+              req = urllib.request.Request(url, headers={"X-Octopus-ApiKey": key, "Accept": "application/json"})
+              try:
+                  with urllib.request.urlopen(req, timeout=60) as resp:
+                      body = resp.read(400).decode("utf-8", "replace")
+                      rows.append({"path": path, "status": resp.status, "body": body})
+              except urllib.error.HTTPError as exc:
+                  body = exc.read(400).decode("utf-8", "replace")
+                  rows.append({"path": path, "status": exc.code, "body": body})
+              except Exception as exc:
+                  rows.append({"path": path, "status": None, "body": str(exc)})
+          json.dump(rows, open(os.environ["OUT"], "w"), indent=2)
+          for row in rows:
+              print(f"{row['status']}\t{row['path']}\t{(row.get('body') or '')[:120].replace(chr(10),' ')}")
+          hard = [r for r in rows if r.get("status") in (401, 403)]
+          if hard:
+              print("DEEP_OCTOPUS_403=1")
+              for r in hard:
+                  print(f"::error::Octopus deep probe HTTP {r['status']} on {r['path']}: {(r.get('body') or '')[:180]}")
+          else:
+              print("DEEP_OCTOPUS_403=0")
+          PY
 
           # Keep a stable filename for the artifact consumers.
           latest_repro=$(ls -1 "${GITHUB_WORKSPACE}/scorecard-report"/cmis-repro-harvest-*.json 2>/dev/null | head -n 1 || true)
