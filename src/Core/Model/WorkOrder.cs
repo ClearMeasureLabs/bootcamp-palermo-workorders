@@ -26,13 +26,13 @@ public class WorkOrder : EntityBase<WorkOrder>
     public string? Description
     {
         get;
-        set => field = GetTruncatedString(value);
+        set => field = GetTruncatedString(value, DescriptionMaxLength);
     } = "";
 
     public string? Instructions
     {
         get;
-        set => field = GetTruncatedString(value);
+        set => field = GetTruncatedString(value, InstructionsMaxLength);
     } = "";
 
     public string? RoomNumber { get; set; }
@@ -59,14 +59,14 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public DateOnly? DueDate { get; set; }
 
-    private string GetTruncatedString(string? value)
+    private string GetTruncatedString(string? value, int maxAllowedLength)
     {
         if (value == null)
         {
             return string.Empty;
         }
 
-        var maxLength = Math.Min(InstructionsMaxLength, value.Length);
+        var maxLength = Math.Min(maxAllowedLength, value.Length);
         return value.Substring(0, maxLength);
     }
 
