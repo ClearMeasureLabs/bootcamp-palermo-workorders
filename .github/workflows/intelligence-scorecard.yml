@@ -5,16 +5,11 @@
 # add-in installer and does not contain cmis. The CLI is the newest release,
 # including delivery prereleases, whose assets include cmis-*-linux-x64.tar.gz.
 #
-# Commands and coordinates are the ones cmis --help and connections add report:
-#   cmis connections add --tracker GitHub --coordinate owner, ownerType, repo, projectNumber
-#   cmis connections add --tracker GitHubDelivery --coordinate owner, repo,
-#       octopusProject, octopusServer, octopusSpace, environments
-#   cmis connections harvest --since --until --on-failure strict
-#   cmis scorecards add --set --period --connection
-#   cmis scorecards render --id
-# Credentials are environment variables CMIS_<KEY>_TOKEN (hyphen becomes underscore).
-# A GitHubDelivery connection reads the GitHub token as CMIS_<ID>_TOKEN and the
-# Octopus API key as CMIS_<ID>_OCTOPUS_TOKEN.
+# Harvests the last two calendar years MONTH BY MONTH (GitHubDelivery + board)
+# into one workspace, then renders a single weekly scorecard (newest week left).
+#
+# Credentials: CMIS_<KEY>_TOKEN (hyphen becomes underscore).
+# GitHubDelivery reads CMIS_<ID>_TOKEN and CMIS_<ID>_OCTOPUS_TOKEN.
 name: Intelligence Scorecard
 
 on:
@@ -27,8 +22,6 @@ permissions:
   issues: read
   pull-requests: read
   actions: read
-  # GitHubDelivery correlates Actions + deployments; the job-scoped GITHUB_TOKEN
-  # needs these when it is used as the harvest credential.
   deployments: read
 
 concurrency:
@@ -39,9 +32,8 @@ jobs:
   scorecard:
     name: Delivery scorecard
     runs-on: ubuntu-latest
-    # Chunked quarterly harvest should finish well under two hours; fail loud
-    # instead of sitting on a stuck cmis call for six hours.
-    timeout-minutes: 120
+    # ~22 months with pauses/retries; fail loud before a six-hour silent hang.
+    timeout-minutes: 360
     env:
       SCORECARD_REPO: ClearMeasure/Clear-Measure-Intelligence-Scorecard
       CMIS_GITHUB_TOKEN: ${{ secrets.CMIS_GITHUB_TOKEN }}
@@ -51,30 +43,22 @@ jobs:
       OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
       OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
       OCTOPUS_PROJECT: ${{ vars.OCTOPUS_PROJECT }}
-      # Per-chunk quarterly harvest wall clock (GNU timeout).
-      CMIS_CHUNK_TIMEOUT_SECS: "900"
+      CMIS_MONTH_TIMEOUT_SECS: "900"
+      CMIS_MONTH_PAUSE_SECS: "45"
     steps:
-      # Identify exactly which API returns 403 before any cmis harvest/retry loop.
-      - name: Diagnose GitHub and Octopus harvest credentials
-        id: diagnose
-        timeout-minutes: 5
+      - name: Install cmis, harvest month-by-month, and publish the HTML scorecard
+        timeout-minutes: 350
         run: |
           set -euo pipefail
 
           if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
-            echo "GitHub token source: CMIS_GITHUB_TOKEN"
             harvest_token="${CMIS_GITHUB_TOKEN}"
-            token_source="CMIS_GITHUB_TOKEN"
+            echo "GitHub token: CMIS_GITHUB_TOKEN"
           elif [ -n "${COPILOT_PAT}" ]; then
-            echo "GitHub token source: COPILOT_PAT (CMIS_GITHUB_TOKEN is not set)"
             harvest_token="${COPILOT_PAT}"
-            token_source="COPILOT_PAT"
-          elif [ -n "${GITHUB_TOKEN_FALLBACK}" ]; then
-            echo "GitHub token source: GITHUB_TOKEN"
-            harvest_token="${GITHUB_TOKEN_FALLBACK}"
-            token_source="GITHUB_TOKEN"
+            echo "GitHub token: COPILOT_PAT (CMIS_GITHUB_TOKEN is not set)"
           else
-            echo "::error::No GitHub token is available. Add repository secret CMIS_GITHUB_TOKEN."
+            echo "::error::Need repository secret CMIS_GITHUB_TOKEN or COPILOT_PAT."
             exit 1
           fi
           if [ -z "${OCTOPUS_URL}" ] || [ -z "${OCTOPUS_API_KEY}" ]; then
@@ -86,783 +70,11 @@ jobs:
             exit 1
           fi
 
-          owner="${GITHUB_REPOSITORY%%/*}"
-          repo="${GITHUB_REPOSITORY#*/}"
-          octopus_root="${OCTOPUS_URL%/}"
-          report="${RUNNER_TEMP}/harvest-auth-diagnose.json"
-          summary_md="${RUNNER_TEMP}/harvest-auth-diagnose.md"
-
-          set +e
-          TOKEN_SOURCE="${token_source}" HARVEST_TOKEN="${harvest_token}" \
-          OCTOPUS_ROOT="${octopus_root}" OCTOPUS_API_KEY="${OCTOPUS_API_KEY}" \
-          OCTOPUS_SPACE="${OCTOPUS_SPACE}" OCTOPUS_PROJECT="${OCTOPUS_PROJECT}" \
-          OWNER="${owner}" REPO="${repo}" REPORT="${report}" SUMMARY_MD="${summary_md}" \
-          python3 << 'PY'
-          import json, os, re, urllib.error, urllib.request
-          from datetime import datetime, timezone
-
-          token = os.environ["HARVEST_TOKEN"]
-          token_source = os.environ["TOKEN_SOURCE"]
-          owner = os.environ["OWNER"]
-          repo = os.environ["REPO"]
-          octopus_root = os.environ["OCTOPUS_ROOT"].rstrip("/")
-          octopus_key = os.environ["OCTOPUS_API_KEY"]
-          wanted_space = os.environ["OCTOPUS_SPACE"]
-          wanted_project = os.environ["OCTOPUS_PROJECT"]
-          report_path = os.environ["REPORT"]
-          summary_path = os.environ["SUMMARY_MD"]
-
-          def classify_github(status, headers, body):
-              h = {k.lower(): v for k, v in headers.items()}
-              text = body or ""
-              lower = text.lower()
-              sso = h.get("x-github-sso") or ""
-              www = h.get("www-authenticate") or ""
-              retry_after = h.get("retry-after")
-              remaining = h.get("x-ratelimit-remaining")
-              resource = h.get("x-ratelimit-resource")
-              msg = ""
-              try:
-                  msg = (json.loads(text).get("message") or "") if text.strip().startswith("{") else text[:300]
-              except Exception:
-                  msg = text[:300]
-              kind = "ok" if 200 <= status < 300 else "http_error"
-              if status == 401:
-                  kind = "auth_unauthorized"
-              elif status == 403:
-                  if "secondary rate limit" in lower or (retry_after and "rate" in lower):
-                      kind = "secondary_rate_limit"
-                  elif remaining == "0" or "rate limit" in lower or "api rate limit" in lower:
-                      kind = "primary_rate_limit"
-                  elif sso or "saml" in lower or "sso" in lower or "organization administration" in lower:
-                      kind = "sso_or_saml_forbidden"
-                  elif "resource not accessible" in lower or "must have" in lower or "permission" in lower:
-                      kind = "permission_forbidden"
-                  elif "blocked" in lower:
-                      kind = "blocked"
-                  else:
-                      kind = "forbidden_other"
-              return {
-                  "kind": kind,
-                  "message": msg.strip(),
-                  "x_ratelimit_remaining": remaining,
-                  "x_ratelimit_limit": h.get("x-ratelimit-limit"),
-                  "x_ratelimit_resource": resource,
-                  "x_ratelimit_reset": h.get("x-ratelimit-reset"),
-                  "retry_after": retry_after,
-                  "x_github_sso": sso or None,
-                  "www_authenticate": www or None,
-                  "x_oauth_scopes": h.get("x-oauth-scopes"),
-                  "x_accepted_github_permissions": h.get("x-accepted-github-permissions"),
-                  "x_github_request_id": h.get("x-github-request-id"),
-              }
-
-          def probe_github(name, url, method="GET", data=None, content_type=None):
-              headers = {
-                  "Authorization": f"Bearer {token}",
-                  "Accept": "application/vnd.github+json",
-                  "User-Agent": "intelligence-scorecard-diagnose",
-                  "X-GitHub-Api-Version": "2022-11-28",
-              }
-              if content_type:
-                  headers["Content-Type"] = content_type
-              req = urllib.request.Request(url, data=data, headers=headers, method=method)
-              try:
-                  with urllib.request.urlopen(req, timeout=45) as resp:
-                      body = resp.read(8000).decode("utf-8", "replace")
-                      status = resp.status
-                      hdrs = {k: v for k, v in resp.headers.items()}
-              except urllib.error.HTTPError as exc:
-                  body = exc.read(8000).decode("utf-8", "replace")
-                  status = exc.code
-                  hdrs = {k: v for k, v in exc.headers.items()} if exc.headers else {}
-              except Exception as exc:
-                  return {
-                      "name": name,
-                      "service": "github",
-                      "url": url,
-                      "status": None,
-                      "error": str(exc),
-                      "classification": {"kind": "transport_error", "message": str(exc)},
-                  }
-              classification = classify_github(status, hdrs, body)
-              return {
-                  "name": name,
-                  "service": "github",
-                  "url": url,
-                  "status": status,
-                  "classification": classification,
-                  "body_preview": body[:500],
-              }
-
-          def probe_octopus(name, url):
-              headers = {
-                  "X-Octopus-ApiKey": octopus_key,
-                  "Accept": "application/json",
-                  "User-Agent": "intelligence-scorecard-diagnose",
-              }
-              req = urllib.request.Request(url, headers=headers, method="GET")
-              try:
-                with urllib.request.urlopen(req, timeout=45) as resp:
-                    body = resp.read(8000).decode("utf-8", "replace")
-                    status = resp.status
-                    hdrs = {k: v for k, v in resp.headers.items()}
-              except urllib.error.HTTPError as exc:
-                  body = exc.read(8000).decode("utf-8", "replace")
-                  status = exc.code
-                  hdrs = {k: v for k, v in exc.headers.items()} if exc.headers else {}
-              except Exception as exc:
-                  return {
-                      "name": name,
-                      "service": "octopus",
-                      "url": url,
-                      "status": None,
-                      "error": str(exc),
-                      "classification": {"kind": "transport_error", "message": str(exc)},
-                  }
-              kind = "ok" if 200 <= status < 300 else ("auth_forbidden" if status in (401, 403) else "http_error")
-              msg = body[:300]
-              try:
-                  parsed = json.loads(body)
-                  if isinstance(parsed, dict):
-                      msg = parsed.get("ErrorMessage") or parsed.get("message") or parsed.get("title") or msg
-              except Exception:
-                  pass
-              return {
-                  "name": name,
-                  "service": "octopus",
-                  "url": re.sub(r"(api-key=)[^&]+", r"\1***", url),
-                  "status": status,
-                  "classification": {
-                      "kind": kind,
-                      "message": (msg or "").strip(),
-                      "octopus_api_version": hdrs.get("Octopus-Version") or hdrs.get("octopus-version"),
-                  },
-                  "body_preview": body[:500],
-              }
-
-          probes = []
-          probes.append(probe_github("github.user", "https://api.github.com/user"))
-          probes.append(probe_github("github.rate_limit", "https://api.github.com/rate_limit"))
-          probes.append(probe_github("github.repo", f"https://api.github.com/repos/{owner}/{repo}"))
-          probes.append(probe_github(
-              "github.repo_pulls",
-              f"https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=1",
-          ))
-          probes.append(probe_github(
-              "github.repo_actions_runs",
-              f"https://api.github.com/repos/{owner}/{repo}/actions/runs?per_page=1",
-          ))
-          probes.append(probe_github(
-              "github.repo_commits",
-              f"https://api.github.com/repos/{owner}/{repo}/commits?per_page=1",
-          ))
-          # Org project board (project 1) — GraphHub GraphQL used by cmis GitHub tracker.
-          gql = json.dumps({
-              "query": """query($owner:String!,$number:Int!){
-                organization(login:$owner){
-                  projectV2(number:$number){ id title }
-                }
-              }""",
-              "variables": {"owner": owner, "number": 1},
-          }).encode()
-          gql_probe = probe_github(
-              "github.graphql_org_project_v2",
-              "https://api.github.com/graphql",
-              method="POST",
-              data=gql,
-              content_type="application/json",
-          )
-          # GraphQL often returns HTTP 200 with an errors[].type of FORBIDDEN / INSUFFICIENT_SCOPES.
-          if gql_probe.get("status") == 200:
-              try:
-                  gql_body = json.loads(gql_probe.get("body_preview") or "{}")
-                  errors = gql_body.get("errors") or []
-                  if errors:
-                      etypes = ",".join(sorted({(e.get("type") or e.get("extensions", {}).get("code") or "error") for e in errors}))
-                      msg = "; ".join((e.get("message") or "")[:160] for e in errors[:3])
-                      kind = "permission_forbidden"
-                      joined = (msg + " " + etypes).lower()
-                      if "rate" in joined:
-                          kind = "secondary_rate_limit"
-                      if "saml" in joined or "sso" in joined:
-                          kind = "sso_or_saml_forbidden"
-                      if "scope" in joined or "insufficient" in joined:
-                          kind = "permission_forbidden"
-                      gql_probe["classification"] = {
-                          **(gql_probe.get("classification") or {}),
-                          "kind": kind,
-                          "message": f"GraphQL errors ({etypes}): {msg}",
-                      }
-                      gql_probe["status"] = 403
-              except Exception:
-                  pass
-          probes.append(gql_probe)
-          # Search is a common secondary-rate-limit surface for delivery harvests.
-          probes.append(probe_github(
-              "github.search_issues",
-              f"https://api.github.com/search/issues?q=repo:{owner}/{repo}+is:pr&per_page=1",
-          ))
-          # GitHubDelivery-oriented surfaces (board tracker does not need these).
-          probes.append(probe_github(
-              "github.repo_deployments",
-              f"https://api.github.com/repos/{owner}/{repo}/deployments?per_page=1",
-          ))
-          probes.append(probe_github(
-              "github.repo_environments",
-              f"https://api.github.com/repos/{owner}/{repo}/environments",
-          ))
-          probes.append(probe_github(
-              "github.repo_actions_workflows",
-              f"https://api.github.com/repos/{owner}/{repo}/actions/workflows?per_page=1",
-          ))
-          probes.append(probe_github(
-              "github.repo_actions_runs_dated",
-              f"https://api.github.com/repos/{owner}/{repo}/actions/runs?per_page=1&created=2026-10-01..2026-10-21",
-          ))
-          probes.append(probe_github(
-              "github.org",
-              f"https://api.github.com/orgs/{owner}",
-          ))
-
-          spaces = probe_octopus("octopus.spaces_all", f"{octopus_root}/api/spaces/all")
-          probes.append(spaces)
-          space_id = None
-          project_id = None
-          if spaces.get("status") == 200:
-              # Re-fetch full spaces for id resolution (probe body may be truncated).
-              try:
-                  req = urllib.request.Request(
-                      f"{octopus_root}/api/spaces/all",
-                      headers={"X-Octopus-ApiKey": octopus_key, "Accept": "application/json"},
-                  )
-                  with urllib.request.urlopen(req, timeout=45) as resp:
-                      space_list = json.load(resp)
-                  if isinstance(space_list, dict):
-                      space_list = space_list.get("Items") or space_list.get("items") or []
-                  match = next(
-                      (s for s in space_list if wanted_space in (s.get("Id"), s.get("Name"), s.get("Slug"))),
-                      None,
-                  )
-                  if match:
-                      space_id = match["Id"]
-              except Exception as exc:
-                  probes.append({
-                      "name": "octopus.space_resolve",
-                      "service": "octopus",
-                      "status": None,
-                      "classification": {"kind": "transport_error", "message": str(exc)},
-                  })
-
-          if space_id:
-              projects = probe_octopus(
-                  "octopus.projects_all",
-                  f"{octopus_root}/api/{space_id}/projects/all",
-              )
-              probes.append(projects)
-              try:
-                  req = urllib.request.Request(
-                      f"{octopus_root}/api/{space_id}/projects/all",
-                      headers={"X-Octopus-ApiKey": octopus_key, "Accept": "application/json"},
-                  )
-                  with urllib.request.urlopen(req, timeout=45) as resp:
-                      project_list = json.load(resp)
-                  if isinstance(project_list, dict):
-                      project_list = project_list.get("Items") or project_list.get("items") or []
-                  match = next(
-                      (
-                          p for p in project_list
-                          if wanted_project in (p.get("Id"), p.get("Name"), p.get("Slug"))
-                      ),
-                      None,
-                  )
-                  if match:
-                      project_id = match["Id"]
-              except Exception as exc:
-                  probes.append({
-                      "name": "octopus.project_resolve",
-                      "service": "octopus",
-                      "status": None,
-                      "classification": {"kind": "transport_error", "message": str(exc)},
-                  })
-
-          if space_id and project_id:
-              probes.append(probe_octopus(
-                  "octopus.project_get",
-                  f"{octopus_root}/api/{space_id}/projects/{project_id}",
-              ))
-              # Same path with the project name/slug (what the workflow passes to cmis).
-              probes.append(probe_octopus(
-                  "octopus.project_get_by_name",
-                  f"{octopus_root}/api/{space_id}/projects/{wanted_project}",
-              ))
-              probes.append(probe_octopus(
-                  "octopus.deployments",
-                  f"{octopus_root}/api/{space_id}/deployments?projects={project_id}&take=1",
-              ))
-              probes.append(probe_octopus(
-                  "octopus.deployments_by_name",
-                  f"{octopus_root}/api/{space_id}/deployments?projects={wanted_project}&take=1",
-              ))
-              probes.append(probe_octopus(
-                  "octopus.deployments_dated",
-                  f"{octopus_root}/api/{space_id}/deployments?projects={project_id}&from=2026-10-01T00:00:00Z&to=2026-10-21T23:59:59Z&take=30",
-              ))
-              probes.append(probe_octopus(
-                  "octopus.releases",
-                  f"{octopus_root}/api/{space_id}/projects/{project_id}/releases?take=1",
-              ))
-              probes.append(probe_octopus(
-                  "octopus.environments_all",
-                  f"{octopus_root}/api/{space_id}/environments/all",
-              ))
-              probes.append(probe_octopus(
-                  "octopus.progression",
-                  f"{octopus_root}/api/{space_id}/projects/{project_id}/progression",
-              ))
-              probes.append(probe_octopus(
-                  "octopus.events_project",
-                  f"{octopus_root}/api/{space_id}/events?regarding={project_id}&take=1",
-              ))
-
-          failures = [
-              p for p in probes
-              if (p.get("status") in (401, 403))
-              or (p.get("classification") or {}).get("kind") not in ("ok", None)
-              and p.get("status") not in (200, 201)
-          ]
-          # Keep only real auth/rate problems for the hard fail list.
-          hard = []
-          for p in probes:
-              kind = (p.get("classification") or {}).get("kind")
-              if p.get("status") in (401, 403) or kind in {
-                  "auth_unauthorized",
-                  "secondary_rate_limit",
-                  "primary_rate_limit",
-                  "sso_or_saml_forbidden",
-                  "permission_forbidden",
-                  "blocked",
-                  "forbidden_other",
-                  "auth_forbidden",
-              }:
-                  hard.append(p)
-
-          result = {
-              "ok": len(hard) == 0,
-              "utc": datetime.now(timezone.utc).isoformat(),
-              "tokenSource": token_source,
-              "tokenPrefix": (token[:4] + "…" + token[-4:]) if len(token) >= 10 else "(short)",
-              "githubRepository": f"{owner}/{repo}",
-              "octopusSpace": wanted_space,
-              "octopusProject": wanted_project,
-              "octopusSpaceId": space_id,
-              "octopusProjectId": project_id,
-              "probes": probes,
-              "hardFailures": [
-                  {
-                      "name": p.get("name"),
-                      "service": p.get("service"),
-                      "status": p.get("status"),
-                      "url": p.get("url"),
-                      "classification": p.get("classification"),
-                  }
-                  for p in hard
-              ],
-          }
-          # Drop body_preview from saved file size? keep for evidence.
-          json.dump(result, open(report_path, "w"), indent=2)
-
-          lines = [
-              "## Harvest auth diagnosis",
-              "",
-              f"- Token source: `{token_source}`",
-              f"- Repo: `{owner}/{repo}`",
-              f"- Octopus space/project: `{wanted_space}` / `{wanted_project}`"
-              + (f" (`{space_id}` / `{project_id}`)" if space_id else ""),
-              f"- Hard failures: **{len(hard)}**",
-              "",
-              "| Probe | Service | Status | Kind | Detail |",
-              "| --- | --- | --- | --- | --- |",
-          ]
-          for p in probes:
-              c = p.get("classification") or {}
-              detail = (c.get("message") or "")[:120].replace("|", "\\|").replace("\n", " ")
-              extra = []
-              if c.get("x_ratelimit_remaining") is not None:
-                  extra.append(f"remaining={c.get('x_ratelimit_remaining')}")
-              if c.get("retry_after"):
-                  extra.append(f"retry-after={c.get('retry_after')}")
-              if c.get("x_github_sso"):
-                  extra.append(f"sso={c.get('x_github_sso')[:60]}")
-              if extra:
-                  detail = (detail + " · " + ", ".join(extra)).strip(" ·")
-              lines.append(
-                  f"| `{p.get('name')}` | {p.get('service')} | `{p.get('status')}` | `{c.get('kind')}` | {detail} |"
-              )
-          if hard:
-              lines += ["", "### Hard failures (403/401/rate/SSO/permission)", ""]
-              for p in hard:
-                  c = p.get("classification") or {}
-                  lines.append(
-                      f"- **{p.get('service')}** `{p.get('name')}` status `{p.get('status')}` "
-                      f"kind `{c.get('kind')}` — {(c.get('message') or '')[:240]}"
-                  )
-                  lines.append(f"  - URL: `{p.get('url')}`")
-          open(summary_path, "w").write("\n".join(lines) + "\n")
-          print("\n".join(lines))
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
-              handle.write("\n".join(lines) + "\n")
-
-          # Machine-readable outputs for later steps / local triage.
-          print(f"DIAGNOSE_JSON={report_path}")
-          if hard:
-              # Prefer naming the first GitHub 403, else first Octopus 403.
-              github_hard = [p for p in hard if p.get("service") == "github"]
-              octopus_hard = [p for p in hard if p.get("service") == "octopus"]
-              top = (github_hard or octopus_hard or hard)[0]
-              c = top.get("classification") or {}
-              print(
-                  f"::error::Harvest auth diagnosis failed: {top.get('service')} "
-                  f"{top.get('name')} HTTP {top.get('status')} kind={c.get('kind')} "
-                  f"msg={(c.get('message') or '')[:180]}"
-              )
-              raise SystemExit(1)
-          print("All credential probes succeeded.")
-          PY
-          diagnose_code=$?
-
-          mkdir -p "${GITHUB_WORKSPACE}/scorecard-report"
-          if [ -f "${report}" ]; then
-            cp "${report}" "${GITHUB_WORKSPACE}/scorecard-report/harvest-auth-diagnose.json"
-          fi
-          if [ "${diagnose_code}" -ne 0 ]; then
-            exit "${diagnose_code}"
-          fi
-          echo "diagnose_ok=true" >> "${GITHUB_OUTPUT}"
-
-      # When curl probes are green but GitHubDelivery still 403s, reproduce with cmis alone
-      # (board tracker is excluded) and capture the full envelope + stderr.
-      - name: Reproduce GitHubDelivery 403 with cmis
-        id: reproduce
-        if: success()
-        timeout-minutes: 15
-        run: |
-          set -euo pipefail
-          # Install token must reach the private scorecard release (COPILOT_PAT /
-          # CMIS_GITHUB_TOKEN). Harvest token is chosen separately — COPILOT_PAT may
-          # be under GitHub secondary/abuse limits after repeated Delivery harvests
-          # even while simple curl probes still return 200.
-          if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
-            install_token="${CMIS_GITHUB_TOKEN}"
-          elif [ -n "${COPILOT_PAT}" ]; then
-            install_token="${COPILOT_PAT}"
-          else
-            echo "::error::Need CMIS_GITHUB_TOKEN or COPILOT_PAT to download the private cmis release."
-            exit 1
-          fi
-          export GH_TOKEN="${install_token}"
-
+          export GH_TOKEN="${harvest_token}"
           dest="${RUNNER_TEMP}/cmis-release"
           mkdir -p "${dest}"
           gh api --paginate "repos/${SCORECARD_REPO}/releases?per_page=100" \
             --jq '.[] | select(any(.assets[]; .name | test("linux-x64\\.tar\\.gz$"))) | {tag:.tag_name, assets:[.assets[].name]}' \
-            > "${dest}/cmis-releases.jsonl"
-          tag=$(jq -s -r '.[0].tag // empty' "${dest}/cmis-releases.jsonl")
-          asset=$(jq -s -r '[.[0].assets[] | select(test("linux-x64\\.tar\\.gz$"))][0] // empty' "${dest}/cmis-releases.jsonl")
-          gh release download "${tag}" --repo "${SCORECARD_REPO}" \
-            --pattern "${asset}" --pattern "SHA256SUMS.txt" --dir "${dest}" --clobber
-          grep -F "${asset}" "${dest}/SHA256SUMS.txt" | (cd "${dest}" && sha256sum -c -)
-          mkdir -p "${dest}/tool"
-          tar -xzf "${dest}/${asset}" -C "${dest}/tool"
-          cmis="${dest}/tool/cmis"
-          chmod +x "${cmis}"
-
-          octopus_root="${OCTOPUS_URL%/}"
-          spaces_json="${RUNNER_TEMP}/octopus-spaces.json"
-          curl -fsS -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" "${octopus_root}/api/spaces/all" -o "${spaces_json}"
-          octopus_space_id=$(OCTOPUS_SPACE="${OCTOPUS_SPACE}" python3 - "${spaces_json}" << 'PY'
-          import json, os, sys
-          payload = json.load(open(sys.argv[1]))
-          spaces = payload if isinstance(payload, list) else payload.get("Items") or []
-          wanted = os.environ["OCTOPUS_SPACE"]
-          for space in spaces:
-              if wanted in (space.get("Id"), space.get("Name"), space.get("Slug")):
-                  print(space["Id"])
-                  raise SystemExit(0)
-          raise SystemExit(f"space not found: {wanted}")
-          PY
-          )
-
-          owner="${GITHUB_REPOSITORY%%/*}"
-          repo="${GITHUB_REPOSITORY#*/}"
-          mkdir -p "${GITHUB_WORKSPACE}/scorecard-report"
-          until=$(date -u +%F)
-          since=$(date -u -d '7 days ago' +%F)
-          octopus_project_id=$(
-            OCTOPUS_URL="${OCTOPUS_URL}" OCTOPUS_API_KEY="${OCTOPUS_API_KEY}" \
-            OCTOPUS_SPACE_ID="${octopus_space_id}" OCTOPUS_PROJECT="${OCTOPUS_PROJECT}" \
-            python3 - << 'PY'
-          import json, os, urllib.request
-          root = os.environ["OCTOPUS_URL"].rstrip("/")
-          space = os.environ["OCTOPUS_SPACE_ID"]
-          key = os.environ["OCTOPUS_API_KEY"]
-          wanted = os.environ["OCTOPUS_PROJECT"]
-          req = urllib.request.Request(
-              f"{root}/api/{space}/projects/all",
-              headers={"X-Octopus-ApiKey": key, "Accept": "application/json"},
-          )
-          with urllib.request.urlopen(req, timeout=60) as resp:
-              projects = json.load(resp)
-          if isinstance(projects, dict):
-              projects = projects.get("Items") or []
-          match = next(p for p in projects if wanted in (p.get("Id"), p.get("Name"), p.get("Slug")))
-          print(match["Id"])
-          PY
-          )
-
-          echo "----- cmis connect / set-token / verify / guidance help -----"
-          "${cmis}" connect --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-connect-help.txt" 2>&1 || true
-          "${cmis}" connect set-token --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt" 2>&1 || true
-          "${cmis}" connect verify --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-help.txt" 2>&1 || true
-          "${cmis}" connect guidance --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-guidance-help.txt" 2>&1 || true
-          "${cmis}" connections harvest --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-harvest-help.txt" 2>&1 || true
-          head -n 80 "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt" || true
-          head -n 80 "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-help.txt" || true
-          "${cmis}" connect guidance --tracker GitHub --json \
-            > "${GITHUB_WORKSPACE}/scorecard-report/cmis-guidance-GitHub.json" 2>&1 || true
-          echo "----- strings: env keys / octopus paths inside cmis -----"
-          strings "${cmis}" | rg -i 'CMIS_.*TOKEN|OCTOPUS|_OCTOPUS|/api/|User-Agent|GitHubDelivery' \
-            | sort -u | head -n 200 \
-            | tee "${GITHUB_WORKSPACE}/scorecard-report/cmis-strings-hints.txt" || true
-
-          # Matrix: harvest token source × project coordinate. Octopus key is constant.
-          summary_json="${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-matrix.json"
-          echo '[]' > "${summary_json}"
-          any_ok=0
-          while IFS='|' read -r case_id project_coord token_name; do
-            case_id=$(echo "${case_id}" | tr -d '[:space:]')
-            project_coord=$(echo "${project_coord}" | tr -d '[:space:]')
-            token_name=$(echo "${token_name}" | tr -d '[:space:]')
-            [ -n "${case_id}" ] || continue
-            case "${token_name}" in
-              GITHUB_TOKEN) harvest_token="${GITHUB_TOKEN_FALLBACK}" ;;
-              COPILOT_PAT) harvest_token="${COPILOT_PAT}" ;;
-              CMIS_GITHUB_TOKEN) harvest_token="${CMIS_GITHUB_TOKEN}" ;;
-              *) echo "::error::unknown token_name ${token_name}"; exit 1 ;;
-            esac
-            if [ -z "${harvest_token}" ]; then
-              echo "skip ${case_id}: token ${token_name} is empty"
-              continue
-            fi
-            echo "########## repro case ${case_id} project=${project_coord} token=${token_name} ##########"
-            workspace="${RUNNER_TEMP}/cmis-repro-${case_id}"
-            store="${RUNNER_TEMP}/cmis-repro-store-${case_id}"
-            rm -rf "${workspace}" "${store}"
-            mkdir -p "${workspace}" "${store}"
-            common=(--json --workspace "${workspace}" --store "${store}")
-
-            export CMIS_BOOTCAMP_TOKEN="${harvest_token}"
-            export CMIS_BOOTCAMP_OCTOPUS_TOKEN="${OCTOPUS_API_KEY}"
-
-            "${cmis}" connections add \
-              --id bootcamp \
-              --name "Delivery" \
-              --tracker GitHubDelivery \
-              --coordinate "owner=${owner}" \
-              --coordinate "repo=${repo}" \
-              --coordinate "octopusServer=${OCTOPUS_URL}" \
-              --coordinate "octopusSpace=${octopus_space_id}" \
-              --coordinate "octopusProject=${project_coord}" \
-              --coordinate "environments=auto" \
-              "${common[@]}" > "${RUNNER_TEMP}/cmis-repro-add-${case_id}.json"
-
-            printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
-              --connection bootcamp --stdin "${common[@]}" \
-              > "${RUNNER_TEMP}/cmis-repro-set-gh-${case_id}.json" || true
-            printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
-              --connection bootcamp-octopus --stdin "${common[@]}" \
-              > "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" || true
-
-            set +e
-            "${cmis}" connect verify \
-              --connection bootcamp \
-              --tracker GitHub \
-              --base-url "https://api.github.com" \
-              --json "${common[@]}" \
-              > "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.json" 2>"${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.err"
-            verify_code=$?
-            set -e
-            echo "verify ${case_id}: exit=${verify_code}"
-            cat "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.json" || true
-
-            set +e
-            "${cmis}" connections harvest \
-              --connection bootcamp \
-              --since "${since}" \
-              --until "${until}" \
-              --on-failure strict \
-              "${common[@]}" > "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>"${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.err"
-            code=$?
-            set -e
-            cp "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" \
-              "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest-${case_id}.json"
-            if [ -s "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.err" ]; then
-              cp "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.err" \
-                "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest-${case_id}.err"
-            fi
-            ok=$(jq -r '.ok // false' "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>/dev/null || echo false)
-            err=$(jq -c '.error // {}' "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>/dev/null || echo '{}')
-            warn=$(jq -c '.warnings // []' "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>/dev/null || echo '[]')
-            echo "case ${case_id}: exit=${code} ok=${ok} error=${err}"
-            python3 - "${summary_json}" "${case_id}" "${project_coord}" "${token_name}" "${code}" "${ok}" "${err}" "${warn}" << 'PY'
-          import json, sys
-          path, case_id, project, token_name, code, ok, err, warn = sys.argv[1:]
-          rows = json.load(open(path))
-          rows.append({
-              "case": case_id,
-              "octopusProject": project,
-              "tokenName": token_name,
-              "exitCode": int(code),
-              "ok": ok == "true",
-              "error": json.loads(err),
-              "warnings": json.loads(warn),
-          })
-          json.dump(rows, open(path, "w"), indent=2)
-          PY
-            if [ "${ok}" = "true" ]; then
-              any_ok=1
-              echo "CASE_OK=${case_id}" >> "${GITHUB_OUTPUT}"
-              break
-            fi
-          done <<EOF
-          copilot-name|${OCTOPUS_PROJECT}|COPILOT_PAT
-          copilot-id|${octopus_project_id}|COPILOT_PAT
-          EOF
-
-          # When GitHub verify is green but harvest 403s, the failure is not the GitHub PAT.
-          # Probe additional Octopus routes that Delivery may call (beyond the diagnose GETs).
-          echo "----- deep Octopus probes with OCTO_API_KEY -----"
-          deep_json="${GITHUB_WORKSPACE}/scorecard-report/octopus-deep-probes.json"
-          OCTOPUS_URL="${OCTOPUS_URL}" OCTOPUS_API_KEY="${OCTOPUS_API_KEY}" \
-          OCTOPUS_SPACE_ID="${octopus_space_id}" OCTOPUS_PROJECT_ID="${octopus_project_id}" \
-          OUT="${deep_json}" python3 << 'PY'
-          import json, os, urllib.error, urllib.request
-          root = os.environ["OCTOPUS_URL"].rstrip("/")
-          key = os.environ["OCTOPUS_API_KEY"]
-          space = os.environ["OCTOPUS_SPACE_ID"]
-          project = os.environ["OCTOPUS_PROJECT_ID"]
-          paths = [
-              f"/api/{space}/deployments?projects={project}&take=100&skip=0",
-              f"/api/{space}/deployments?projects={project}&take=100&skip=100",
-              f"/api/{space}/releases?projectId={project}&take=50",
-              f"/api/{space}/projects/{project}/runbooks",
-              f"/api/{space}/tasks?take=30&project={project}",
-              f"/api/{space}/events?regarding={project}&from=2026-10-01T00:00:00Z&to=2026-10-21T23:59:59Z&take=50",
-              f"/api/{space}/projects/{project}/summary",
-              f"/api/{space}/dashboard?projectId={project}",
-              f"/api/{space}/progression?projectId={project}",
-              f"/api/users/me",
-              "/api",
-          ]
-          rows = []
-          for path in paths:
-              url = root + path
-              req = urllib.request.Request(url, headers={"X-Octopus-ApiKey": key, "Accept": "application/json"})
-              try:
-                  with urllib.request.urlopen(req, timeout=60) as resp:
-                      body = resp.read(400).decode("utf-8", "replace")
-                      rows.append({"path": path, "status": resp.status, "body": body})
-              except urllib.error.HTTPError as exc:
-                  body = exc.read(400).decode("utf-8", "replace")
-                  rows.append({"path": path, "status": exc.code, "body": body})
-              except Exception as exc:
-                  rows.append({"path": path, "status": None, "body": str(exc)})
-          json.dump(rows, open(os.environ["OUT"], "w"), indent=2)
-          for row in rows:
-              print(f"{row['status']}\t{row['path']}\t{(row.get('body') or '')[:120].replace(chr(10),' ')}")
-          hard = [r for r in rows if r.get("status") in (401, 403)]
-          if hard:
-              print("DEEP_OCTOPUS_403=1")
-              for r in hard:
-                  print(f"::error::Octopus deep probe HTTP {r['status']} on {r['path']}: {(r.get('body') or '')[:180]}")
-          else:
-              print("DEEP_OCTOPUS_403=0")
-          PY
-
-          # Keep a stable filename for the artifact consumers.
-          latest_repro=$(ls -1 "${GITHUB_WORKSPACE}/scorecard-report"/cmis-repro-harvest-*.json 2>/dev/null | head -n 1 || true)
-          if [ -n "${latest_repro}" ]; then
-            cp "${latest_repro}" "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest.json"
-          fi
-
-          echo >> "${GITHUB_STEP_SUMMARY}"
-          echo "## cmis GitHubDelivery repro matrix (${since}..${until})" >> "${GITHUB_STEP_SUMMARY}"
-          echo '```json' >> "${GITHUB_STEP_SUMMARY}"
-          cat "${summary_json}" >> "${GITHUB_STEP_SUMMARY}"
-          echo '```' >> "${GITHUB_STEP_SUMMARY}"
-          echo "----- set-token help (head) -----" >> "${GITHUB_STEP_SUMMARY}"
-          echo '```' >> "${GITHUB_STEP_SUMMARY}"
-          head -n 60 "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt" >> "${GITHUB_STEP_SUMMARY}" || true
-          echo '```' >> "${GITHUB_STEP_SUMMARY}"
-
-          if [ "${any_ok}" -ne 1 ]; then
-            echo "::error::All GitHubDelivery repro cases failed while curl probes were HTTP 200. See cmis-repro-matrix.json and set-token help in the harvest-auth-diagnose artifact."
-            exit 1
-          fi
-          echo "GitHubDelivery repro succeeded for case ${CASE_OK:-unknown}."
-
-      - name: Upload auth diagnosis artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: harvest-auth-diagnose
-          path: |
-            scorecard-report/harvest-auth-diagnose.json
-            scorecard-report/cmis-repro-*.json
-            scorecard-report/cmis-repro-*.err
-            scorecard-report/cmis-verify-*.json
-            scorecard-report/cmis-verify-*.err
-            scorecard-report/cmis-guidance-*.json
-            scorecard-report/cmis-*-help.txt
-            scorecard-report/cmis-strings-hints.txt
-            scorecard-report/octopus-deep-probes.json
-          if-no-files-found: ignore
-          retention-days: 30
-
-      - name: Install cmis, harvest, and publish the HTML scorecard
-        timeout-minutes: 100
-        run: |
-          set -euo pipefail
-
-          # cmis connect verify requires a classic PAT with repo + read:project.
-          # GITHUB_TOKEN fails that check. Prefer CMIS_GITHUB_TOKEN, else COPILOT_PAT.
-          if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
-            install_token="${CMIS_GITHUB_TOKEN}"
-            harvest_token="${CMIS_GITHUB_TOKEN}"
-            echo "Token: CMIS_GITHUB_TOKEN (install + harvest)"
-          elif [ -n "${COPILOT_PAT}" ]; then
-            install_token="${COPILOT_PAT}"
-            harvest_token="${COPILOT_PAT}"
-            echo "Token: COPILOT_PAT (install + harvest; CMIS_GITHUB_TOKEN unset)"
-          else
-            echo "::error::Need repository secret CMIS_GITHUB_TOKEN (classic PAT with repo + read:project) or COPILOT_PAT."
-            exit 1
-          fi
-
-          if [ -z "${OCTOPUS_URL}" ] || [ -z "${OCTOPUS_API_KEY}" ]; then
-            echo "::error::Octopus auth is missing. Repository secrets OCTOPUS_URL and OCTO_API_KEY are required."
-            exit 1
-          fi
-          if [ -z "${OCTOPUS_SPACE}" ] || [ -z "${OCTOPUS_PROJECT}" ]; then
-            echo "::error::Octopus target is missing. Repository variables OCTOPUS_SPACE and OCTOPUS_PROJECT are required."
-            exit 1
-          fi
-
-          export GH_TOKEN="${install_token}"
-          dest="${RUNNER_TEMP}/cmis-release"
-          mkdir -p "${dest}"
-          gh api --paginate "repos/${SCORECARD_REPO}/releases?per_page=100" \
-            --jq '.[] | select(any(.assets[]; .name | test("linux-x64\\.tar\\.gz$"))) | {tag:.tag_name, prerelease, assets:[.assets[].name]}' \
             > "${dest}/cmis-releases.jsonl"
           tag=$(jq -s -r '.[0].tag // empty' "${dest}/cmis-releases.jsonl")
           asset=$(jq -s -r '[.[0].assets[] | select(test("linux-x64\\.tar\\.gz$"))][0] // empty' "${dest}/cmis-releases.jsonl")
@@ -883,36 +95,26 @@ jobs:
           mkdir -p "${dest}/tool"
           tar -xzf "${dest}/${asset}" -C "${dest}/tool"
           cmis="${dest}/tool/cmis"
-          if [ ! -x "${cmis}" ]; then
-            chmod +x "${cmis}"
-          fi
-          if [ ! -f "${cmis}" ]; then
-            echo "::error::cmis binary missing from ${asset}"
-            exit 1
-          fi
+          chmod +x "${cmis}"
           "${cmis}" --version
 
           owner="${GITHUB_REPOSITORY%%/*}"
           repo="${GITHUB_REPOSITORY#*/}"
-          # Last two calendar years: 1 Jan of the previous UTC year through today.
           until=$(date -u +%F)
           since="$(date -u -d "$(date -u +%Y)-01-01 -1 year" +%F)"
           echo "Scorecard window: ${since} through ${until} (UTC)"
+
           workspace="${RUNNER_TEMP}/cmis-workspace"
           store="${RUNNER_TEMP}/cmis-store"
           mkdir -p "${workspace}" "${store}" "${GITHUB_WORKSPACE}/scorecard-report"
           report="${GITHUB_WORKSPACE}/scorecard-report/intelligence-scorecard.html"
           render_json="${RUNNER_TEMP}/scorecard-render.json"
           harvest_json="${RUNNER_TEMP}/harvest.json"
+          months_status="${GITHUB_WORKSPACE}/scorecard-report/months-status.json"
 
-          # Connection id "bootcamp" -> CMIS_BOOTCAMP_TOKEN and CMIS_BOOTCAMP_OCTOPUS_TOKEN.
-          # Connection id "bootcamp-board" -> CMIS_BOOTCAMP_BOARD_TOKEN.
-          # Delivery uses harvest_token (GITHUB_TOKEN by default). Board keeps the
-          # broader install_token so org Project v2 GraphQL still works.
           export CMIS_BOOTCAMP_TOKEN="${harvest_token}"
-          export CMIS_BOOTCAMP_BOARD_TOKEN="${install_token}"
+          export CMIS_BOOTCAMP_BOARD_TOKEN="${harvest_token}"
           export CMIS_BOOTCAMP_OCTOPUS_TOKEN="${OCTOPUS_API_KEY}"
-
           common=(--json --workspace "${workspace}" --store "${store}")
 
           cmis_ok() {
@@ -933,122 +135,29 @@ jobs:
             cp "${out}" "${RUNNER_TEMP}/cmis-${label// /-}.json"
           }
 
-          # cmis puts octopusSpace / octopusProject into /api/{space}/projects/{project}.
-          # Repository variables are the names the Octopus Deploy actions use; resolve
-          # both to ids, and wait out transient Octopus 403/503 answers.
+          # Resolve Octopus space name -> id (cmis puts octopusSpace into /api/{space}/...).
           octopus_root="${OCTOPUS_URL%/}"
-          octopus_resolve="${RUNNER_TEMP}/octopus-resolve.json"
-          octopus_attempt=1
-          octopus_max=8
-          octopus_sleep=20
-          while true; do
-            echo "----- Octopus preflight attempt ${octopus_attempt}/${octopus_max} -----"
-            set +e
-            curl -sS -w "\nHTTP_STATUS:%{http_code}\n" \
-              -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" \
-              "${octopus_root}/api/spaces/all" > "${RUNNER_TEMP}/octopus-spaces.raw"
-            spaces_curl=$?
-            set -e
-            spaces_status=$(awk -F: '/^HTTP_STATUS:/ {print $2}' "${RUNNER_TEMP}/octopus-spaces.raw" | tr -d '\r')
-            sed '/^HTTP_STATUS:/d' "${RUNNER_TEMP}/octopus-spaces.raw" > "${RUNNER_TEMP}/octopus-spaces.json"
-            if [ "${spaces_curl}" -eq 0 ] && [ "${spaces_status}" = "200" ]; then
-              if OCTOPUS_SPACE="${OCTOPUS_SPACE}" OCTOPUS_PROJECT="${OCTOPUS_PROJECT}" \
-                python3 - "${RUNNER_TEMP}/octopus-spaces.json" "${octopus_root}" "${OCTOPUS_API_KEY}" "${octopus_resolve}" << 'PY'
-          import json, os, sys, urllib.request
-
-          spaces_path, root, api_key, out_path = sys.argv[1:]
-          payload = json.load(open(spaces_path))
+          spaces_json="${RUNNER_TEMP}/octopus-spaces.json"
+          if ! curl -fsS -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" \
+            "${octopus_root}/api/spaces/all" -o "${spaces_json}"; then
+            echo "::error::Octopus auth failed calling ${octopus_root}/api/spaces/all."
+            exit 1
+          fi
+          octopus_space_id=$(OCTOPUS_SPACE="${OCTOPUS_SPACE}" python3 - "${spaces_json}" << 'PY'
+          import json, os, sys
+          payload = json.load(open(sys.argv[1]))
           spaces = payload if isinstance(payload, list) else payload.get("Items") or payload.get("items") or []
-          wanted_space = os.environ["OCTOPUS_SPACE"]
-          space = next(
-              (s for s in spaces if wanted_space in (s.get("Id"), s.get("Name"), s.get("Slug"))),
-              None,
-          )
-          if space is None:
-              names = ", ".join(sorted(s.get("Name") or s.get("Id") or "?" for s in spaces))
-              print(f"No Octopus space matches '{wanted_space}'. Spaces: {names}", file=sys.stderr)
-              raise SystemExit(2)
-
-          space_id = space["Id"]
-          wanted_project = os.environ["OCTOPUS_PROJECT"]
-          req = urllib.request.Request(
-              f"{root.rstrip('/')}/api/{space_id}/projects/all",
-              headers={"X-Octopus-ApiKey": api_key, "Accept": "application/json"},
-          )
-          try:
-              with urllib.request.urlopen(req, timeout=60) as response:
-                  projects = json.load(response)
-          except Exception as exc:
-              print(f"Octopus projects list failed: {exc}", file=sys.stderr)
-              raise SystemExit(3)
-
-          if isinstance(projects, dict):
-              projects = projects.get("Items") or projects.get("items") or []
-          project = next(
-              (
-                  p
-                  for p in projects
-                  if wanted_project in (p.get("Id"), p.get("Name"), p.get("Slug"))
-              ),
-              None,
-          )
-          if project is None:
-              names = ", ".join(sorted(p.get("Name") or p.get("Id") or "?" for p in projects)[:40])
-              print(
-                  f"No Octopus project matches '{wanted_project}' in {space_id}. Projects: {names}",
-                  file=sys.stderr,
-              )
-              raise SystemExit(4)
-
-          # Confirm the direct project route cmis will call.
-          project_id = project["Id"]
-          check = urllib.request.Request(
-              f"{root.rstrip('/')}/api/{space_id}/projects/{project_id}",
-              headers={"X-Octopus-ApiKey": api_key, "Accept": "application/json"},
-          )
-          try:
-              with urllib.request.urlopen(check, timeout=60) as response:
-                  if response.status != 200:
-                      print(f"Octopus project GET status {response.status}", file=sys.stderr)
-                      raise SystemExit(5)
-          except Exception as exc:
-              print(f"Octopus project GET failed: {exc}", file=sys.stderr)
-              raise SystemExit(5)
-
-          result = {
-              "spaceId": space_id,
-              "spaceName": space.get("Name"),
-              "projectId": project_id,
-              "projectName": project.get("Name"),
-              "projectSlug": project.get("Slug"),
-          }
-          json.dump(result, open(out_path, "w"))
-          print(json.dumps(result))
+          wanted = os.environ["OCTOPUS_SPACE"]
+          for space in spaces:
+              if wanted in (space.get("Id"), space.get("Name"), space.get("Slug")):
+                  print(space["Id"])
+                  raise SystemExit(0)
+          names = ", ".join(sorted(space.get("Name") or space.get("Id") or "?" for space in spaces))
+          print(f"No Octopus space matches '{wanted}'. Spaces: {names}", file=sys.stderr)
+          raise SystemExit(1)
           PY
-              then
-                break
-              fi
-              resolve_code=$?
-              echo "::warning::Octopus resolve failed (exit ${resolve_code})"
-            else
-              echo "::warning::Octopus spaces/all returned status=${spaces_status:-curl-${spaces_curl}}"
-            fi
-            if [ "${octopus_attempt}" -ge "${octopus_max}" ]; then
-              echo "::error::Octopus did not become ready for space '${OCTOPUS_SPACE}' project '${OCTOPUS_PROJECT}'."
-              exit 1
-            fi
-            echo "Sleeping ${octopus_sleep}s before Octopus retry"
-            sleep "${octopus_sleep}"
-            octopus_attempt=$((octopus_attempt + 1))
-            octopus_sleep=$((octopus_sleep * 2))
-            if [ "${octopus_sleep}" -gt 300 ]; then
-              octopus_sleep=300
-            fi
-          done
-          octopus_space_id=$(jq -r .spaceId "${octopus_resolve}")
-          octopus_project_id=$(jq -r .projectId "${octopus_resolve}")
+          )
           echo "Octopus space id: ${octopus_space_id}"
-          echo "Octopus project id: ${octopus_project_id} ($(jq -r .projectName "${octopus_resolve}"))"
 
           cmis_ok "add-board" connections add \
             --id bootcamp-board \
@@ -1060,9 +169,6 @@ jobs:
             --coordinate "projectNumber=1" \
             "${common[@]}"
 
-          # Use the Octopus project name/slug (same as the green 30-day run). The
-          # resolved id is logged for diagnostics; cmis GitHubDelivery accepted the
-          # name while Projects-* ids have returned opaque 403s with apiRequestCount 0.
           cmis_ok "add-delivery" connections add \
             --id bootcamp \
             --name "Delivery" \
@@ -1075,138 +181,238 @@ jobs:
             --coordinate "environments=auto" \
             "${common[@]}"
 
-          # Credentials: env vars only (CMIS_BOOTCAMP_TOKEN / _OCTOPUS_TOKEN /
-          # CMIS_BOOTCAMP_BOARD_TOKEN). The green run did not use connect set-token;
-          # writing bootcamp-octopus into the store correlated with persistent 403s.
-
-          # Harvest the two-year window in quarterly chunks so a stuck GitHub or
-          # Octopus call cannot sit silently for hours. Each chunk is bounded by
-          # GNU timeout; a parallel heartbeat logs progress every 30s.
-          # Newest quarter first. Harvest both connections together per chunk
-          # (same shape as the green trailing-window run).
-          chunks_file="${RUNNER_TEMP}/harvest-chunks.json"
-          python3 - "${since}" "${until}" "${chunks_file}" << 'PY'
+          # Calendar months from window start through current month (UTC).
+          months_file="${RUNNER_TEMP}/harvest-months.json"
+          python3 - "${since}" "${until}" "${months_file}" << 'PY'
           import json, sys
-          from datetime import date, timedelta
           from calendar import monthrange
+          from datetime import date
 
-          since_s, until_s, out_path = sys.argv[1:]
-          since = date.fromisoformat(since_s)
-          until = date.fromisoformat(until_s)
-          if until < since:
-              raise SystemExit(f"until {until} is before since {since}")
-
-          def quarter_start(d: date) -> date:
-              return date(d.year, ((d.month - 1) // 3) * 3 + 1, 1)
-
-          def quarter_end(d: date) -> date:
-              start = quarter_start(d)
-              end_month = start.month + 2
-              last_day = monthrange(start.year, end_month)[1]
-              return date(start.year, end_month, last_day)
-
-          chunks = []
-          cursor = since
-          while cursor <= until:
-              q_end = quarter_end(cursor)
-              chunk_until = min(q_end, until)
-              label = f"Q{((cursor.month - 1) // 3) + 1}-{cursor.year}"
-              chunks.append({
-                  "label": label,
-                  "since": cursor.isoformat(),
-                  "until": chunk_until.isoformat(),
-              })
-              cursor = chunk_until + timedelta(days=1)
-          # Newest quarter first: recent delivery data lands before older history,
-          # and a stuck ancient chunk is obvious in the log tail.
-          chunks.reverse()
-          json.dump(chunks, open(out_path, "w"))
-          print(f"Harvest chunks ({len(chunks)}, newest first):")
-          for chunk in chunks:
-              print(f"  {chunk['label']}: {chunk['since']} .. {chunk['until']}")
+          since = date.fromisoformat(sys.argv[1])
+          until = date.fromisoformat(sys.argv[2])
+          months = []
+          y, m = since.year, since.month
+          while True:
+              start = date(y, m, 1)
+              if start > until:
+                  break
+              last = monthrange(y, m)[1]
+              end = min(date(y, m, last), until)
+              if end >= since:
+                  chunk_since = max(start, since)
+                  months.append({
+                      "label": f"{y:04d}-{m:02d}",
+                      "since": chunk_since.isoformat(),
+                      "until": end.isoformat(),
+                  })
+              if m == 12:
+                  y, m = y + 1, 1
+              else:
+                  m += 1
+              if date(y, m, 1) > until and not (y == until.year and m == until.month):
+                  # loop ends via start > until
+                  pass
+          json.dump(months, open(sys.argv[3], "w"))
+          print(f"Harvest months ({len(months)}):")
+          for row in months:
+              print(f"  {row['label']}: {row['since']} .. {row['until']}")
           PY
 
-          chunk_timeout_secs="${CMIS_CHUNK_TIMEOUT_SECS:-900}"
-          harvest_receipts_dir="${RUNNER_TEMP}/harvest-receipts"
-          mkdir -p "${harvest_receipts_dir}"
-
-          # No blind retries. Auth/rate problems are diagnosed in the prior step;
-          # a harvest 403 fails this chunk once with the cmis envelope for evidence.
-          cmis_harvest_chunk() {
-            local chunk_since="$1"
-            local chunk_until="$2"
-            local chunk_label="$3"
-            local receipt="${harvest_receipts_dir}/all-${chunk_label}.json"
-            local stamp
-            stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "===== ${stamp} START harvest ${chunk_label} ${chunk_since}..${chunk_until} (timeout ${chunk_timeout_secs}s, no retry) ====="
-            local out="${RUNNER_TEMP}/cmis-last.json"
-            local err="${RUNNER_TEMP}/cmis-last.err"
-            : > "${out}"
-            : > "${err}"
-            local start_epoch
-            start_epoch="$(date +%s)"
-            set +e
-            (
-              while true; do
-                sleep 30
-                echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) still harvesting ${chunk_label} (elapsed $(( $(date +%s) - start_epoch ))s / ${chunk_timeout_secs}s)"
-              done
-            ) &
-            local hb_pid=$!
-            timeout --signal=TERM --kill-after=45s "${chunk_timeout_secs}" \
-              "${cmis}" connections harvest \
-                --since "${chunk_since}" \
-                --until "${chunk_until}" \
-                --on-failure strict \
-                "${common[@]}" > "${out}" 2>"${err}"
-            local code=$?
-            kill "${hb_pid}" 2>/dev/null || true
-            wait "${hb_pid}" 2>/dev/null || true
-            set -e
-            local elapsed=$(( $(date +%s) - start_epoch ))
-            if [ -s "${err}" ]; then
-              echo "----- ${chunk_label} stderr (tail) -----"
-              tail -n 80 "${err}" || true
-            fi
-            if [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
-              echo "::error::harvest ${chunk_label} timed out after ${elapsed}s (exit ${code})"
-              cat "${out}" || true
-              return 1
-            fi
-            if [ "${code}" -eq 0 ] && [ "$(jq -r '.ok // empty' "${out}")" = "true" ]; then
-              cp "${out}" "${receipt}"
-              local raw rows
-              raw="$(jq -r '.data.totalRawItems // 0' "${out}")"
-              rows="$(jq -r '.data.totalRowsAdded // 0' "${out}")"
-              echo "===== $(date -u +%Y-%m-%dT%H:%M:%SZ) DONE harvest ${chunk_label} in ${elapsed}s raw=${raw} rows=${rows} ====="
-              jq -c '.data.connections[]?|{connectionId,succeeded,error,rawItems,rowsAdded}' "${out}" || true
-              return 0
-            fi
-            local err_code
-            err_code="$(jq -r '.error.code // empty' "${out}" 2>/dev/null || true)"
-            echo "::error::harvest ${chunk_label} failed (exit ${code}, ${elapsed}s, error.code=${err_code:-unknown}). No retry."
-            jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error,apiRequestCount}]})}' "${out}" 2>/dev/null || cat "${out}" || true
-            return 1
+          log_rate_limit() {
+            local label="$1"
+            echo "----- GitHub rate_limit before ${label} -----"
+            gh api rate_limit --jq '{
+              core: .resources.core|{remaining,limit,reset,resetLocal:(.reset|todateiso8601)},
+              search: .resources.search|{remaining,limit,reset,resetLocal:(.reset|todateiso8601)},
+              graphql: .resources.graphql|{remaining,limit,reset,resetLocal:(.reset|todateiso8601)}
+            }' || echo "::warning::gh api rate_limit failed"
           }
 
-          chunk_count=$(jq 'length' "${chunks_file}")
-          chunk_index=0
-          while [ "${chunk_index}" -lt "${chunk_count}" ]; do
-            chunk_label=$(jq -r ".[${chunk_index}].label" "${chunks_file}")
-            chunk_since=$(jq -r ".[${chunk_index}].since" "${chunks_file}")
-            chunk_until=$(jq -r ".[${chunk_index}].until" "${chunks_file}")
-            echo "########## chunk $((chunk_index + 1))/${chunk_count}: ${chunk_label} ${chunk_since}..${chunk_until} ##########"
-            cmis_harvest_chunk "${chunk_since}" "${chunk_until}" "${chunk_label}"
-            chunk_index=$((chunk_index + 1))
+          sleep_for_rate_limit() {
+            # Prefer explicit seconds; else sleep until core reset (capped).
+            local suggested="$1"
+            local reset
+            reset=$(gh api rate_limit --jq '.resources.core.reset' 2>/dev/null || echo "")
+            local now
+            now=$(date +%s)
+            local wait="${suggested:-60}"
+            if [ -n "${reset}" ] && [ "${reset}" -gt "${now}" ]; then
+              local until_reset=$((reset - now + 5))
+              if [ "${until_reset}" -gt "${wait}" ]; then
+                wait="${until_reset}"
+              fi
+            fi
+            if [ "${wait}" -gt 900 ]; then
+              wait=900
+            fi
+            if [ "${wait}" -lt 30 ]; then
+              wait=30
+            fi
+            echo "Sleeping ${wait}s for rate-limit / 403 backoff"
+            sleep "${wait}"
+          }
+
+          receipts_dir="${RUNNER_TEMP}/harvest-receipts"
+          mkdir -p "${receipts_dir}"
+          month_timeout="${CMIS_MONTH_TIMEOUT_SECS:-900}"
+          month_pause="${CMIS_MONTH_PAUSE_SECS:-45}"
+          status_rows='[]'
+
+          harvest_month() {
+            local month_since="$1"
+            local month_until="$2"
+            local month_label="$3"
+            local attempt=1
+            local max_attempts=3
+            local receipt="${receipts_dir}/${month_label}.json"
+            while true; do
+              log_rate_limit "${month_label} attempt ${attempt}"
+              local stamp
+              stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              echo "===== ${stamp} START month ${month_label} ${month_since}..${month_until} attempt ${attempt}/${max_attempts} ====="
+              local out="${RUNNER_TEMP}/cmis-last.json"
+              local err="${RUNNER_TEMP}/cmis-last.err"
+              : > "${out}"
+              : > "${err}"
+              local start_epoch
+              start_epoch="$(date +%s)"
+              set +e
+              (
+                while true; do
+                  sleep 30
+                  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) still harvesting ${month_label} (elapsed $(( $(date +%s) - start_epoch ))s / ${month_timeout}s)"
+                done
+              ) &
+              local hb_pid=$!
+              timeout --signal=TERM --kill-after=45s "${month_timeout}" \
+                "${cmis}" connections harvest \
+                  --since "${month_since}" \
+                  --until "${month_until}" \
+                  --on-failure strict \
+                  "${common[@]}" > "${out}" 2>"${err}"
+              local code=$?
+              kill "${hb_pid}" 2>/dev/null || true
+              wait "${hb_pid}" 2>/dev/null || true
+              set -e
+              local elapsed=$(( $(date +%s) - start_epoch ))
+              if [ -s "${err}" ]; then
+                echo "----- ${month_label} stderr (tail) -----"
+                tail -n 40 "${err}" || true
+              fi
+
+              if [ "${code}" -eq 0 ] && [ "$(jq -r '.ok // empty' "${out}")" = "true" ]; then
+                cp "${out}" "${receipt}"
+                local raw rows
+                raw="$(jq -r '.data.totalRawItems // 0' "${out}")"
+                rows="$(jq -r '.data.totalRowsAdded // 0' "${out}")"
+                echo "===== DONE ${month_label} in ${elapsed}s raw=${raw} rows=${rows} ====="
+                jq -c '.data.connections[]?|{connectionId,succeeded,error,rawItems,rowsAdded}' "${out}" || true
+                status_rows=$(MONTH_LABEL="${month_label}" MONTH_SINCE="${month_since}" MONTH_UNTIL="${month_until}" \
+                  RAW="${raw}" ROWS="${rows}" ELAPSED="${elapsed}" STATUS_ROWS="${status_rows}" python3 - << 'PY'
+          import json, os
+          rows = json.loads(os.environ["STATUS_ROWS"])
+          rows.append({
+              "month": os.environ["MONTH_LABEL"],
+              "since": os.environ["MONTH_SINCE"],
+              "until": os.environ["MONTH_UNTIL"],
+              "ok": True,
+              "error": None,
+              "rawItems": int(os.environ["RAW"]),
+              "rowsAdded": int(os.environ["ROWS"]),
+              "elapsedSeconds": int(os.environ["ELAPSED"]),
+          })
+          print(json.dumps(rows))
+          PY
+                )
+                return 0
+              fi
+
+              local err_code err_cause warn_cause
+              err_code="$(jq -r '.error.code // empty' "${out}" 2>/dev/null || true)"
+              err_cause="$(jq -r '.error.cause // empty' "${out}" 2>/dev/null || true)"
+              warn_cause="$(jq -r '[.warnings[]?.cause] | join("; ")' "${out}" 2>/dev/null || true)"
+              local combined="${err_cause} ${warn_cause}"
+              echo "::warning::month ${month_label} attempt ${attempt} failed (exit ${code}, ${elapsed}s, code=${err_code:-unknown})"
+              jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error}]})}' "${out}" 2>/dev/null || cat "${out}" || true
+
+              local is_403=0
+              if echo "${combined}" | grep -Eqi '403|Forbidden|rate limit|abuse'; then
+                is_403=1
+              fi
+
+              if [ "${attempt}" -ge "${max_attempts}" ]; then
+                echo "::error::month ${month_label} failed after ${max_attempts} attempts."
+                status_rows=$(MONTH_LABEL="${month_label}" MONTH_SINCE="${month_since}" MONTH_UNTIL="${month_until}" \
+                  ERR_CODE="${err_code}" ERR_CAUSE="${err_cause}" WARN_CAUSE="${warn_cause}" \
+                  EXIT_CODE="${code}" ELAPSED="${elapsed}" STATUS_ROWS="${status_rows}" python3 - << 'PY'
+          import json, os
+          rows = json.loads(os.environ["STATUS_ROWS"])
+          rows.append({
+              "month": os.environ["MONTH_LABEL"],
+              "since": os.environ["MONTH_SINCE"],
+              "until": os.environ["MONTH_UNTIL"],
+              "ok": False,
+              "error": {
+                  "exitCode": int(os.environ["EXIT_CODE"]),
+                  "code": os.environ.get("ERR_CODE") or None,
+                  "cause": os.environ.get("ERR_CAUSE") or None,
+                  "warnings": os.environ.get("WARN_CAUSE") or None,
+              },
+              "rawItems": 0,
+              "rowsAdded": 0,
+              "elapsedSeconds": int(os.environ["ELAPSED"]),
+          })
+          print(json.dumps(rows))
+          PY
+                )
+                return 1
+              fi
+
+              if [ "${is_403}" -eq 1 ] || [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
+                # Honor Retry-After from rate_limit resources when present.
+                local retry_after=""
+                retry_after=$(gh api -i rate_limit 2>/dev/null | awk -F': ' 'tolower($1)=="retry-after"{gsub(/\r/,"",$2); print $2; exit}' || true)
+                if [ -n "${retry_after}" ]; then
+                  sleep_for_rate_limit "${retry_after}"
+                else
+                  sleep_for_rate_limit $((60 * attempt))
+                fi
+              else
+                echo "Sleeping 30s before non-403 retry"
+                sleep 30
+              fi
+              attempt=$((attempt + 1))
+            done
+          }
+
+          month_count=$(jq 'length' "${months_file}")
+          month_index=0
+          failed_months=0
+          while [ "${month_index}" -lt "${month_count}" ]; do
+            month_label=$(jq -r ".[${month_index}].label" "${months_file}")
+            month_since=$(jq -r ".[${month_index}].since" "${months_file}")
+            month_until=$(jq -r ".[${month_index}].until" "${months_file}")
+            echo "########## month $((month_index + 1))/${month_count}: ${month_label} ${month_since}..${month_until} ##########"
+            set +e
+            harvest_month "${month_since}" "${month_until}" "${month_label}"
+            month_rc=$?
+            set -e
+            if [ "${month_rc}" -ne 0 ]; then
+              failed_months=$((failed_months + 1))
+            fi
+            month_index=$((month_index + 1))
+            if [ "${month_index}" -lt "${month_count}" ]; then
+              echo "Pausing ${month_pause}s before next month"
+              sleep "${month_pause}"
+            fi
           done
 
-          # Merge per-chunk receipts into one summary envelope for the HTML report.
-          python3 - "${harvest_receipts_dir}" "${since}" "${until}" "${harvest_json}" << 'PY'
-          import json, os, sys
+          echo "${status_rows}" | tee "${months_status}" | jq .
+          python3 - "${receipts_dir}" "${since}" "${until}" "${harvest_json}" "${months_status}" << 'PY'
+          import json, sys
           from pathlib import Path
-
-          receipts_dir, since, until, out_path = sys.argv[1:]
+          receipts_dir, since, until, out_path, status_path = sys.argv[1:]
+          status = json.load(open(status_path))
           receipts = []
           for path in sorted(Path(receipts_dir).glob("*.json")):
               payload = json.loads(path.read_text())
@@ -1218,24 +424,39 @@ jobs:
                   "connections": data.get("connections") or [],
               })
           out = {
-              "ok": True,
+              "ok": all(row.get("ok") for row in status) if status else False,
               "data": {
                   "since": since,
                   "until": until,
                   "totalRawItems": sum(r["totalRawItems"] for r in receipts),
                   "totalRowsAdded": sum(r["totalRowsAdded"] for r in receipts),
-                  "failedCount": 0,
-                  "chunkCount": len(receipts),
+                  "failedCount": sum(1 for row in status if not row.get("ok")),
+                  "monthCount": len(status),
+                  "succeededMonths": [row["month"] for row in status if row.get("ok")],
+                  "failedMonths": [row["month"] for row in status if not row.get("ok")],
+                  "months": status,
                   "connections": [c for r in receipts for c in r["connections"]],
-                  "chunks": receipts,
               },
           }
           json.dump(out, open(out_path, "w"))
           print(
-              f"Merged {len(receipts)} chunk receipts: "
-              f"raw={out['data']['totalRawItems']} rows={out['data']['totalRowsAdded']}"
+              f"Merged {len(receipts)} month receipts: "
+              f"raw={out['data']['totalRawItems']} rows={out['data']['totalRowsAdded']} "
+              f"failed_months={out['data']['failedCount']}"
           )
           PY
+
+          succeeded_count=$(jq '[.[]|select(.ok==true)]|length' "${months_status}")
+          if [ "${succeeded_count}" -eq 0 ]; then
+            echo "::error::Every month harvest failed; refusing to render an empty scorecard."
+            {
+              echo "## Intelligence scorecard — monthly harvest failed"
+              echo ""
+              echo "No month succeeded. See \`months-status.json\` in the run logs / artifacts."
+              jq -r '.[] | "- `\(.month)`: ok=\(.ok) error=\(.error|@json)"' "${months_status}"
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
 
           cmis_ok "add-scorecard" scorecards add \
             --id delivery \
@@ -1251,25 +472,23 @@ jobs:
           cmis_ok "render" scorecards render --id delivery "${common[@]}"
           cp "${RUNNER_TEMP}/cmis-last.json" "${render_json}"
 
-          python3 - "${render_json}" "${harvest_json}" "${report}" "${since}" "${until}" "${tag}" "${asset}" << 'PY'
+          python3 - "${render_json}" "${harvest_json}" "${report}" "${since}" "${until}" "${tag}" "${asset}" "${months_status}" << 'PY'
           import html
           import json
           import os
           import sys
 
-          render_path, harvest_path, report_path, since, until, tag, asset = sys.argv[1:]
+          render_path, harvest_path, report_path, since, until, tag, asset, months_path = sys.argv[1:]
           render = json.load(open(render_path))
           harvest = json.load(open(harvest_path))
+          months = json.load(open(months_path))
           if render.get("ok") is not True:
               sys.exit("render envelope is not ok")
           data = render.get("data") or {}
           sections = data.get("sections") or []
           if not sections:
-              print(json.dumps(list(data.keys()) if isinstance(data, dict) else type(data).__name__))
               sys.exit("scorecards render returned no sections; refusing an empty report")
 
-          # scorecards render has no column-order flag. Weeks are period rows in the
-          # JSON; they are transposed here so each week is a column, newest on the left.
           WEEK_KEYS = ("periodStart", "label", "period", "periodLabel", "name")
           METRIC_SKIP = set(WEEK_KEYS) | {"periodEnd", "period_end", "id"}
 
@@ -1313,11 +532,27 @@ jobs:
               "",
               f"- Repository: `{os.environ.get('GITHUB_REPOSITORY', '')}`",
               f"- Window: `{since}` through `{until}` (UTC)",
+              f"- Harvest: calendar months (pause between months; 403 backoff)",
               f"- cmis: `{tag}` (`{asset}`)",
               f"- Scorecard: `{data.get('name') or data.get('id') or 'delivery'}`",
               f"- Week columns: newest on the left",
               "",
+              "### Monthly harvest",
+              "",
           ]
+          for row in months:
+              if row.get("ok"):
+                  summary_lines.append(
+                      f"- `{row['month']}` OK — raw `{row.get('rawItems')}`, rows `{row.get('rowsAdded')}`, {row.get('elapsedSeconds')}s"
+                  )
+              else:
+                  err = row.get("error") or {}
+                  summary_lines.append(
+                      f"- `{row['month']}` FAILED — exit `{err.get('exitCode')}`, code `{err.get('code')}`, "
+                      f"cause `{(err.get('cause') or '')[:180]}`, warnings `{(err.get('warnings') or '')[:180]}`"
+                  )
+          summary_lines.append("")
+
           table_count = 0
           last_week_labels = []
           for section in sections:
@@ -1362,18 +597,14 @@ jobs:
               parts.append("</tbody></table></div>")
 
           if table_count == 0:
-              sample = sections[0] if sections else None
-              keys = list(sample.keys()) if isinstance(sample, dict) else type(sample).__name__
-              print("section keys:", keys)
               sys.exit("scorecards render sections had no rows; refusing an empty report")
 
           harvest_data = harvest.get("data") if isinstance(harvest, dict) else None
           if isinstance(harvest_data, dict):
               summary_lines.append(
-                  f"- Harvest: `{harvest_data.get('totalRawItems')}` raw items, "
+                  f"- Harvest totals: `{harvest_data.get('totalRawItems')}` raw items, "
                   f"`{harvest_data.get('totalRowsAdded')}` normalized rows, "
-                  f"`{harvest_data.get('failedCount')}` failed connections, "
-                  f"`{harvest_data.get('chunkCount')}` quarterly chunk receipts"
+                  f"`{harvest_data.get('failedCount')}` failed months"
               )
               summary_lines.append("")
 
@@ -1393,7 +624,7 @@ jobs:
           </head>
           <body>
           <h1>Intelligence scorecard</h1>
-          <p>{esc(os.environ.get('GITHUB_REPOSITORY', ''))} · {esc(since)} through {esc(until)} UTC · cmis {esc(tag)} · weeks newest on the left</p>
+          <p>{esc(os.environ.get('GITHUB_REPOSITORY', ''))} · {esc(since)} through {esc(until)} UTC · monthly harvest · cmis {esc(tag)} · weeks newest on the left</p>
           {''.join(parts)}
           </body>
           </html>
@@ -1402,8 +633,7 @@ jobs:
               handle.write(document)
           if os.path.getsize(report_path) < 200:
               sys.exit("HTML report is empty")
-          summary_path = os.environ["GITHUB_STEP_SUMMARY"]
-          with open(summary_path, "a", encoding="utf-8") as handle:
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
               handle.write("\n".join(summary_lines) + "\n")
           print(f"Wrote {report_path} ({os.path.getsize(report_path)} bytes)")
           if last_week_labels:
@@ -1415,10 +645,18 @@ jobs:
               )
           PY
 
+          if [ "${failed_months}" -gt 0 ]; then
+            echo "::error::${failed_months} month(s) failed. HTML report was still produced from successful months."
+            exit 1
+          fi
+
       - name: Upload HTML scorecard
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: intelligence-scorecard
-          path: scorecard-report/intelligence-scorecard.html
-          if-no-files-found: error
+          path: |
+            scorecard-report/intelligence-scorecard.html
+            scorecard-report/months-status.json
+          if-no-files-found: warn
           retention-days: 30
