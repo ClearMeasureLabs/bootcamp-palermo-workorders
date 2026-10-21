@@ -27,6 +27,10 @@ permissions:
   issues: read
   pull-requests: read
   actions: read
+  # GitHubDelivery correlates Actions + deployments; the job-scoped GITHUB_TOKEN
+  # needs these when it is used as the harvest credential.
+  deployments: read
+  metadata: read
 
 concurrency:
   group: intelligence-scorecard
@@ -545,16 +549,19 @@ jobs:
         timeout-minutes: 15
         run: |
           set -euo pipefail
+          # Install token must reach the private scorecard release (COPILOT_PAT /
+          # CMIS_GITHUB_TOKEN). Harvest token is chosen separately — COPILOT_PAT may
+          # be under GitHub secondary/abuse limits after repeated Delivery harvests
+          # even while simple curl probes still return 200.
           if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
-            harvest_token="${CMIS_GITHUB_TOKEN}"
+            install_token="${CMIS_GITHUB_TOKEN}"
           elif [ -n "${COPILOT_PAT}" ]; then
-            harvest_token="${COPILOT_PAT}"
+            install_token="${COPILOT_PAT}"
           else
-            harvest_token="${GITHUB_TOKEN_FALLBACK}"
+            echo "::error::Need CMIS_GITHUB_TOKEN or COPILOT_PAT to download the private cmis release."
+            exit 1
           fi
-          export GH_TOKEN="${harvest_token}"
-          export CMIS_BOOTCAMP_TOKEN="${harvest_token}"
-          export CMIS_BOOTCAMP_OCTOPUS_TOKEN="${OCTOPUS_API_KEY}"
+          export GH_TOKEN="${install_token}"
 
           dest="${RUNNER_TEMP}/cmis-release"
           mkdir -p "${dest}"
@@ -630,24 +637,32 @@ jobs:
           echo "----- guidance GitHubDelivery -----"
           cat "${GITHUB_WORKSPACE}/scorecard-report/cmis-guidance-GitHubDelivery.json" || true
 
-          # Matrix: which credential wiring / project coordinate cmis accepts.
-          # Curl probes already proved GitHub+Octopus APIs return 200 with these secrets.
+          # Matrix: harvest token source × project coordinate. Octopus key is constant.
           summary_json="${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-matrix.json"
           echo '[]' > "${summary_json}"
           any_ok=0
-          while IFS='|' read -r case_id project_coord cred_mode; do
-            case_id=$(echo "${case_id}" | tr -d ' ')
-            project_coord=$(echo "${project_coord}" | tr -d ' ')
-            cred_mode=$(echo "${cred_mode}" | tr -d ' ')
+          while IFS='|' read -r case_id project_coord token_name; do
+            case_id=$(echo "${case_id}" | tr -d '[:space:]')
+            project_coord=$(echo "${project_coord}" | tr -d '[:space:]')
+            token_name=$(echo "${token_name}" | tr -d '[:space:]')
             [ -n "${case_id}" ] || continue
-            echo "########## repro case ${case_id} project=${project_coord} creds=${cred_mode} ##########"
+            case "${token_name}" in
+              GITHUB_TOKEN) harvest_token="${GITHUB_TOKEN_FALLBACK}" ;;
+              COPILOT_PAT) harvest_token="${COPILOT_PAT}" ;;
+              CMIS_GITHUB_TOKEN) harvest_token="${CMIS_GITHUB_TOKEN}" ;;
+              *) echo "::error::unknown token_name ${token_name}"; exit 1 ;;
+            esac
+            if [ -z "${harvest_token}" ]; then
+              echo "skip ${case_id}: token ${token_name} is empty"
+              continue
+            fi
+            echo "########## repro case ${case_id} project=${project_coord} token=${token_name} ##########"
             workspace="${RUNNER_TEMP}/cmis-repro-${case_id}"
             store="${RUNNER_TEMP}/cmis-repro-store-${case_id}"
             rm -rf "${workspace}" "${store}"
             mkdir -p "${workspace}" "${store}"
             common=(--json --workspace "${workspace}" --store "${store}")
 
-            # Fresh env for each case.
             export CMIS_BOOTCAMP_TOKEN="${harvest_token}"
             export CMIS_BOOTCAMP_OCTOPUS_TOKEN="${OCTOPUS_API_KEY}"
 
@@ -663,46 +678,24 @@ jobs:
               --coordinate "environments=auto" \
               "${common[@]}" > "${RUNNER_TEMP}/cmis-repro-add-${case_id}.json"
 
-            if [ "${cred_mode}" = "set-token" ]; then
-              # Preferred path suggested by the cmis error envelope.
-              printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
-                --connection bootcamp --stdin "${common[@]}" \
-                > "${RUNNER_TEMP}/cmis-repro-set-gh-${case_id}.json" || true
-              # Try common Octopus token switches; keep whichever help documents.
-              if grep -Eqi 'octopus|--kind|--provider|--type' "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt"; then
-                # Prefer explicit kind/provider if the CLI advertises it.
-                if grep -Eqi -- '--kind' "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt"; then
-                  printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
-                    --connection bootcamp --kind octopus --stdin "${common[@]}" \
-                    > "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" || true
-                elif grep -Eqi -- '--provider' "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt"; then
-                  printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
-                    --connection bootcamp --provider octopus --stdin "${common[@]}" \
-                    > "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" || true
-                fi
-              else
-                # Fallback observed in earlier drafts: connection id suffix -octopus.
-                printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
-                  --connection bootcamp-octopus --stdin "${common[@]}" \
-                  > "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" || true
-              fi
-              jq -c . "${RUNNER_TEMP}/cmis-repro-set-gh-${case_id}.json" "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" 2>/dev/null || true
-            fi
+            printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
+              --connection bootcamp --stdin "${common[@]}" \
+              > "${RUNNER_TEMP}/cmis-repro-set-gh-${case_id}.json" || true
+            printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
+              --connection bootcamp-octopus --stdin "${common[@]}" \
+              > "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" || true
 
-            "${cmis}" connections inventory --json "${common[@]}" \
-              > "${RUNNER_TEMP}/cmis-repro-inventory-${case_id}.json" || true
-
-            # verify names which credential identity succeeded/failed before harvest.
             set +e
-            "${cmis}" connect verify --connection bootcamp --json "${common[@]}" \
+            "${cmis}" connect verify \
+              --connection bootcamp \
+              --tracker GitHub \
+              --base-url "https://api.github.com" \
+              --json "${common[@]}" \
               > "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.json" 2>"${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.err"
             verify_code=$?
             set -e
             echo "verify ${case_id}: exit=${verify_code}"
             cat "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.json" || true
-            if [ -s "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.err" ]; then
-              echo "verify stderr:"; cat "${GITHUB_WORKSPACE}/scorecard-report/cmis-verify-${case_id}.err" || true
-            fi
 
             set +e
             "${cmis}" connections harvest \
@@ -723,14 +716,14 @@ jobs:
             err=$(jq -c '.error // {}' "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>/dev/null || echo '{}')
             warn=$(jq -c '.warnings // []' "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>/dev/null || echo '[]')
             echo "case ${case_id}: exit=${code} ok=${ok} error=${err}"
-            python3 - "${summary_json}" "${case_id}" "${project_coord}" "${cred_mode}" "${code}" "${ok}" "${err}" "${warn}" << 'PY'
+            python3 - "${summary_json}" "${case_id}" "${project_coord}" "${token_name}" "${code}" "${ok}" "${err}" "${warn}" << 'PY'
           import json, sys
-          path, case_id, project, mode, code, ok, err, warn = sys.argv[1:]
+          path, case_id, project, token_name, code, ok, err, warn = sys.argv[1:]
           rows = json.load(open(path))
           rows.append({
               "case": case_id,
               "octopusProject": project,
-              "credMode": mode,
+              "tokenName": token_name,
               "exitCode": int(code),
               "ok": ok == "true",
               "error": json.loads(err),
@@ -744,16 +737,15 @@ jobs:
               break
             fi
           done <<EOF
-          name-env|${OCTOPUS_PROJECT}|env
-          id-env|${octopus_project_id}|env
-          name-set-token|${OCTOPUS_PROJECT}|set-token
-          id-set-token|${octopus_project_id}|set-token
+          ghtoken-name|${OCTOPUS_PROJECT}|GITHUB_TOKEN
+          ghtoken-id|${octopus_project_id}|GITHUB_TOKEN
+          copilot-name|${OCTOPUS_PROJECT}|COPILOT_PAT
           EOF
 
           # Keep a stable filename for the artifact consumers.
-          if [ -f "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest-name-env.json" ]; then
-            cp "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest-name-env.json" \
-              "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest.json"
+          latest_repro=$(ls -1 "${GITHUB_WORKSPACE}/scorecard-report"/cmis-repro-harvest-*.json 2>/dev/null | head -n 1 || true)
+          if [ -n "${latest_repro}" ]; then
+            cp "${latest_repro}" "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest.json"
           fi
 
           echo >> "${GITHUB_STEP_SUMMARY}"
@@ -793,17 +785,30 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Private cmis release download vs harvest credentials are split on purpose:
+          # COPILOT_PAT can install the CLI but has been returning Delivery-only 403s
+          # under load while curl probes still pass (secondary/abuse limit pattern).
           if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
-            echo "GitHub token: CMIS_GITHUB_TOKEN"
-            harvest_token="${CMIS_GITHUB_TOKEN}"
+            install_token="${CMIS_GITHUB_TOKEN}"
+            echo "Install token: CMIS_GITHUB_TOKEN"
           elif [ -n "${COPILOT_PAT}" ]; then
-            echo "GitHub token: COPILOT_PAT (CMIS_GITHUB_TOKEN is not set)"
-            harvest_token="${COPILOT_PAT}"
-          elif [ -n "${GITHUB_TOKEN_FALLBACK}" ]; then
-            echo "GitHub token: GITHUB_TOKEN (cannot read the internal cmis release)"
-            harvest_token="${GITHUB_TOKEN_FALLBACK}"
+            install_token="${COPILOT_PAT}"
+            echo "Install token: COPILOT_PAT"
           else
-            echo "::error::No GitHub token is available. Add repository secret CMIS_GITHUB_TOKEN."
+            echo "::error::Need CMIS_GITHUB_TOKEN or COPILOT_PAT to download the private cmis release."
+            exit 1
+          fi
+          if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
+            harvest_token="${CMIS_GITHUB_TOKEN}"
+            echo "Harvest token: CMIS_GITHUB_TOKEN"
+          elif [ -n "${GITHUB_TOKEN_FALLBACK}" ]; then
+            harvest_token="${GITHUB_TOKEN_FALLBACK}"
+            echo "Harvest token: GITHUB_TOKEN (preferred over COPILOT_PAT for API harvest)"
+          elif [ -n "${COPILOT_PAT}" ]; then
+            harvest_token="${COPILOT_PAT}"
+            echo "Harvest token: COPILOT_PAT (fallback)"
+          else
+            echo "::error::No GitHub harvest token is available."
             exit 1
           fi
 
@@ -816,7 +821,7 @@ jobs:
             exit 1
           fi
 
-          export GH_TOKEN="${harvest_token}"
+          export GH_TOKEN="${install_token}"
           dest="${RUNNER_TEMP}/cmis-release"
           mkdir -p "${dest}"
           gh api --paginate "repos/${SCORECARD_REPO}/releases?per_page=100" \
