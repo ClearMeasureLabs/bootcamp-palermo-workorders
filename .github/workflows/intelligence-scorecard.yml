@@ -1,0 +1,554 @@
+# Daily delivery scorecard for this repository.
+#
+# Installs the newest cmis build that ships a linux CLI asset. GitHub's Latest
+# release of ClearMeasure/Clear-Measure-Intelligence-Scorecard is the Excel
+# add-in installer and does not contain cmis. The CLI is the newest release,
+# including delivery prereleases, whose assets include cmis-*-linux-x64.tar.gz.
+#
+# Commands and coordinates are the ones cmis --help and connections add report:
+#   cmis connections add --tracker GitHub --coordinate owner, ownerType, repo, projectNumber
+#   cmis connections add --tracker GitHubDelivery --coordinate owner, repo,
+#       octopusProject, octopusServer, octopusSpace, environments
+#   cmis connections harvest --since --until --on-failure strict
+#   cmis scorecards add --set --period --connection
+#   cmis scorecards render --id
+# Credentials are environment variables CMIS_<KEY>_TOKEN (hyphen becomes underscore).
+# A GitHubDelivery connection reads the GitHub token as CMIS_<ID>_TOKEN and the
+# Octopus API key as CMIS_<ID>_OCTOPUS_TOKEN.
+name: Intelligence Scorecard
+
+on:
+  schedule:
+    - cron: "17 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+
+concurrency:
+  group: intelligence-scorecard
+  cancel-in-progress: false
+
+jobs:
+  scorecard:
+    name: Delivery scorecard
+    runs-on: ubuntu-latest
+    # Two calendar years of GitHub + Octopus harvest can take longer than a
+    # trailing-month run. Hosted runners allow up to six hours.
+    timeout-minutes: 360
+    env:
+      SCORECARD_REPO: ClearMeasure/Clear-Measure-Intelligence-Scorecard
+      CMIS_GITHUB_TOKEN: ${{ secrets.CMIS_GITHUB_TOKEN }}
+      COPILOT_PAT: ${{ secrets.COPILOT_PAT }}
+      GITHUB_TOKEN_FALLBACK: ${{ secrets.GITHUB_TOKEN }}
+      OCTOPUS_URL: ${{ secrets.OCTOPUS_URL }}
+      OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
+      OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
+      OCTOPUS_PROJECT: ${{ vars.OCTOPUS_PROJECT }}
+    steps:
+      - name: Install cmis, harvest, and publish the HTML scorecard
+        run: |
+          set -euo pipefail
+
+          if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
+            echo "GitHub token: CMIS_GITHUB_TOKEN"
+            harvest_token="${CMIS_GITHUB_TOKEN}"
+          elif [ -n "${COPILOT_PAT}" ]; then
+            echo "GitHub token: COPILOT_PAT (CMIS_GITHUB_TOKEN is not set)"
+            harvest_token="${COPILOT_PAT}"
+          elif [ -n "${GITHUB_TOKEN_FALLBACK}" ]; then
+            echo "GitHub token: GITHUB_TOKEN (cannot read the internal cmis release)"
+            harvest_token="${GITHUB_TOKEN_FALLBACK}"
+          else
+            echo "::error::No GitHub token is available. Add repository secret CMIS_GITHUB_TOKEN."
+            exit 1
+          fi
+
+          if [ -z "${OCTOPUS_URL}" ] || [ -z "${OCTOPUS_API_KEY}" ]; then
+            echo "::error::Octopus auth is missing. Repository secrets OCTOPUS_URL and OCTO_API_KEY are required."
+            exit 1
+          fi
+          if [ -z "${OCTOPUS_SPACE}" ] || [ -z "${OCTOPUS_PROJECT}" ]; then
+            echo "::error::Octopus target is missing. Repository variables OCTOPUS_SPACE and OCTOPUS_PROJECT are required."
+            exit 1
+          fi
+
+          export GH_TOKEN="${harvest_token}"
+          dest="${RUNNER_TEMP}/cmis-release"
+          mkdir -p "${dest}"
+          gh api --paginate "repos/${SCORECARD_REPO}/releases?per_page=100" \
+            --jq '.[] | select(any(.assets[]; .name | test("linux-x64\\.tar\\.gz$"))) | {tag:.tag_name, prerelease, assets:[.assets[].name]}' \
+            > "${dest}/cmis-releases.jsonl"
+          tag=$(jq -s -r '.[0].tag // empty' "${dest}/cmis-releases.jsonl")
+          asset=$(jq -s -r '[.[0].assets[] | select(test("linux-x64\\.tar\\.gz$"))][0] // empty' "${dest}/cmis-releases.jsonl")
+          if [ -z "${tag}" ] || [ -z "${asset}" ]; then
+            echo "::error::No linux-x64 cmis asset on ${SCORECARD_REPO}."
+            exit 1
+          fi
+          echo "Installing ${asset} from ${tag}"
+          gh release download "${tag}" --repo "${SCORECARD_REPO}" \
+            --pattern "${asset}" --pattern "SHA256SUMS.txt" \
+            --dir "${dest}" --clobber
+          if [ -f "${dest}/SHA256SUMS.txt" ] && grep -F -q "${asset}" "${dest}/SHA256SUMS.txt"; then
+            grep -F "${asset}" "${dest}/SHA256SUMS.txt" | (cd "${dest}" && sha256sum -c -)
+          else
+            echo "::error::SHA256SUMS.txt does not list ${asset}. Refusing to run an unverified binary."
+            exit 1
+          fi
+          mkdir -p "${dest}/tool"
+          tar -xzf "${dest}/${asset}" -C "${dest}/tool"
+          cmis="${dest}/tool/cmis"
+          if [ ! -x "${cmis}" ]; then
+            chmod +x "${cmis}"
+          fi
+          if [ ! -f "${cmis}" ]; then
+            echo "::error::cmis binary missing from ${asset}"
+            exit 1
+          fi
+          "${cmis}" --version
+
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          # Last two calendar years: 1 Jan of the previous UTC year through today.
+          until=$(date -u +%F)
+          since="$(date -u -d "$(date -u +%Y)-01-01 -1 year" +%F)"
+          echo "Scorecard window: ${since} through ${until} (UTC)"
+          workspace="${RUNNER_TEMP}/cmis-workspace"
+          store="${RUNNER_TEMP}/cmis-store"
+          mkdir -p "${workspace}" "${store}" "${GITHUB_WORKSPACE}/scorecard-report"
+          report="${GITHUB_WORKSPACE}/scorecard-report/intelligence-scorecard.html"
+          render_json="${RUNNER_TEMP}/scorecard-render.json"
+          harvest_json="${RUNNER_TEMP}/harvest.json"
+
+          # Connection id "bootcamp" -> CMIS_BOOTCAMP_TOKEN and CMIS_BOOTCAMP_OCTOPUS_TOKEN.
+          # Connection id "bootcamp-board" -> CMIS_BOOTCAMP_BOARD_TOKEN.
+          export CMIS_BOOTCAMP_TOKEN="${harvest_token}"
+          export CMIS_BOOTCAMP_BOARD_TOKEN="${harvest_token}"
+          export CMIS_BOOTCAMP_OCTOPUS_TOKEN="${OCTOPUS_API_KEY}"
+
+          common=(--json --workspace "${workspace}" --store "${store}")
+
+          cmis_ok() {
+            local label="$1"
+            shift
+            local out="${RUNNER_TEMP}/cmis-last.json"
+            echo "----- ${label} -----"
+            if ! "${cmis}" "$@" > "${out}"; then
+              echo "::error::${label} exited non-zero."
+              cat "${out}" || true
+              exit 1
+            fi
+            if [ "$(jq -r '.ok' "${out}")" != "true" ]; then
+              echo "::error::${label} failed: $(jq -r '.error.code // "error"'): $(jq -r '.error.cause // .error.message // "unknown"')"
+              jq -c '.error' "${out}" || true
+              exit 1
+            fi
+            cp "${out}" "${RUNNER_TEMP}/cmis-${label// /-}.json"
+          }
+
+          # cmis puts octopusSpace / octopusProject into /api/{space}/projects/{project}.
+          # Repository variables are the names the Octopus Deploy actions use; resolve
+          # both to ids, and wait out transient Octopus 403/503 answers.
+          octopus_root="${OCTOPUS_URL%/}"
+          octopus_resolve="${RUNNER_TEMP}/octopus-resolve.json"
+          octopus_attempt=1
+          octopus_max=8
+          octopus_sleep=20
+          while true; do
+            echo "----- Octopus preflight attempt ${octopus_attempt}/${octopus_max} -----"
+            set +e
+            curl -sS -w "\nHTTP_STATUS:%{http_code}\n" \
+              -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" \
+              "${octopus_root}/api/spaces/all" > "${RUNNER_TEMP}/octopus-spaces.raw"
+            spaces_curl=$?
+            set -e
+            spaces_status=$(awk -F: '/^HTTP_STATUS:/ {print $2}' "${RUNNER_TEMP}/octopus-spaces.raw" | tr -d '\r')
+            sed '/^HTTP_STATUS:/d' "${RUNNER_TEMP}/octopus-spaces.raw" > "${RUNNER_TEMP}/octopus-spaces.json"
+            if [ "${spaces_curl}" -eq 0 ] && [ "${spaces_status}" = "200" ]; then
+              if OCTOPUS_SPACE="${OCTOPUS_SPACE}" OCTOPUS_PROJECT="${OCTOPUS_PROJECT}" \
+                python3 - "${RUNNER_TEMP}/octopus-spaces.json" "${octopus_root}" "${OCTOPUS_API_KEY}" "${octopus_resolve}" << 'PY'
+          import json, os, sys, urllib.request
+
+          spaces_path, root, api_key, out_path = sys.argv[1:]
+          payload = json.load(open(spaces_path))
+          spaces = payload if isinstance(payload, list) else payload.get("Items") or payload.get("items") or []
+          wanted_space = os.environ["OCTOPUS_SPACE"]
+          space = next(
+              (s for s in spaces if wanted_space in (s.get("Id"), s.get("Name"), s.get("Slug"))),
+              None,
+          )
+          if space is None:
+              names = ", ".join(sorted(s.get("Name") or s.get("Id") or "?" for s in spaces))
+              print(f"No Octopus space matches '{wanted_space}'. Spaces: {names}", file=sys.stderr)
+              raise SystemExit(2)
+
+          space_id = space["Id"]
+          wanted_project = os.environ["OCTOPUS_PROJECT"]
+          req = urllib.request.Request(
+              f"{root.rstrip('/')}/api/{space_id}/projects/all",
+              headers={"X-Octopus-ApiKey": api_key, "Accept": "application/json"},
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=60) as response:
+                  projects = json.load(response)
+          except Exception as exc:
+              print(f"Octopus projects list failed: {exc}", file=sys.stderr)
+              raise SystemExit(3)
+
+          if isinstance(projects, dict):
+              projects = projects.get("Items") or projects.get("items") or []
+          project = next(
+              (
+                  p
+                  for p in projects
+                  if wanted_project in (p.get("Id"), p.get("Name"), p.get("Slug"))
+              ),
+              None,
+          )
+          if project is None:
+              names = ", ".join(sorted(p.get("Name") or p.get("Id") or "?" for p in projects)[:40])
+              print(
+                  f"No Octopus project matches '{wanted_project}' in {space_id}. Projects: {names}",
+                  file=sys.stderr,
+              )
+              raise SystemExit(4)
+
+          # Confirm the direct project route cmis will call.
+          project_id = project["Id"]
+          check = urllib.request.Request(
+              f"{root.rstrip('/')}/api/{space_id}/projects/{project_id}",
+              headers={"X-Octopus-ApiKey": api_key, "Accept": "application/json"},
+          )
+          try:
+              with urllib.request.urlopen(check, timeout=60) as response:
+                  if response.status != 200:
+                      print(f"Octopus project GET status {response.status}", file=sys.stderr)
+                      raise SystemExit(5)
+          except Exception as exc:
+              print(f"Octopus project GET failed: {exc}", file=sys.stderr)
+              raise SystemExit(5)
+
+          result = {
+              "spaceId": space_id,
+              "spaceName": space.get("Name"),
+              "projectId": project_id,
+              "projectName": project.get("Name"),
+              "projectSlug": project.get("Slug"),
+          }
+          json.dump(result, open(out_path, "w"))
+          print(json.dumps(result))
+          PY
+              then
+                break
+              fi
+              resolve_code=$?
+              echo "::warning::Octopus resolve failed (exit ${resolve_code})"
+            else
+              echo "::warning::Octopus spaces/all returned status=${spaces_status:-curl-${spaces_curl}}"
+            fi
+            if [ "${octopus_attempt}" -ge "${octopus_max}" ]; then
+              echo "::error::Octopus did not become ready for space '${OCTOPUS_SPACE}' project '${OCTOPUS_PROJECT}'."
+              exit 1
+            fi
+            echo "Sleeping ${octopus_sleep}s before Octopus retry"
+            sleep "${octopus_sleep}"
+            octopus_attempt=$((octopus_attempt + 1))
+            octopus_sleep=$((octopus_sleep * 2))
+            if [ "${octopus_sleep}" -gt 300 ]; then
+              octopus_sleep=300
+            fi
+          done
+          octopus_space_id=$(jq -r .spaceId "${octopus_resolve}")
+          octopus_project_id=$(jq -r .projectId "${octopus_resolve}")
+          echo "Octopus space id: ${octopus_space_id}"
+          echo "Octopus project id: ${octopus_project_id} ($(jq -r .projectName "${octopus_resolve}"))"
+
+          cmis_ok "add-board" connections add \
+            --id bootcamp-board \
+            --name "Project board" \
+            --tracker GitHub \
+            --coordinate "owner=${owner}" \
+            --coordinate "ownerType=organization" \
+            --coordinate "repo=${repo}" \
+            --coordinate "projectNumber=1" \
+            "${common[@]}"
+
+          cmis_ok "add-delivery" connections add \
+            --id bootcamp \
+            --name "Delivery" \
+            --tracker GitHubDelivery \
+            --coordinate "owner=${owner}" \
+            --coordinate "repo=${repo}" \
+            --coordinate "octopusServer=${OCTOPUS_URL}" \
+            --coordinate "octopusSpace=${octopus_space_id}" \
+            --coordinate "octopusProject=${octopus_project_id}" \
+            --coordinate "environments=auto" \
+            "${common[@]}"
+
+          # Store credentials in the workspace secret store as well as env vars.
+          # GitHubDelivery reads CMIS_BOOTCAMP_TOKEN and CMIS_BOOTCAMP_OCTOPUS_TOKEN;
+          # set-token writes the same keys cmis resolves for harvest.
+          printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
+            --connection bootcamp --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-bootcamp.json"
+          jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-bootcamp.json" >/dev/null
+          printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
+            --connection bootcamp-octopus --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-octopus.json"
+          jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-octopus.json" >/dev/null
+          printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
+            --connection bootcamp-board --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-board.json"
+          jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-board.json" >/dev/null
+
+          # Harvest one connection at a time. Octopus has returned transient 403/503
+          # on the two-year GitHubDelivery pull; retry with backoff. Delivery first
+          # so it gets a fresh GitHub rate-limit budget before the board harvest.
+          cmis_harvest_one() {
+            local connection="$1"
+            local attempt=1
+            local max_attempts=8
+            local sleep_s=45
+            while true; do
+              echo "----- harvest ${connection} attempt ${attempt}/${max_attempts} -----"
+              local out="${RUNNER_TEMP}/cmis-last.json"
+              set +e
+              "${cmis}" connections harvest \
+                --connection "${connection}" \
+                --since "${since}" \
+                --until "${until}" \
+                --on-failure strict \
+                "${common[@]}" > "${out}"
+              local code=$?
+              set -e
+              if [ "${code}" -eq 0 ] && [ "$(jq -r '.ok' "${out}")" = "true" ]; then
+                cp "${out}" "${RUNNER_TEMP}/cmis-harvest-${connection}.json"
+                echo "harvest ${connection} succeeded on attempt ${attempt}"
+                return 0
+              fi
+              echo "::warning::harvest ${connection} attempt ${attempt} failed (exit ${code})"
+              jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error}]})}' "${out}" || true
+              if [ "${attempt}" -ge "${max_attempts}" ]; then
+                echo "::error::harvest ${connection} failed after ${max_attempts} attempts."
+                cat "${out}" || true
+                return 1
+              fi
+              echo "Sleeping ${sleep_s}s before retry"
+              sleep "${sleep_s}"
+              attempt=$((attempt + 1))
+              sleep_s=$((sleep_s * 2))
+              if [ "${sleep_s}" -gt 600 ]; then
+                sleep_s=600
+              fi
+            done
+          }
+
+          cmis_harvest_one bootcamp
+          cmis_harvest_one bootcamp-board
+          # Combined receipt for the summary: prefer delivery harvest, attach board counts.
+          python3 - "${RUNNER_TEMP}/cmis-harvest-bootcamp.json" "${RUNNER_TEMP}/cmis-harvest-bootcamp-board.json" "${harvest_json}" << 'PY'
+          import json, sys
+          delivery = json.load(open(sys.argv[1]))
+          board = json.load(open(sys.argv[2]))
+          out = {
+              "ok": True,
+              "data": {
+                  "since": (delivery.get("data") or {}).get("since"),
+                  "until": (delivery.get("data") or {}).get("until"),
+                  "totalRawItems": ((delivery.get("data") or {}).get("totalRawItems") or 0)
+                      + ((board.get("data") or {}).get("totalRawItems") or 0),
+                  "totalRowsAdded": ((delivery.get("data") or {}).get("totalRowsAdded") or 0)
+                      + ((board.get("data") or {}).get("totalRowsAdded") or 0),
+                  "failedCount": 0,
+                  "connections": []
+                      + ((delivery.get("data") or {}).get("connections") or [])
+                      + ((board.get("data") or {}).get("connections") or []),
+              },
+          }
+          json.dump(out, open(sys.argv[3], "w"))
+          PY
+
+          cmis_ok "add-scorecard" scorecards add \
+            --id delivery \
+            --name "Delivery" \
+            --connection bootcamp \
+            --connection bootcamp-board \
+            --period week \
+            --since "${since}" \
+            --until "${until}" \
+            --set Delivery \
+            "${common[@]}"
+
+          cmis_ok "render" scorecards render --id delivery "${common[@]}"
+          cp "${RUNNER_TEMP}/cmis-last.json" "${render_json}"
+
+          python3 - "${render_json}" "${harvest_json}" "${report}" "${since}" "${until}" "${tag}" "${asset}" << 'PY'
+          import html
+          import json
+          import os
+          import sys
+
+          render_path, harvest_path, report_path, since, until, tag, asset = sys.argv[1:]
+          render = json.load(open(render_path))
+          harvest = json.load(open(harvest_path))
+          if render.get("ok") is not True:
+              sys.exit("render envelope is not ok")
+          data = render.get("data") or {}
+          sections = data.get("sections") or []
+          if not sections:
+              print(json.dumps(list(data.keys()) if isinstance(data, dict) else type(data).__name__))
+              sys.exit("scorecards render returned no sections; refusing an empty report")
+
+          # scorecards render has no column-order flag. Weeks are period rows in the
+          # JSON; they are transposed here so each week is a column, newest on the left.
+          WEEK_KEYS = ("periodStart", "label", "period", "periodLabel", "name")
+          METRIC_SKIP = set(WEEK_KEYS) | {"periodEnd", "period_end", "id"}
+
+          def esc(value):
+              return html.escape("" if value is None else str(value))
+
+          def period_rows(section):
+              if not isinstance(section, dict):
+                  return []
+              for key in ("rows", "periods", "points", "values"):
+                  value = section.get(key)
+                  if isinstance(value, list) and value and isinstance(value[0], dict):
+                      return value
+              return []
+
+          def week_sort_key(row):
+              return str(row.get("periodStart") or row.get("label") or row.get("periodLabel") or "")
+
+          def week_label(row):
+              return str(row.get("label") or row.get("periodLabel") or row.get("periodStart") or row.get("name") or "?")
+
+          def metric_names(rows):
+              names = []
+              for row in rows:
+                  for key in row.keys():
+                      if key in METRIC_SKIP or key in names:
+                          continue
+                      names.append(key)
+              return names
+
+          def format_cell(value):
+              if value is None:
+                  return ""
+              if isinstance(value, float):
+                  return f"{value:.4g}"
+              return str(value)
+
+          parts = []
+          summary_lines = [
+              "## Intelligence scorecard",
+              "",
+              f"- Repository: `{os.environ.get('GITHUB_REPOSITORY', '')}`",
+              f"- Window: `{since}` through `{until}` (UTC)",
+              f"- cmis: `{tag}` (`{asset}`)",
+              f"- Scorecard: `{data.get('name') or data.get('id') or 'delivery'}`",
+              f"- Week columns: newest on the left",
+              "",
+          ]
+          table_count = 0
+          last_week_labels = []
+          for section in sections:
+              title = (section.get("name") or section.get("id") or "Section") if isinstance(section, dict) else "Section"
+              rows = period_rows(section)
+              parts.append(f"<h2>{esc(title)}</h2>")
+              if not rows:
+                  parts.append("<pre>" + esc(json.dumps(section, indent=2)[:8000]) + "</pre>")
+                  summary_lines.append(f"- {title}: no period rows")
+                  continue
+
+              weeks = sorted(rows, key=week_sort_key, reverse=True)
+              metrics = metric_names(weeks)
+              if not metrics:
+                  parts.append("<pre>" + esc(json.dumps(section, indent=2)[:8000]) + "</pre>")
+                  summary_lines.append(f"- {title}: no metrics")
+                  continue
+
+              table_count += 1
+              week_labels = [week_label(week) for week in weeks]
+              last_week_labels = week_labels
+              summary_lines.append(f"### {title}")
+              summary_lines.append("")
+              summary_lines.append(f"{len(weeks)} weeks · newest `{week_labels[0]}` · oldest `{week_labels[-1]}`")
+              summary_lines.append("")
+              header = "| Metric | " + " | ".join(f"`{label}`" for label in week_labels) + " |"
+              sep = "| --- | " + " | ".join(["---"] * len(week_labels)) + " |"
+              summary_lines.append(header)
+              summary_lines.append(sep)
+              for metric in metrics:
+                  cells = [format_cell(week.get(metric)) for week in weeks]
+                  summary_lines.append("| " + " | ".join([f"`{metric}`"] + cells) + " |")
+              summary_lines.append("")
+
+              parts.append('<div class="scroll"><table><thead><tr><th>Metric</th>')
+              parts.append("".join(f"<th>{esc(label)}</th>" for label in week_labels))
+              parts.append("</tr></thead><tbody>")
+              for metric in metrics:
+                  parts.append(f"<tr><th scope=\"row\">{esc(metric)}</th>")
+                  parts.append("".join(f"<td>{esc(format_cell(week.get(metric)))}</td>" for week in weeks))
+                  parts.append("</tr>")
+              parts.append("</tbody></table></div>")
+
+          if table_count == 0:
+              sample = sections[0] if sections else None
+              keys = list(sample.keys()) if isinstance(sample, dict) else type(sample).__name__
+              print("section keys:", keys)
+              sys.exit("scorecards render sections had no rows; refusing an empty report")
+
+          harvest_data = harvest.get("data") if isinstance(harvest, dict) else None
+          if isinstance(harvest_data, dict):
+              summary_lines.append(
+                  f"- Harvest: `{harvest_data.get('totalRawItems')}` raw items, "
+                  f"`{harvest_data.get('totalRowsAdded')}` normalized rows, "
+                  f"`{harvest_data.get('failedCount')}` failed connections"
+              )
+              summary_lines.append("")
+
+          document = f"""<!DOCTYPE html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <title>Intelligence scorecard {esc(os.environ.get('GITHUB_REPOSITORY', ''))}</title>
+          <style>
+            body {{ font-family: sans-serif; margin: 2rem; color: #1a1a1a; }}
+            .scroll {{ overflow-x: auto; max-width: 100%; margin: 0 0 2rem; }}
+            table {{ border-collapse: collapse; }}
+            th, td {{ border: 1px solid #ccc; padding: 0.35rem 0.6rem; text-align: left; white-space: nowrap; }}
+            thead th {{ background: #f4f4f4; position: sticky; top: 0; }}
+            tbody th {{ background: #fafafa; text-align: left; }}
+          </style>
+          </head>
+          <body>
+          <h1>Intelligence scorecard</h1>
+          <p>{esc(os.environ.get('GITHUB_REPOSITORY', ''))} · {esc(since)} through {esc(until)} UTC · cmis {esc(tag)} · weeks newest on the left</p>
+          {''.join(parts)}
+          </body>
+          </html>
+          """
+          with open(report_path, "w", encoding="utf-8") as handle:
+              handle.write(document)
+          if os.path.getsize(report_path) < 200:
+              sys.exit("HTML report is empty")
+          summary_path = os.environ["GITHUB_STEP_SUMMARY"]
+          with open(summary_path, "a", encoding="utf-8") as handle:
+              handle.write("\n".join(summary_lines) + "\n")
+          print(f"Wrote {report_path} ({os.path.getsize(report_path)} bytes)")
+          if last_week_labels:
+              print(
+                  "Week columns (newest first): "
+                  + ", ".join(last_week_labels[:3])
+                  + (" ..." if len(last_week_labels) > 3 else "")
+                  + (f" ... {last_week_labels[-1]}" if len(last_week_labels) > 3 else "")
+              )
+          PY
+
+      - name: Upload HTML scorecard
+        uses: actions/upload-artifact@v4
+        with:
+          name: intelligence-scorecard
+          path: scorecard-report/intelligence-scorecard.html
+          if-no-files-found: error
+          retention-days: 30
