@@ -196,12 +196,74 @@ jobs:
             --coordinate "environments=auto" \
             "${common[@]}"
 
-          cmis_ok "harvest" connections harvest \
-            --since "${since}" \
-            --until "${until}" \
-            --on-failure strict \
-            "${common[@]}"
-          cp "${RUNNER_TEMP}/cmis-last.json" "${harvest_json}"
+          # Harvest one connection at a time. A two-year GitHubDelivery pull can
+          # hit a transient 403 (rate / abuse) after a large board harvest; retry
+          # with backoff, and harvest delivery before the board so it gets a
+          # fresh rate-limit budget.
+          cmis_harvest_one() {
+            local label="$1"
+            local connection="$1"
+            local attempt=1
+            local max_attempts=5
+            local sleep_s=30
+            while true; do
+              echo "----- harvest ${connection} attempt ${attempt}/${max_attempts} -----"
+              local out="${RUNNER_TEMP}/cmis-last.json"
+              set +e
+              "${cmis}" connections harvest \
+                --connection "${connection}" \
+                --since "${since}" \
+                --until "${until}" \
+                --on-failure strict \
+                "${common[@]}" > "${out}"
+              local code=$?
+              set -e
+              if [ "${code}" -eq 0 ] && [ "$(jq -r '.ok' "${out}")" = "true" ]; then
+                cp "${out}" "${RUNNER_TEMP}/cmis-harvest-${connection}.json"
+                echo "harvest ${connection} succeeded on attempt ${attempt}"
+                return 0
+              fi
+              echo "::warning::harvest ${connection} attempt ${attempt} failed (exit ${code})"
+              jq -c '{ok, error, warnings}' "${out}" || true
+              if [ "${attempt}" -ge "${max_attempts}" ]; then
+                echo "::error::harvest ${connection} failed after ${max_attempts} attempts."
+                cat "${out}" || true
+                return 1
+              fi
+              echo "Sleeping ${sleep_s}s before retry"
+              sleep "${sleep_s}"
+              attempt=$((attempt + 1))
+              sleep_s=$((sleep_s * 2))
+              if [ "${sleep_s}" -gt 480 ]; then
+                sleep_s=480
+              fi
+            done
+          }
+
+          cmis_harvest_one bootcamp
+          cmis_harvest_one bootcamp-board
+          # Combined receipt for the summary: prefer delivery harvest, attach board counts.
+          python3 - "${RUNNER_TEMP}/cmis-harvest-bootcamp.json" "${RUNNER_TEMP}/cmis-harvest-bootcamp-board.json" "${harvest_json}" << 'PY'
+          import json, sys
+          delivery = json.load(open(sys.argv[1]))
+          board = json.load(open(sys.argv[2]))
+          out = {
+              "ok": True,
+              "data": {
+                  "since": (delivery.get("data") or {}).get("since"),
+                  "until": (delivery.get("data") or {}).get("until"),
+                  "totalRawItems": ((delivery.get("data") or {}).get("totalRawItems") or 0)
+                      + ((board.get("data") or {}).get("totalRawItems") or 0),
+                  "totalRowsAdded": ((delivery.get("data") or {}).get("totalRowsAdded") or 0)
+                      + ((board.get("data") or {}).get("totalRowsAdded") or 0),
+                  "failedCount": 0,
+                  "connections": []
+                      + ((delivery.get("data") or {}).get("connections") or [])
+                      + ((board.get("data") or {}).get("connections") or []),
+              },
+          }
+          json.dump(out, open(sys.argv[3], "w"))
+          PY
 
           cmis_ok "add-scorecard" scorecards add \
             --id delivery \
