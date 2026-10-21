@@ -30,7 +30,6 @@ permissions:
   # GitHubDelivery correlates Actions + deployments; the job-scoped GITHUB_TOKEN
   # needs these when it is used as the harvest credential.
   deployments: read
-  metadata: read
 
 concurrency:
   group: intelligence-scorecard
@@ -870,8 +869,10 @@ jobs:
 
           # Connection id "bootcamp" -> CMIS_BOOTCAMP_TOKEN and CMIS_BOOTCAMP_OCTOPUS_TOKEN.
           # Connection id "bootcamp-board" -> CMIS_BOOTCAMP_BOARD_TOKEN.
+          # Delivery uses harvest_token (GITHUB_TOKEN by default). Board keeps the
+          # broader install_token so org Project v2 GraphQL still works.
           export CMIS_BOOTCAMP_TOKEN="${harvest_token}"
-          export CMIS_BOOTCAMP_BOARD_TOKEN="${harvest_token}"
+          export CMIS_BOOTCAMP_BOARD_TOKEN="${install_token}"
           export CMIS_BOOTCAMP_OCTOPUS_TOKEN="${OCTOPUS_API_KEY}"
 
           common=(--json --workspace "${workspace}" --store "${store}")
