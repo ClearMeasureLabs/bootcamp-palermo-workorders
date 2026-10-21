@@ -48,9 +48,459 @@ jobs:
       OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
       OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
       OCTOPUS_PROJECT: ${{ vars.OCTOPUS_PROJECT }}
-      # Per-connection quarterly harvest wall clock (GNU timeout).
+      # Per-chunk quarterly harvest wall clock (GNU timeout).
       CMIS_CHUNK_TIMEOUT_SECS: "900"
     steps:
+      # Identify exactly which API returns 403 before any cmis harvest/retry loop.
+      - name: Diagnose GitHub and Octopus harvest credentials
+        id: diagnose
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+
+          if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
+            echo "GitHub token source: CMIS_GITHUB_TOKEN"
+            harvest_token="${CMIS_GITHUB_TOKEN}"
+            token_source="CMIS_GITHUB_TOKEN"
+          elif [ -n "${COPILOT_PAT}" ]; then
+            echo "GitHub token source: COPILOT_PAT (CMIS_GITHUB_TOKEN is not set)"
+            harvest_token="${COPILOT_PAT}"
+            token_source="COPILOT_PAT"
+          elif [ -n "${GITHUB_TOKEN_FALLBACK}" ]; then
+            echo "GitHub token source: GITHUB_TOKEN"
+            harvest_token="${GITHUB_TOKEN_FALLBACK}"
+            token_source="GITHUB_TOKEN"
+          else
+            echo "::error::No GitHub token is available. Add repository secret CMIS_GITHUB_TOKEN."
+            exit 1
+          fi
+          if [ -z "${OCTOPUS_URL}" ] || [ -z "${OCTOPUS_API_KEY}" ]; then
+            echo "::error::Octopus auth is missing. Repository secrets OCTOPUS_URL and OCTO_API_KEY are required."
+            exit 1
+          fi
+          if [ -z "${OCTOPUS_SPACE}" ] || [ -z "${OCTOPUS_PROJECT}" ]; then
+            echo "::error::Octopus target is missing. Repository variables OCTOPUS_SPACE and OCTOPUS_PROJECT are required."
+            exit 1
+          fi
+
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          octopus_root="${OCTOPUS_URL%/}"
+          report="${RUNNER_TEMP}/harvest-auth-diagnose.json"
+          summary_md="${RUNNER_TEMP}/harvest-auth-diagnose.md"
+
+          TOKEN_SOURCE="${token_source}" HARVEST_TOKEN="${harvest_token}" \
+          OCTOPUS_ROOT="${octopus_root}" OCTOPUS_API_KEY="${OCTOPUS_API_KEY}" \
+          OCTOPUS_SPACE="${OCTOPUS_SPACE}" OCTOPUS_PROJECT="${OCTOPUS_PROJECT}" \
+          OWNER="${owner}" REPO="${repo}" REPORT="${report}" SUMMARY_MD="${summary_md}" \
+          python3 << 'PY'
+          import json, os, re, urllib.error, urllib.request
+          from datetime import datetime, timezone
+
+          token = os.environ["HARVEST_TOKEN"]
+          token_source = os.environ["TOKEN_SOURCE"]
+          owner = os.environ["OWNER"]
+          repo = os.environ["REPO"]
+          octopus_root = os.environ["OCTOPUS_ROOT"].rstrip("/")
+          octopus_key = os.environ["OCTOPUS_API_KEY"]
+          wanted_space = os.environ["OCTOPUS_SPACE"]
+          wanted_project = os.environ["OCTOPUS_PROJECT"]
+          report_path = os.environ["REPORT"]
+          summary_path = os.environ["SUMMARY_MD"]
+
+          def classify_github(status, headers, body):
+              h = {k.lower(): v for k, v in headers.items()}
+              text = body or ""
+              lower = text.lower()
+              sso = h.get("x-github-sso") or ""
+              www = h.get("www-authenticate") or ""
+              retry_after = h.get("retry-after")
+              remaining = h.get("x-ratelimit-remaining")
+              resource = h.get("x-ratelimit-resource")
+              msg = ""
+              try:
+                  msg = (json.loads(text).get("message") or "") if text.strip().startswith("{") else text[:300]
+              except Exception:
+                  msg = text[:300]
+              kind = "ok" if 200 <= status < 300 else "http_error"
+              if status == 401:
+                  kind = "auth_unauthorized"
+              elif status == 403:
+                  if "secondary rate limit" in lower or (retry_after and "rate" in lower):
+                      kind = "secondary_rate_limit"
+                  elif remaining == "0" or "rate limit" in lower or "api rate limit" in lower:
+                      kind = "primary_rate_limit"
+                  elif sso or "saml" in lower or "sso" in lower or "organization administration" in lower:
+                      kind = "sso_or_saml_forbidden"
+                  elif "resource not accessible" in lower or "must have" in lower or "permission" in lower:
+                      kind = "permission_forbidden"
+                  elif "blocked" in lower:
+                      kind = "blocked"
+                  else:
+                      kind = "forbidden_other"
+              return {
+                  "kind": kind,
+                  "message": msg.strip(),
+                  "x_ratelimit_remaining": remaining,
+                  "x_ratelimit_limit": h.get("x-ratelimit-limit"),
+                  "x_ratelimit_resource": resource,
+                  "x_ratelimit_reset": h.get("x-ratelimit-reset"),
+                  "retry_after": retry_after,
+                  "x_github_sso": sso or None,
+                  "www_authenticate": www or None,
+                  "x_github_request_id": h.get("x-github-request-id"),
+              }
+
+          def probe_github(name, url, method="GET", data=None, content_type=None):
+              headers = {
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/vnd.github+json",
+                  "User-Agent": "intelligence-scorecard-diagnose",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              }
+              if content_type:
+                  headers["Content-Type"] = content_type
+              req = urllib.request.Request(url, data=data, headers=headers, method=method)
+              try:
+                  with urllib.request.urlopen(req, timeout=45) as resp:
+                      body = resp.read(8000).decode("utf-8", "replace")
+                      status = resp.status
+                      hdrs = {k: v for k, v in resp.headers.items()}
+              except urllib.error.HTTPError as exc:
+                  body = exc.read(8000).decode("utf-8", "replace")
+                  status = exc.code
+                  hdrs = {k: v for k, v in exc.headers.items()} if exc.headers else {}
+              except Exception as exc:
+                  return {
+                      "name": name,
+                      "service": "github",
+                      "url": url,
+                      "status": None,
+                      "error": str(exc),
+                      "classification": {"kind": "transport_error", "message": str(exc)},
+                  }
+              classification = classify_github(status, hdrs, body)
+              return {
+                  "name": name,
+                  "service": "github",
+                  "url": url,
+                  "status": status,
+                  "classification": classification,
+                  "body_preview": body[:500],
+              }
+
+          def probe_octopus(name, url):
+              headers = {
+                  "X-Octopus-ApiKey": octopus_key,
+                  "Accept": "application/json",
+                  "User-Agent": "intelligence-scorecard-diagnose",
+              }
+              req = urllib.request.Request(url, headers=headers, method="GET")
+              try:
+                with urllib.request.urlopen(req, timeout=45) as resp:
+                    body = resp.read(8000).decode("utf-8", "replace")
+                    status = resp.status
+                    hdrs = {k: v for k, v in resp.headers.items()}
+              except urllib.error.HTTPError as exc:
+                  body = exc.read(8000).decode("utf-8", "replace")
+                  status = exc.code
+                  hdrs = {k: v for k, v in exc.headers.items()} if exc.headers else {}
+              except Exception as exc:
+                  return {
+                      "name": name,
+                      "service": "octopus",
+                      "url": url,
+                      "status": None,
+                      "error": str(exc),
+                      "classification": {"kind": "transport_error", "message": str(exc)},
+                  }
+              kind = "ok" if 200 <= status < 300 else ("auth_forbidden" if status in (401, 403) else "http_error")
+              msg = body[:300]
+              try:
+                  parsed = json.loads(body)
+                  if isinstance(parsed, dict):
+                      msg = parsed.get("ErrorMessage") or parsed.get("message") or parsed.get("title") or msg
+              except Exception:
+                  pass
+              return {
+                  "name": name,
+                  "service": "octopus",
+                  "url": re.sub(r"(api-key=)[^&]+", r"\1***", url),
+                  "status": status,
+                  "classification": {
+                      "kind": kind,
+                      "message": (msg or "").strip(),
+                      "octopus_api_version": hdrs.get("Octopus-Version") or hdrs.get("octopus-version"),
+                  },
+                  "body_preview": body[:500],
+              }
+
+          probes = []
+          probes.append(probe_github("github.user", "https://api.github.com/user"))
+          probes.append(probe_github("github.rate_limit", "https://api.github.com/rate_limit"))
+          probes.append(probe_github("github.repo", f"https://api.github.com/repos/{owner}/{repo}"))
+          probes.append(probe_github(
+              "github.repo_pulls",
+              f"https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=1",
+          ))
+          probes.append(probe_github(
+              "github.repo_actions_runs",
+              f"https://api.github.com/repos/{owner}/{repo}/actions/runs?per_page=1",
+          ))
+          probes.append(probe_github(
+              "github.repo_commits",
+              f"https://api.github.com/repos/{owner}/{repo}/commits?per_page=1",
+          ))
+          # Org project board (project 1) — GraphHub GraphQL used by cmis GitHub tracker.
+          gql = json.dumps({
+              "query": """query($owner:String!,$number:Int!){
+                organization(login:$owner){
+                  projectV2(number:$number){ id title }
+                }
+              }""",
+              "variables": {"owner": owner, "number": 1},
+          }).encode()
+          gql_probe = probe_github(
+              "github.graphql_org_project_v2",
+              "https://api.github.com/graphql",
+              method="POST",
+              data=gql,
+              content_type="application/json",
+          )
+          # GraphQL often returns HTTP 200 with an errors[].type of FORBIDDEN / INSUFFICIENT_SCOPES.
+          if gql_probe.get("status") == 200:
+              try:
+                  gql_body = json.loads(gql_probe.get("body_preview") or "{}")
+                  errors = gql_body.get("errors") or []
+                  if errors:
+                      etypes = ",".join(sorted({(e.get("type") or e.get("extensions", {}).get("code") or "error") for e in errors}))
+                      msg = "; ".join((e.get("message") or "")[:160] for e in errors[:3])
+                      kind = "permission_forbidden"
+                      joined = (msg + " " + etypes).lower()
+                      if "rate" in joined:
+                          kind = "secondary_rate_limit"
+                      if "saml" in joined or "sso" in joined:
+                          kind = "sso_or_saml_forbidden"
+                      if "scope" in joined or "insufficient" in joined:
+                          kind = "permission_forbidden"
+                      gql_probe["classification"] = {
+                          **(gql_probe.get("classification") or {}),
+                          "kind": kind,
+                          "message": f"GraphQL errors ({etypes}): {msg}",
+                      }
+                      gql_probe["status"] = 403
+              except Exception:
+                  pass
+          probes.append(gql_probe)
+          # Search is a common secondary-rate-limit surface for delivery harvests.
+          probes.append(probe_github(
+              "github.search_issues",
+              f"https://api.github.com/search/issues?q=repo:{owner}/{repo}+is:pr&per_page=1",
+          ))
+
+          spaces = probe_octopus("octopus.spaces_all", f"{octopus_root}/api/spaces/all")
+          probes.append(spaces)
+          space_id = None
+          project_id = None
+          if spaces.get("status") == 200:
+              # Re-fetch full spaces for id resolution (probe body may be truncated).
+              try:
+                  req = urllib.request.Request(
+                      f"{octopus_root}/api/spaces/all",
+                      headers={"X-Octopus-ApiKey": octopus_key, "Accept": "application/json"},
+                  )
+                  with urllib.request.urlopen(req, timeout=45) as resp:
+                      space_list = json.load(resp)
+                  if isinstance(space_list, dict):
+                      space_list = space_list.get("Items") or space_list.get("items") or []
+                  match = next(
+                      (s for s in space_list if wanted_space in (s.get("Id"), s.get("Name"), s.get("Slug"))),
+                      None,
+                  )
+                  if match:
+                      space_id = match["Id"]
+              except Exception as exc:
+                  probes.append({
+                      "name": "octopus.space_resolve",
+                      "service": "octopus",
+                      "status": None,
+                      "classification": {"kind": "transport_error", "message": str(exc)},
+                  })
+
+          if space_id:
+              projects = probe_octopus(
+                  "octopus.projects_all",
+                  f"{octopus_root}/api/{space_id}/projects/all",
+              )
+              probes.append(projects)
+              try:
+                  req = urllib.request.Request(
+                      f"{octopus_root}/api/{space_id}/projects/all",
+                      headers={"X-Octopus-ApiKey": octopus_key, "Accept": "application/json"},
+                  )
+                  with urllib.request.urlopen(req, timeout=45) as resp:
+                      project_list = json.load(resp)
+                  if isinstance(project_list, dict):
+                      project_list = project_list.get("Items") or project_list.get("items") or []
+                  match = next(
+                      (
+                          p for p in project_list
+                          if wanted_project in (p.get("Id"), p.get("Name"), p.get("Slug"))
+                      ),
+                      None,
+                  )
+                  if match:
+                      project_id = match["Id"]
+              except Exception as exc:
+                  probes.append({
+                      "name": "octopus.project_resolve",
+                      "service": "octopus",
+                      "status": None,
+                      "classification": {"kind": "transport_error", "message": str(exc)},
+                  })
+
+          if space_id and project_id:
+              probes.append(probe_octopus(
+                  "octopus.project_get",
+                  f"{octopus_root}/api/{space_id}/projects/{project_id}",
+              ))
+              probes.append(probe_octopus(
+                  "octopus.deployments",
+                  f"{octopus_root}/api/{space_id}/deployments?projects={project_id}&take=1",
+              ))
+              probes.append(probe_octopus(
+                  "octopus.releases",
+                  f"{octopus_root}/api/{space_id}/projects/{project_id}/releases?take=1",
+              ))
+              probes.append(probe_octopus(
+                  "octopus.events_project",
+                  f"{octopus_root}/api/{space_id}/events?regarding={project_id}&take=1",
+              ))
+
+          failures = [
+              p for p in probes
+              if (p.get("status") in (401, 403))
+              or (p.get("classification") or {}).get("kind") not in ("ok", None)
+              and p.get("status") not in (200, 201)
+          ]
+          # Keep only real auth/rate problems for the hard fail list.
+          hard = []
+          for p in probes:
+              kind = (p.get("classification") or {}).get("kind")
+              if p.get("status") in (401, 403) or kind in {
+                  "auth_unauthorized",
+                  "secondary_rate_limit",
+                  "primary_rate_limit",
+                  "sso_or_saml_forbidden",
+                  "permission_forbidden",
+                  "blocked",
+                  "forbidden_other",
+                  "auth_forbidden",
+              }:
+                  hard.append(p)
+
+          result = {
+              "ok": len(hard) == 0,
+              "utc": datetime.now(timezone.utc).isoformat(),
+              "tokenSource": token_source,
+              "tokenPrefix": (token[:4] + "…" + token[-4:]) if len(token) >= 10 else "(short)",
+              "githubRepository": f"{owner}/{repo}",
+              "octopusSpace": wanted_space,
+              "octopusProject": wanted_project,
+              "octopusSpaceId": space_id,
+              "octopusProjectId": project_id,
+              "probes": probes,
+              "hardFailures": [
+                  {
+                      "name": p.get("name"),
+                      "service": p.get("service"),
+                      "status": p.get("status"),
+                      "url": p.get("url"),
+                      "classification": p.get("classification"),
+                  }
+                  for p in hard
+              ],
+          }
+          # Drop body_preview from saved file size? keep for evidence.
+          json.dump(result, open(report_path, "w"), indent=2)
+
+          lines = [
+              "## Harvest auth diagnosis",
+              "",
+              f"- Token source: `{token_source}`",
+              f"- Repo: `{owner}/{repo}`",
+              f"- Octopus space/project: `{wanted_space}` / `{wanted_project}`"
+              + (f" (`{space_id}` / `{project_id}`)" if space_id else ""),
+              f"- Hard failures: **{len(hard)}**",
+              "",
+              "| Probe | Service | Status | Kind | Detail |",
+              "| --- | --- | --- | --- | --- |",
+          ]
+          for p in probes:
+              c = p.get("classification") or {}
+              detail = (c.get("message") or "")[:120].replace("|", "\\|").replace("\n", " ")
+              extra = []
+              if c.get("x_ratelimit_remaining") is not None:
+                  extra.append(f"remaining={c.get('x_ratelimit_remaining')}")
+              if c.get("retry_after"):
+                  extra.append(f"retry-after={c.get('retry_after')}")
+              if c.get("x_github_sso"):
+                  extra.append(f"sso={c.get('x_github_sso')[:60]}")
+              if extra:
+                  detail = (detail + " · " + ", ".join(extra)).strip(" ·")
+              lines.append(
+                  f"| `{p.get('name')}` | {p.get('service')} | `{p.get('status')}` | `{c.get('kind')}` | {detail} |"
+              )
+          if hard:
+              lines += ["", "### Hard failures (403/401/rate/SSO/permission)", ""]
+              for p in hard:
+                  c = p.get("classification") or {}
+                  lines.append(
+                      f"- **{p.get('service')}** `{p.get('name')}` status `{p.get('status')}` "
+                      f"kind `{c.get('kind')}` — {(c.get('message') or '')[:240]}"
+                  )
+                  lines.append(f"  - URL: `{p.get('url')}`")
+          open(summary_path, "w").write("\n".join(lines) + "\n")
+          print("\n".join(lines))
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+              handle.write("\n".join(lines) + "\n")
+
+          # Machine-readable outputs for later steps / local triage.
+          print(f"DIAGNOSE_JSON={report_path}")
+          if hard:
+              # Prefer naming the first GitHub 403, else first Octopus 403.
+              github_hard = [p for p in hard if p.get("service") == "github"]
+              octopus_hard = [p for p in hard if p.get("service") == "octopus"]
+              top = (github_hard or octopus_hard or hard)[0]
+              c = top.get("classification") or {}
+              print(
+                  f"::error::Harvest auth diagnosis failed: {top.get('service')} "
+                  f"{top.get('name')} HTTP {top.get('status')} kind={c.get('kind')} "
+                  f"msg={(c.get('message') or '')[:180]}"
+              )
+              raise SystemExit(1)
+          print("All credential probes succeeded.")
+          PY
+          diagnose_code=$?
+
+          mkdir -p "${GITHUB_WORKSPACE}/scorecard-report"
+          if [ -f "${report}" ]; then
+            cp "${report}" "${GITHUB_WORKSPACE}/scorecard-report/harvest-auth-diagnose.json"
+          fi
+          if [ "${diagnose_code}" -ne 0 ]; then
+            exit "${diagnose_code}"
+          fi
+          echo "diagnose_ok=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload auth diagnosis artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harvest-auth-diagnose
+          path: scorecard-report/harvest-auth-diagnose.json
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Install cmis, harvest, and publish the HTML scorecard
         timeout-minutes: 100
         run: |
@@ -349,86 +799,64 @@ jobs:
           harvest_receipts_dir="${RUNNER_TEMP}/harvest-receipts"
           mkdir -p "${harvest_receipts_dir}"
 
-          echo "----- GitHub auth/rate-limit probe before harvest -----"
-          gh api user --jq '{login,id,type}' || echo "::warning::gh api user failed"
-          gh api rate_limit --jq '{core:.resources.core|{remaining,limit,reset},search:.resources.search|{remaining,limit,reset},graphql:.resources.graphql|{remaining,limit,reset}}' \
-            || echo "::warning::Could not read GitHub rate_limit"
-          echo "----- Octopus deployments probe (project ${octopus_project_id}) -----"
-          set +e
-          curl -sS -o "${RUNNER_TEMP}/octopus-deployments-probe.json" -w "HTTP_STATUS:%{http_code}\n" \
-            -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" \
-            "${octopus_root}/api/${octopus_space_id}/deployments?projects=${octopus_project_id}&take=1"
-          set -e
-          head -c 400 "${RUNNER_TEMP}/octopus-deployments-probe.json" || true
-          echo
-
+          # No blind retries. Auth/rate problems are diagnosed in the prior step;
+          # a harvest 403 fails this chunk once with the cmis envelope for evidence.
           cmis_harvest_chunk() {
             local chunk_since="$1"
             local chunk_until="$2"
             local chunk_label="$3"
-            local attempt=1
-            local max_attempts=3
-            local sleep_s=30
             local receipt="${harvest_receipts_dir}/all-${chunk_label}.json"
-            while true; do
-              local stamp
-              stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-              echo "===== ${stamp} START harvest ${chunk_label} ${chunk_since}..${chunk_until} attempt ${attempt}/${max_attempts} (timeout ${chunk_timeout_secs}s) ====="
-              local out="${RUNNER_TEMP}/cmis-last.json"
-              local err="${RUNNER_TEMP}/cmis-last.err"
-              : > "${out}"
-              : > "${err}"
-              local start_epoch
-              start_epoch="$(date +%s)"
-              set +e
-              # Parallel heartbeat so a stuck call is visible without delaying failure detection.
-              (
-                while true; do
-                  sleep 30
-                  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) still harvesting ${chunk_label} (elapsed $(( $(date +%s) - start_epoch ))s / ${chunk_timeout_secs}s)"
-                done
-              ) &
-              local hb_pid=$!
-              # timeout starts a new process group so TERM/KILL reach cmis children.
-              timeout --signal=TERM --kill-after=45s "${chunk_timeout_secs}" \
-                "${cmis}" connections harvest \
-                  --since "${chunk_since}" \
-                  --until "${chunk_until}" \
-                  --on-failure strict \
-                  "${common[@]}" > "${out}" 2>"${err}"
-              local code=$?
-              kill "${hb_pid}" 2>/dev/null || true
-              wait "${hb_pid}" 2>/dev/null || true
-              set -e
-              local elapsed=$(( $(date +%s) - start_epoch ))
-              if [ -s "${err}" ]; then
-                echo "----- ${chunk_label} stderr (tail) -----"
-                tail -n 40 "${err}" || true
-              fi
-              if [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
-                echo "::warning::harvest ${chunk_label} timed out after ${elapsed}s (exit ${code})"
-              elif [ "${code}" -eq 0 ] && [ "$(jq -r '.ok // empty' "${out}")" = "true" ]; then
-                cp "${out}" "${receipt}"
-                local raw rows
-                raw="$(jq -r '.data.totalRawItems // 0' "${out}")"
-                rows="$(jq -r '.data.totalRowsAdded // 0' "${out}")"
-                echo "===== $(date -u +%Y-%m-%dT%H:%M:%SZ) DONE harvest ${chunk_label} in ${elapsed}s raw=${raw} rows=${rows} ====="
-                jq -c '.data.connections[]?|{connectionId,succeeded,error,rawItems,rowsAdded}' "${out}" || true
-                return 0
-              else
-                echo "::warning::harvest ${chunk_label} attempt ${attempt} failed (exit ${code}, ${elapsed}s)"
-                jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error}]})}' "${out}" 2>/dev/null || cat "${out}" || true
-              fi
-              if [ "${attempt}" -ge "${max_attempts}" ]; then
-                echo "::error::harvest ${chunk_label} failed after ${max_attempts} attempts."
-                cat "${out}" || true
-                return 1
-              fi
-              echo "Sleeping ${sleep_s}s before retry of ${chunk_label}"
-              sleep "${sleep_s}"
-              attempt=$((attempt + 1))
-              sleep_s=$((sleep_s * 2))
-            done
+            local stamp
+            stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "===== ${stamp} START harvest ${chunk_label} ${chunk_since}..${chunk_until} (timeout ${chunk_timeout_secs}s, no retry) ====="
+            local out="${RUNNER_TEMP}/cmis-last.json"
+            local err="${RUNNER_TEMP}/cmis-last.err"
+            : > "${out}"
+            : > "${err}"
+            local start_epoch
+            start_epoch="$(date +%s)"
+            set +e
+            (
+              while true; do
+                sleep 30
+                echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) still harvesting ${chunk_label} (elapsed $(( $(date +%s) - start_epoch ))s / ${chunk_timeout_secs}s)"
+              done
+            ) &
+            local hb_pid=$!
+            timeout --signal=TERM --kill-after=45s "${chunk_timeout_secs}" \
+              "${cmis}" connections harvest \
+                --since "${chunk_since}" \
+                --until "${chunk_until}" \
+                --on-failure strict \
+                "${common[@]}" > "${out}" 2>"${err}"
+            local code=$?
+            kill "${hb_pid}" 2>/dev/null || true
+            wait "${hb_pid}" 2>/dev/null || true
+            set -e
+            local elapsed=$(( $(date +%s) - start_epoch ))
+            if [ -s "${err}" ]; then
+              echo "----- ${chunk_label} stderr (tail) -----"
+              tail -n 80 "${err}" || true
+            fi
+            if [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
+              echo "::error::harvest ${chunk_label} timed out after ${elapsed}s (exit ${code})"
+              cat "${out}" || true
+              return 1
+            fi
+            if [ "${code}" -eq 0 ] && [ "$(jq -r '.ok // empty' "${out}")" = "true" ]; then
+              cp "${out}" "${receipt}"
+              local raw rows
+              raw="$(jq -r '.data.totalRawItems // 0' "${out}")"
+              rows="$(jq -r '.data.totalRowsAdded // 0' "${out}")"
+              echo "===== $(date -u +%Y-%m-%dT%H:%M:%SZ) DONE harvest ${chunk_label} in ${elapsed}s raw=${raw} rows=${rows} ====="
+              jq -c '.data.connections[]?|{connectionId,succeeded,error,rawItems,rowsAdded}' "${out}" || true
+              return 0
+            fi
+            local err_code
+            err_code="$(jq -r '.error.code // empty' "${out}" 2>/dev/null || true)"
+            echo "::error::harvest ${chunk_label} failed (exit ${code}, ${elapsed}s, error.code=${err_code:-unknown}). No retry."
+            jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error,apiRequestCount}]})}' "${out}" 2>/dev/null || cat "${out}" || true
+            return 1
           }
 
           chunk_count=$(jq 'length' "${chunks_file}")
