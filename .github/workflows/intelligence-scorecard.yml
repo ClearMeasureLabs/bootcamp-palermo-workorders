@@ -589,57 +589,166 @@ jobs:
 
           owner="${GITHUB_REPOSITORY%%/*}"
           repo="${GITHUB_REPOSITORY#*/}"
-          workspace="${RUNNER_TEMP}/cmis-repro-workspace"
-          store="${RUNNER_TEMP}/cmis-repro-store"
-          mkdir -p "${workspace}" "${store}" "${GITHUB_WORKSPACE}/scorecard-report"
-          common=(--json --workspace "${workspace}" --store "${store}")
+          mkdir -p "${GITHUB_WORKSPACE}/scorecard-report"
           until=$(date -u +%F)
           since=$(date -u -d '7 days ago' +%F)
-          echo "Repro window: ${since} .. ${until}; octopusSpace=${octopus_space_id}; octopusProject=${OCTOPUS_PROJECT}"
+          octopus_project_id=$(
+            OCTOPUS_URL="${OCTOPUS_URL}" OCTOPUS_API_KEY="${OCTOPUS_API_KEY}" \
+            OCTOPUS_SPACE_ID="${octopus_space_id}" OCTOPUS_PROJECT="${OCTOPUS_PROJECT}" \
+            python3 - << 'PY'
+          import json, os, urllib.request
+          root = os.environ["OCTOPUS_URL"].rstrip("/")
+          space = os.environ["OCTOPUS_SPACE_ID"]
+          key = os.environ["OCTOPUS_API_KEY"]
+          wanted = os.environ["OCTOPUS_PROJECT"]
+          req = urllib.request.Request(
+              f"{root}/api/{space}/projects/all",
+              headers={"X-Octopus-ApiKey": key, "Accept": "application/json"},
+          )
+          with urllib.request.urlopen(req, timeout=60) as resp:
+              projects = json.load(resp)
+          if isinstance(projects, dict):
+              projects = projects.get("Items") or []
+          match = next(p for p in projects if wanted in (p.get("Id"), p.get("Name"), p.get("Slug")))
+          print(match["Id"])
+          PY
+          )
 
-          "${cmis}" connections add \
-            --id bootcamp \
-            --name "Delivery" \
-            --tracker GitHubDelivery \
-            --coordinate "owner=${owner}" \
-            --coordinate "repo=${repo}" \
-            --coordinate "octopusServer=${OCTOPUS_URL}" \
-            --coordinate "octopusSpace=${octopus_space_id}" \
-            --coordinate "octopusProject=${OCTOPUS_PROJECT}" \
-            --coordinate "environments=auto" \
-            "${common[@]}" | tee "${RUNNER_TEMP}/cmis-repro-add.json"
+          echo "----- cmis connect / set-token help -----"
+          "${cmis}" connect --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-connect-help.txt" 2>&1 || true
+          "${cmis}" connect set-token --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt" 2>&1 || true
+          "${cmis}" connections harvest --help > "${GITHUB_WORKSPACE}/scorecard-report/cmis-harvest-help.txt" 2>&1 || true
+          head -n 80 "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt" || true
 
-          set +e
-          # Capture .NET HTTP chatter if the build honors these switches.
-          export DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP2SUPPORT=1
-          "${cmis}" connections harvest \
-            --connection bootcamp \
-            --since "${since}" \
-            --until "${until}" \
-            --on-failure strict \
-            "${common[@]}" > "${RUNNER_TEMP}/cmis-repro-harvest.json" 2>"${RUNNER_TEMP}/cmis-repro-harvest.err"
-          code=$?
-          set -e
-          cp "${RUNNER_TEMP}/cmis-repro-harvest.json" "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest.json"
-          if [ -s "${RUNNER_TEMP}/cmis-repro-harvest.err" ]; then
-            cp "${RUNNER_TEMP}/cmis-repro-harvest.err" "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest.err"
-            echo "----- cmis stderr -----"
-            cat "${RUNNER_TEMP}/cmis-repro-harvest.err"
+          # Matrix: which credential wiring / project coordinate cmis accepts.
+          # Curl probes already proved GitHub+Octopus APIs return 200 with these secrets.
+          summary_json="${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-matrix.json"
+          echo '[]' > "${summary_json}"
+          any_ok=0
+          while IFS='|' read -r case_id project_coord cred_mode; do
+            case_id=$(echo "${case_id}" | tr -d ' ')
+            project_coord=$(echo "${project_coord}" | tr -d ' ')
+            cred_mode=$(echo "${cred_mode}" | tr -d ' ')
+            [ -n "${case_id}" ] || continue
+            echo "########## repro case ${case_id} project=${project_coord} creds=${cred_mode} ##########"
+            workspace="${RUNNER_TEMP}/cmis-repro-${case_id}"
+            store="${RUNNER_TEMP}/cmis-repro-store-${case_id}"
+            rm -rf "${workspace}" "${store}"
+            mkdir -p "${workspace}" "${store}"
+            common=(--json --workspace "${workspace}" --store "${store}")
+
+            # Fresh env for each case.
+            export CMIS_BOOTCAMP_TOKEN="${harvest_token}"
+            export CMIS_BOOTCAMP_OCTOPUS_TOKEN="${OCTOPUS_API_KEY}"
+
+            "${cmis}" connections add \
+              --id bootcamp \
+              --name "Delivery" \
+              --tracker GitHubDelivery \
+              --coordinate "owner=${owner}" \
+              --coordinate "repo=${repo}" \
+              --coordinate "octopusServer=${OCTOPUS_URL}" \
+              --coordinate "octopusSpace=${octopus_space_id}" \
+              --coordinate "octopusProject=${project_coord}" \
+              --coordinate "environments=auto" \
+              "${common[@]}" > "${RUNNER_TEMP}/cmis-repro-add-${case_id}.json"
+
+            if [ "${cred_mode}" = "set-token" ]; then
+              # Preferred path suggested by the cmis error envelope.
+              printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
+                --connection bootcamp --stdin "${common[@]}" \
+                > "${RUNNER_TEMP}/cmis-repro-set-gh-${case_id}.json" || true
+              # Try common Octopus token switches; keep whichever help documents.
+              if grep -Eqi 'octopus|--kind|--provider|--type' "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt"; then
+                # Prefer explicit kind/provider if the CLI advertises it.
+                if grep -Eqi -- '--kind' "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt"; then
+                  printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
+                    --connection bootcamp --kind octopus --stdin "${common[@]}" \
+                    > "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" || true
+                elif grep -Eqi -- '--provider' "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt"; then
+                  printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
+                    --connection bootcamp --provider octopus --stdin "${common[@]}" \
+                    > "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" || true
+                fi
+              else
+                # Fallback observed in earlier drafts: connection id suffix -octopus.
+                printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
+                  --connection bootcamp-octopus --stdin "${common[@]}" \
+                  > "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" || true
+              fi
+              jq -c . "${RUNNER_TEMP}/cmis-repro-set-gh-${case_id}.json" "${RUNNER_TEMP}/cmis-repro-set-octo-${case_id}.json" 2>/dev/null || true
+            fi
+
+            "${cmis}" connections inventory --json "${common[@]}" \
+              > "${RUNNER_TEMP}/cmis-repro-inventory-${case_id}.json" || true
+
+            set +e
+            "${cmis}" connections harvest \
+              --connection bootcamp \
+              --since "${since}" \
+              --until "${until}" \
+              --on-failure strict \
+              "${common[@]}" > "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>"${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.err"
+            code=$?
+            set -e
+            cp "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" \
+              "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest-${case_id}.json"
+            if [ -s "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.err" ]; then
+              cp "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.err" \
+                "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest-${case_id}.err"
+            fi
+            ok=$(jq -r '.ok // false' "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>/dev/null || echo false)
+            err=$(jq -c '.error // {}' "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>/dev/null || echo '{}')
+            warn=$(jq -c '.warnings // []' "${RUNNER_TEMP}/cmis-repro-harvest-${case_id}.json" 2>/dev/null || echo '[]')
+            echo "case ${case_id}: exit=${code} ok=${ok} error=${err}"
+            python3 - "${summary_json}" "${case_id}" "${project_coord}" "${cred_mode}" "${code}" "${ok}" "${err}" "${warn}" << 'PY'
+          import json, sys
+          path, case_id, project, mode, code, ok, err, warn = sys.argv[1:]
+          rows = json.load(open(path))
+          rows.append({
+              "case": case_id,
+              "octopusProject": project,
+              "credMode": mode,
+              "exitCode": int(code),
+              "ok": ok == "true",
+              "error": json.loads(err),
+              "warnings": json.loads(warn),
+          })
+          json.dump(rows, open(path, "w"), indent=2)
+          PY
+            if [ "${ok}" = "true" ]; then
+              any_ok=1
+              echo "CASE_OK=${case_id}" >> "${GITHUB_OUTPUT}"
+              break
+            fi
+          done <<EOF
+          name-env|${OCTOPUS_PROJECT}|env
+          id-env|${octopus_project_id}|env
+          name-set-token|${OCTOPUS_PROJECT}|set-token
+          id-set-token|${octopus_project_id}|set-token
+          EOF
+
+          # Keep a stable filename for the artifact consumers.
+          if [ -f "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest-name-env.json" ]; then
+            cp "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest-name-env.json" \
+              "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest.json"
           fi
-          echo "----- cmis harvest envelope -----"
-          cat "${RUNNER_TEMP}/cmis-repro-harvest.json"
+
           echo >> "${GITHUB_STEP_SUMMARY}"
-          echo "## cmis GitHubDelivery repro (${since}..${until})" >> "${GITHUB_STEP_SUMMARY}"
+          echo "## cmis GitHubDelivery repro matrix (${since}..${until})" >> "${GITHUB_STEP_SUMMARY}"
           echo '```json' >> "${GITHUB_STEP_SUMMARY}"
-          jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error,apiRequestCount,rawItems,rowsAdded}]})}' \
-            "${RUNNER_TEMP}/cmis-repro-harvest.json" >> "${GITHUB_STEP_SUMMARY}" || cat "${RUNNER_TEMP}/cmis-repro-harvest.json" >> "${GITHUB_STEP_SUMMARY}"
+          cat "${summary_json}" >> "${GITHUB_STEP_SUMMARY}"
+          echo '```' >> "${GITHUB_STEP_SUMMARY}"
+          echo "----- set-token help (head) -----" >> "${GITHUB_STEP_SUMMARY}"
+          echo '```' >> "${GITHUB_STEP_SUMMARY}"
+          head -n 60 "${GITHUB_WORKSPACE}/scorecard-report/cmis-set-token-help.txt" >> "${GITHUB_STEP_SUMMARY}" || true
           echo '```' >> "${GITHUB_STEP_SUMMARY}"
 
-          if [ "${code}" -ne 0 ] || [ "$(jq -r '.ok // false' "${RUNNER_TEMP}/cmis-repro-harvest.json")" != "true" ]; then
-            echo "::error::GitHubDelivery-only cmis harvest failed while curl probes were green. Envelope is in the harvest-auth-diagnose artifact set / job summary. This is a cmis-or-token-scope gap, not a generic GitHub/Octopus outage."
+          if [ "${any_ok}" -ne 1 ]; then
+            echo "::error::All GitHubDelivery repro cases failed while curl probes were HTTP 200. See cmis-repro-matrix.json and set-token help in the harvest-auth-diagnose artifact."
             exit 1
           fi
-          echo "GitHubDelivery-only repro succeeded."
+          echo "GitHubDelivery repro succeeded for case ${CASE_OK:-unknown}."
 
       - name: Upload auth diagnosis artifact
         if: always()
@@ -648,8 +757,9 @@ jobs:
           name: harvest-auth-diagnose
           path: |
             scorecard-report/harvest-auth-diagnose.json
-            scorecard-report/cmis-repro-harvest.json
-            scorecard-report/cmis-repro-harvest.err
+            scorecard-report/cmis-repro-*.json
+            scorecard-report/cmis-repro-*.err
+            scorecard-report/cmis-*-help.txt
           if-no-files-found: ignore
           retention-days: 30
 
