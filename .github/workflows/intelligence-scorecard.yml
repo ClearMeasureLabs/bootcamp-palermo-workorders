@@ -89,6 +89,7 @@ jobs:
           report="${RUNNER_TEMP}/harvest-auth-diagnose.json"
           summary_md="${RUNNER_TEMP}/harvest-auth-diagnose.md"
 
+          set +e
           TOKEN_SOURCE="${token_source}" HARVEST_TOKEN="${harvest_token}" \
           OCTOPUS_ROOT="${octopus_root}" OCTOPUS_API_KEY="${OCTOPUS_API_KEY}" \
           OCTOPUS_SPACE="${OCTOPUS_SPACE}" OCTOPUS_PROJECT="${OCTOPUS_PROJECT}" \
@@ -148,6 +149,8 @@ jobs:
                   "retry_after": retry_after,
                   "x_github_sso": sso or None,
                   "www_authenticate": www or None,
+                  "x_oauth_scopes": h.get("x-oauth-scopes"),
+                  "x_accepted_github_permissions": h.get("x-accepted-github-permissions"),
                   "x_github_request_id": h.get("x-github-request-id"),
               }
 
@@ -297,6 +300,27 @@ jobs:
               "github.search_issues",
               f"https://api.github.com/search/issues?q=repo:{owner}/{repo}+is:pr&per_page=1",
           ))
+          # GitHubDelivery-oriented surfaces (board tracker does not need these).
+          probes.append(probe_github(
+              "github.repo_deployments",
+              f"https://api.github.com/repos/{owner}/{repo}/deployments?per_page=1",
+          ))
+          probes.append(probe_github(
+              "github.repo_environments",
+              f"https://api.github.com/repos/{owner}/{repo}/environments",
+          ))
+          probes.append(probe_github(
+              "github.repo_actions_workflows",
+              f"https://api.github.com/repos/{owner}/{repo}/actions/workflows?per_page=1",
+          ))
+          probes.append(probe_github(
+              "github.repo_actions_runs_dated",
+              f"https://api.github.com/repos/{owner}/{repo}/actions/runs?per_page=1&created=2026-10-01..2026-10-21",
+          ))
+          probes.append(probe_github(
+              "github.org",
+              f"https://api.github.com/orgs/{owner}",
+          ))
 
           spaces = probe_octopus("octopus.spaces_all", f"{octopus_root}/api/spaces/all")
           probes.append(spaces)
@@ -364,13 +388,34 @@ jobs:
                   "octopus.project_get",
                   f"{octopus_root}/api/{space_id}/projects/{project_id}",
               ))
+              # Same path with the project name/slug (what the workflow passes to cmis).
+              probes.append(probe_octopus(
+                  "octopus.project_get_by_name",
+                  f"{octopus_root}/api/{space_id}/projects/{wanted_project}",
+              ))
               probes.append(probe_octopus(
                   "octopus.deployments",
                   f"{octopus_root}/api/{space_id}/deployments?projects={project_id}&take=1",
               ))
               probes.append(probe_octopus(
+                  "octopus.deployments_by_name",
+                  f"{octopus_root}/api/{space_id}/deployments?projects={wanted_project}&take=1",
+              ))
+              probes.append(probe_octopus(
+                  "octopus.deployments_dated",
+                  f"{octopus_root}/api/{space_id}/deployments?projects={project_id}&from=2026-10-01T00:00:00Z&to=2026-10-21T23:59:59Z&take=30",
+              ))
+              probes.append(probe_octopus(
                   "octopus.releases",
                   f"{octopus_root}/api/{space_id}/projects/{project_id}/releases?take=1",
+              ))
+              probes.append(probe_octopus(
+                  "octopus.environments_all",
+                  f"{octopus_root}/api/{space_id}/environments/all",
+              ))
+              probes.append(probe_octopus(
+                  "octopus.progression",
+                  f"{octopus_root}/api/{space_id}/projects/{project_id}/progression",
               ))
               probes.append(probe_octopus(
                   "octopus.events_project",
@@ -492,12 +537,119 @@ jobs:
           fi
           echo "diagnose_ok=true" >> "${GITHUB_OUTPUT}"
 
+      # When curl probes are green but GitHubDelivery still 403s, reproduce with cmis alone
+      # (board tracker is excluded) and capture the full envelope + stderr.
+      - name: Reproduce GitHubDelivery 403 with cmis
+        id: reproduce
+        if: success()
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          if [ -n "${CMIS_GITHUB_TOKEN}" ]; then
+            harvest_token="${CMIS_GITHUB_TOKEN}"
+          elif [ -n "${COPILOT_PAT}" ]; then
+            harvest_token="${COPILOT_PAT}"
+          else
+            harvest_token="${GITHUB_TOKEN_FALLBACK}"
+          fi
+          export GH_TOKEN="${harvest_token}"
+          export CMIS_BOOTCAMP_TOKEN="${harvest_token}"
+          export CMIS_BOOTCAMP_OCTOPUS_TOKEN="${OCTOPUS_API_KEY}"
+
+          dest="${RUNNER_TEMP}/cmis-release"
+          mkdir -p "${dest}"
+          gh api --paginate "repos/${SCORECARD_REPO}/releases?per_page=100" \
+            --jq '.[] | select(any(.assets[]; .name | test("linux-x64\\.tar\\.gz$"))) | {tag:.tag_name, assets:[.assets[].name]}' \
+            > "${dest}/cmis-releases.jsonl"
+          tag=$(jq -s -r '.[0].tag // empty' "${dest}/cmis-releases.jsonl")
+          asset=$(jq -s -r '[.[0].assets[] | select(test("linux-x64\\.tar\\.gz$"))][0] // empty' "${dest}/cmis-releases.jsonl")
+          gh release download "${tag}" --repo "${SCORECARD_REPO}" \
+            --pattern "${asset}" --pattern "SHA256SUMS.txt" --dir "${dest}" --clobber
+          grep -F "${asset}" "${dest}/SHA256SUMS.txt" | (cd "${dest}" && sha256sum -c -)
+          mkdir -p "${dest}/tool"
+          tar -xzf "${dest}/${asset}" -C "${dest}/tool"
+          cmis="${dest}/tool/cmis"
+          chmod +x "${cmis}"
+
+          octopus_root="${OCTOPUS_URL%/}"
+          spaces_json="${RUNNER_TEMP}/octopus-spaces.json"
+          curl -fsS -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" "${octopus_root}/api/spaces/all" -o "${spaces_json}"
+          octopus_space_id=$(OCTOPUS_SPACE="${OCTOPUS_SPACE}" python3 - "${spaces_json}" << 'PY'
+          import json, os, sys
+          payload = json.load(open(sys.argv[1]))
+          spaces = payload if isinstance(payload, list) else payload.get("Items") or []
+          wanted = os.environ["OCTOPUS_SPACE"]
+          for space in spaces:
+              if wanted in (space.get("Id"), space.get("Name"), space.get("Slug")):
+                  print(space["Id"])
+                  raise SystemExit(0)
+          raise SystemExit(f"space not found: {wanted}")
+          PY
+          )
+
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          workspace="${RUNNER_TEMP}/cmis-repro-workspace"
+          store="${RUNNER_TEMP}/cmis-repro-store"
+          mkdir -p "${workspace}" "${store}" "${GITHUB_WORKSPACE}/scorecard-report"
+          common=(--json --workspace "${workspace}" --store "${store}")
+          until=$(date -u +%F)
+          since=$(date -u -d '7 days ago' +%F)
+          echo "Repro window: ${since} .. ${until}; octopusSpace=${octopus_space_id}; octopusProject=${OCTOPUS_PROJECT}"
+
+          "${cmis}" connections add \
+            --id bootcamp \
+            --name "Delivery" \
+            --tracker GitHubDelivery \
+            --coordinate "owner=${owner}" \
+            --coordinate "repo=${repo}" \
+            --coordinate "octopusServer=${OCTOPUS_URL}" \
+            --coordinate "octopusSpace=${octopus_space_id}" \
+            --coordinate "octopusProject=${OCTOPUS_PROJECT}" \
+            --coordinate "environments=auto" \
+            "${common[@]}" | tee "${RUNNER_TEMP}/cmis-repro-add.json"
+
+          set +e
+          # Capture .NET HTTP chatter if the build honors these switches.
+          export DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP2SUPPORT=1
+          "${cmis}" connections harvest \
+            --connection bootcamp \
+            --since "${since}" \
+            --until "${until}" \
+            --on-failure strict \
+            "${common[@]}" > "${RUNNER_TEMP}/cmis-repro-harvest.json" 2>"${RUNNER_TEMP}/cmis-repro-harvest.err"
+          code=$?
+          set -e
+          cp "${RUNNER_TEMP}/cmis-repro-harvest.json" "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest.json"
+          if [ -s "${RUNNER_TEMP}/cmis-repro-harvest.err" ]; then
+            cp "${RUNNER_TEMP}/cmis-repro-harvest.err" "${GITHUB_WORKSPACE}/scorecard-report/cmis-repro-harvest.err"
+            echo "----- cmis stderr -----"
+            cat "${RUNNER_TEMP}/cmis-repro-harvest.err"
+          fi
+          echo "----- cmis harvest envelope -----"
+          cat "${RUNNER_TEMP}/cmis-repro-harvest.json"
+          echo >> "${GITHUB_STEP_SUMMARY}"
+          echo "## cmis GitHubDelivery repro (${since}..${until})" >> "${GITHUB_STEP_SUMMARY}"
+          echo '```json' >> "${GITHUB_STEP_SUMMARY}"
+          jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error,apiRequestCount,rawItems,rowsAdded}]})}' \
+            "${RUNNER_TEMP}/cmis-repro-harvest.json" >> "${GITHUB_STEP_SUMMARY}" || cat "${RUNNER_TEMP}/cmis-repro-harvest.json" >> "${GITHUB_STEP_SUMMARY}"
+          echo '```' >> "${GITHUB_STEP_SUMMARY}"
+
+          if [ "${code}" -ne 0 ] || [ "$(jq -r '.ok // false' "${RUNNER_TEMP}/cmis-repro-harvest.json")" != "true" ]; then
+            echo "::error::GitHubDelivery-only cmis harvest failed while curl probes were green. Envelope is in the harvest-auth-diagnose artifact set / job summary. This is a cmis-or-token-scope gap, not a generic GitHub/Octopus outage."
+            exit 1
+          fi
+          echo "GitHubDelivery-only repro succeeded."
+
       - name: Upload auth diagnosis artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: harvest-auth-diagnose
-          path: scorecard-report/harvest-auth-diagnose.json
+          path: |
+            scorecard-report/harvest-auth-diagnose.json
+            scorecard-report/cmis-repro-harvest.json
+            scorecard-report/cmis-repro-harvest.err
           if-no-files-found: ignore
           retention-days: 30
 
