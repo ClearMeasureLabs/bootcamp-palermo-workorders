@@ -257,23 +257,21 @@ jobs:
           }
 
           record_month() {
-            # Always succeed recording so set -e cannot abort the month loop.
-            set +e
-            status_rows=$(
-              MONTH_JSON="$1" STATUS_ROWS="${status_rows}" python3 - << 'PY'
+            # Do not toggle set -e here. A callee that re-enables errexit makes
+            # the caller's `return 1` abort the whole job before the next month.
+            local next
+            next=$(MONTH_JSON="$1" STATUS_ROWS="${status_rows}" python3 - << 'PY'
           import json, os
           rows = json.loads(os.environ["STATUS_ROWS"])
           rows.append(json.loads(os.environ["MONTH_JSON"]))
           print(json.dumps(rows))
           PY
-            )
-            local rc=$?
-            set -e
-            if [ "${rc}" -ne 0 ] || [ -z "${status_rows}" ]; then
+            ) || {
               echo "::warning::failed to append month status row"
-              status_rows="${status_rows:-[]}"
-            fi
-            write_months_status
+              return 0
+            }
+            status_rows="${next}"
+            write_months_status || echo "::warning::failed to write months-status.json"
           }
 
           receipts_dir="${RUNNER_TEMP}/harvest-receipts"
@@ -352,19 +350,34 @@ jobs:
                 is_403=1
               fi
 
-              if [ "${attempt}" -ge "${max_attempts}" ]; then
-                echo "::error::month ${month_label} failed after ${max_attempts} attempts."
+              local retry_after=""
+              local core_remaining="1"
+              if [ "${is_403}" -eq 1 ] || [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
+                retry_after=$(gh api -i rate_limit 2>/dev/null | awk -F': ' 'tolower($1)=="retry-after"{gsub(/\r/,"",$2); print $2; exit}' || true)
+                core_remaining=$(gh api rate_limit --jq '.resources.core.remaining' 2>/dev/null || echo "1")
+              fi
+
+              # A Delivery 403 with core budget left is not a rate-limit.
+              # Retrying it burns the token and cannot finish 22 months inside
+              # the 6h job cap. Backoff-retry only when Retry-After is set,
+              # core remaining is 0, or the harvest timed out.
+              local should_retry=1
+              if [ "${is_403}" -eq 1 ] && [ -z "${retry_after}" ] && [ "${core_remaining}" != "0" ] && [ "${code}" -ne 124 ] && [ "${code}" -ne 137 ]; then
+                echo "403 without Retry-After and core remaining=${core_remaining}; not retrying ${month_label}"
+                should_retry=0
+              fi
+
+              if [ "${attempt}" -ge "${max_attempts}" ] || [ "${should_retry}" -eq 0 ]; then
+                echo "::error::month ${month_label} failed after ${attempt} attempt(s)."
                 record_month "$(jq -nc \
                   --arg m "${month_label}" --arg s "${month_since}" --arg u "${month_until}" \
                   --argjson code "${code}" --arg ec "${err_code}" --arg cause "${err_cause}" \
                   --arg warn "${warn_cause}" --arg conn "${conn_err}" --argjson el "${elapsed}" \
-                  '{month:$m,since:$s,until:$u,ok:false,error:{exitCode:$code,code:(if $ec=="" then null else $ec end),cause:(if $cause=="" then null else $cause end),warnings:(if $warn=="" then null else $warn end),connections:(if $conn=="" then null else $conn end)},rawItems:0,rowsAdded:0,elapsedSeconds:$el}')"
+                  '{month:$m,since:$s,until:$u,ok:false,error:{exitCode:$code,code:(if $ec=="" then null else $ec end),cause:(if $cause=="" then null else $cause end),warnings:(if $warn=="" then null else $warn end),connections:(if $conn=="" then null else $conn end)},rawItems:0,rowsAdded:0,elapsedSeconds:$el}')" || true
                 return 1
               fi
 
               if [ "${is_403}" -eq 1 ] || [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
-                local retry_after=""
-                retry_after=$(gh api -i rate_limit 2>/dev/null | awk -F': ' 'tolower($1)=="retry-after"{gsub(/\r/,"",$2); print $2; exit}' || true)
                 if [ -n "${retry_after}" ]; then
                   sleep_for_rate_limit "${retry_after}"
                 else
@@ -387,10 +400,8 @@ jobs:
             month_since=$(jq -r ".[${month_index}].since" "${months_file}")
             month_until=$(jq -r ".[${month_index}].until" "${months_file}")
             echo "########## month $((month_index + 1))/${month_count}: ${month_label} ${month_since}..${month_until} ##########"
-            set +e
-            harvest_month "${month_since}" "${month_until}" "${month_label}"
-            month_rc=$?
-            set -e
+            month_rc=0
+            harvest_month "${month_since}" "${month_until}" "${month_label}" || month_rc=$?
             if [ "${month_rc}" -ne 0 ]; then
               failed_months=$((failed_months + 1))
               echo "Continuing after failed month ${month_label} (failed_months=${failed_months})"
@@ -444,14 +455,7 @@ jobs:
 
           succeeded_count=$(jq '[.[]|select(.ok==true)]|length' "${months_status}")
           if [ "${succeeded_count}" -eq 0 ]; then
-            echo "::error::Every month harvest failed; refusing to render an empty scorecard."
-            {
-              echo "## Intelligence scorecard — monthly harvest failed"
-              echo ""
-              echo "No month succeeded. See \`months-status.json\` in the run logs / artifacts."
-              jq -r '.[] | "- `\(.month)`: ok=\(.ok) error=\(.error|@json)"' "${months_status}"
-            } >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
+            echo "::warning::No month fully succeeded. Rendering from whatever the store kept (board rows survive a strict Delivery 403)."
           fi
 
           cmis_ok "add-scorecard" scorecards add \
