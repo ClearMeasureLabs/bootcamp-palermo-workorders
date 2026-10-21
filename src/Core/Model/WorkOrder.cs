@@ -21,6 +21,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     /// </summary>
     public const int InstructionsMaxLength = 4000;
 
+    /// <summary>
+    /// Maximum length of <see cref="CustomerRep"/> accepted by persistence and the work-order form.
+    /// </summary>
+    public const int CustomerRepMaxLength = 50;
+
     public string? Title { get; set; } = "";
 
     public string? Description
@@ -42,6 +47,11 @@ public class WorkOrder : EntityBase<WorkOrder>
     public Employee? Creator { get; set; }
 
     public Employee? Assignee { get; set; }
+
+    /// <summary>
+    /// Optional free-text customer representative name (max 50 characters).
+    /// </summary>
+    public string? CustomerRep { get; set; }
 
     public string? Number { get; set; }
 

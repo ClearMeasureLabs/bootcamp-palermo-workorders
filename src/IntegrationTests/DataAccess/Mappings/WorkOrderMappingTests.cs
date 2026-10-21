@@ -21,6 +21,7 @@ public class WorkOrderMappingTests
             Description = "Replace broken light bulbs in conference room",
             Instructions = "Lock out panel before work.",
             RoomNumber = "CR-101",
+            CustomerRep = "Pat Customer",
             Status = WorkOrderStatus.Draft,
             Creator = creator
         };
@@ -46,6 +47,7 @@ public class WorkOrderMappingTests
         rehydratedWorkOrder.Description.ShouldBe("Replace broken light bulbs in conference room");
         rehydratedWorkOrder.Instructions.ShouldBe("Lock out panel before work.");
         rehydratedWorkOrder.RoomNumber.ShouldBe("CR-101");
+        rehydratedWorkOrder.CustomerRep.ShouldBe("Pat Customer");
         rehydratedWorkOrder.Status.ShouldBe(WorkOrderStatus.Draft);
         rehydratedWorkOrder.Creator.ShouldNotBeNull();
         rehydratedWorkOrder.Creator!.Id.ShouldBe(creator.Id);
@@ -65,7 +67,8 @@ public class WorkOrderMappingTests
             Title = "foo",
             Description = "bar",
             Instructions = "Use 10ft ladder",
-            RoomNumber = "123 a"
+            RoomNumber = "123 a",
+            CustomerRep = "Rep One"
         };
         order.ChangeStatus(WorkOrderStatus.InProgress);
         order.Number = "123";
@@ -95,6 +98,7 @@ public class WorkOrderMappingTests
             rehydratedWorkOrder.Instructions.ShouldBe(order.Instructions);
             rehydratedWorkOrder.Status.ShouldBe(order.Status);
             rehydratedWorkOrder.RoomNumber.ShouldBe(order.RoomNumber);
+            rehydratedWorkOrder.CustomerRep.ShouldBe(order.CustomerRep);
             rehydratedWorkOrder.Number.ShouldBe(order.Number);
         }
     }
@@ -317,6 +321,107 @@ public class WorkOrderMappingTests
 
         rehydratedWorkOrder.RoomNumber.ShouldBe(room);
         rehydratedWorkOrder.RoomNumber!.Length.ShouldBe(WorkOrder.RoomNumberMaxLength);
+    }
+
+    [Test]
+    public void ShouldRoundTripCustomerRep()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-CR",
+            Title = "Customer rep round-trip",
+            Description = "description",
+            CustomerRep = "Alex Representative",
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.CustomerRep.ShouldBe("Alex Representative");
+    }
+
+    [Test]
+    public void ShouldPersistNullCustomerRep()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-CN",
+            Title = "Null customer rep",
+            Description = "description",
+            CustomerRep = null,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.CustomerRep.ShouldBeNull();
+    }
+
+    [Test]
+    public void ShouldSupportMaxLengthCustomerRep()
+    {
+        new DatabaseTests().Clean();
+
+        var creator = new Employee("creator1", "John", "Doe", "john@example.com");
+        var customerRep = new string('C', WorkOrder.CustomerRepMaxLength);
+        var workOrder = new WorkOrder
+        {
+            Number = "WO-C5",
+            Title = "Max length customer rep",
+            Description = "description",
+            CustomerRep = customerRep,
+            Creator = creator,
+            Status = WorkOrderStatus.Draft
+        };
+
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            context.Add(creator);
+            context.Add(workOrder);
+            context.SaveChanges();
+        }
+
+        WorkOrder rehydratedWorkOrder;
+        using (var context = TestHost.GetRequiredService<DbContext>())
+        {
+            rehydratedWorkOrder = context.Set<WorkOrder>()
+                .Single(wo => wo.Id == workOrder.Id);
+        }
+
+        rehydratedWorkOrder.CustomerRep.ShouldBe(customerRep);
+        rehydratedWorkOrder.CustomerRep!.Length.ShouldBe(WorkOrder.CustomerRepMaxLength);
     }
 
     [Test]
