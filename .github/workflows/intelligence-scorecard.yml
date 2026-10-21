@@ -198,20 +198,16 @@ jobs:
                   break
               last = monthrange(y, m)[1]
               end = min(date(y, m, last), until)
-              if end >= since:
-                  chunk_since = max(start, since)
-                  months.append({
-                      "label": f"{y:04d}-{m:02d}",
-                      "since": chunk_since.isoformat(),
-                      "until": end.isoformat(),
-                  })
+              chunk_since = max(start, since)
+              months.append({
+                  "label": f"{y:04d}-{m:02d}",
+                  "since": chunk_since.isoformat(),
+                  "until": end.isoformat(),
+              })
               if m == 12:
                   y, m = y + 1, 1
               else:
                   m += 1
-              if date(y, m, 1) > until and not (y == until.year and m == until.month):
-                  # loop ends via start > until
-                  pass
           json.dump(months, open(sys.argv[3], "w"))
           print(f"Harvest months ({len(months)}):")
           for row in months:
@@ -229,7 +225,8 @@ jobs:
           }
 
           sleep_for_rate_limit() {
-            # Prefer explicit seconds; else sleep until core reset (capped).
+            # Prefer Retry-After / suggested seconds; optionally extend toward
+            # x-ratelimit-reset, but keep a tight cap so 22 months can finish.
             local suggested="$1"
             local reset
             reset=$(gh api rate_limit --jq '.resources.core.reset' 2>/dev/null || echo "")
@@ -238,18 +235,45 @@ jobs:
             local wait="${suggested:-60}"
             if [ -n "${reset}" ] && [ "${reset}" -gt "${now}" ]; then
               local until_reset=$((reset - now + 5))
-              if [ "${until_reset}" -gt "${wait}" ]; then
+              # Only wait for reset when remaining core budget is exhausted.
+              local remaining
+              remaining=$(gh api rate_limit --jq '.resources.core.remaining' 2>/dev/null || echo "1")
+              if [ "${remaining}" = "0" ] && [ "${until_reset}" -gt "${wait}" ]; then
                 wait="${until_reset}"
               fi
             fi
-            if [ "${wait}" -gt 900 ]; then
-              wait=900
+            if [ "${wait}" -gt 180 ]; then
+              wait=180
             fi
             if [ "${wait}" -lt 30 ]; then
               wait=30
             fi
-            echo "Sleeping ${wait}s for rate-limit / 403 backoff"
+            echo "Sleeping ${wait}s for rate-limit / 403 backoff (cap 180s)"
             sleep "${wait}"
+          }
+
+          write_months_status() {
+            printf '%s\n' "${status_rows}" > "${months_status}"
+          }
+
+          record_month() {
+            # Always succeed recording so set -e cannot abort the month loop.
+            set +e
+            status_rows=$(
+              MONTH_JSON="$1" STATUS_ROWS="${status_rows}" python3 - << 'PY'
+          import json, os
+          rows = json.loads(os.environ["STATUS_ROWS"])
+          rows.append(json.loads(os.environ["MONTH_JSON"]))
+          print(json.dumps(rows))
+          PY
+            )
+            local rc=$?
+            set -e
+            if [ "${rc}" -ne 0 ] || [ -z "${status_rows}" ]; then
+              echo "::warning::failed to append month status row"
+              status_rows="${status_rows:-[]}"
+            fi
+            write_months_status
           }
 
           receipts_dir="${RUNNER_TEMP}/harvest-receipts"
@@ -307,75 +331,44 @@ jobs:
                 rows="$(jq -r '.data.totalRowsAdded // 0' "${out}")"
                 echo "===== DONE ${month_label} in ${elapsed}s raw=${raw} rows=${rows} ====="
                 jq -c '.data.connections[]?|{connectionId,succeeded,error,rawItems,rowsAdded}' "${out}" || true
-                status_rows=$(MONTH_LABEL="${month_label}" MONTH_SINCE="${month_since}" MONTH_UNTIL="${month_until}" \
-                  RAW="${raw}" ROWS="${rows}" ELAPSED="${elapsed}" STATUS_ROWS="${status_rows}" python3 - << 'PY'
-          import json, os
-          rows = json.loads(os.environ["STATUS_ROWS"])
-          rows.append({
-              "month": os.environ["MONTH_LABEL"],
-              "since": os.environ["MONTH_SINCE"],
-              "until": os.environ["MONTH_UNTIL"],
-              "ok": True,
-              "error": None,
-              "rawItems": int(os.environ["RAW"]),
-              "rowsAdded": int(os.environ["ROWS"]),
-              "elapsedSeconds": int(os.environ["ELAPSED"]),
-          })
-          print(json.dumps(rows))
-          PY
-                )
+                record_month "$(jq -nc \
+                  --arg m "${month_label}" --arg s "${month_since}" --arg u "${month_until}" \
+                  --argjson raw "${raw}" --argjson rows "${rows}" --argjson el "${elapsed}" \
+                  '{month:$m,since:$s,until:$u,ok:true,error:null,rawItems:$raw,rowsAdded:$rows,elapsedSeconds:$el}')"
                 return 0
               fi
 
-              local err_code err_cause warn_cause
+              local err_code err_cause warn_cause conn_err
               err_code="$(jq -r '.error.code // empty' "${out}" 2>/dev/null || true)"
               err_cause="$(jq -r '.error.cause // empty' "${out}" 2>/dev/null || true)"
               warn_cause="$(jq -r '[.warnings[]?.cause] | join("; ")' "${out}" 2>/dev/null || true)"
-              local combined="${err_cause} ${warn_cause}"
+              conn_err="$(jq -r '[.data.connections[]?|select(.succeeded==false)|.connectionId+": "+(.error//"")]|join(" | ")' "${out}" 2>/dev/null || true)"
+              local combined="${err_cause} ${warn_cause} ${conn_err}"
               echo "::warning::month ${month_label} attempt ${attempt} failed (exit ${code}, ${elapsed}s, code=${err_code:-unknown})"
               jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error}]})}' "${out}" 2>/dev/null || cat "${out}" || true
 
               local is_403=0
-              if echo "${combined}" | grep -Eqi '403|Forbidden|rate limit|abuse'; then
+              if printf '%s' "${combined}" | grep -Eqi '403|Forbidden|rate limit|abuse'; then
                 is_403=1
               fi
 
               if [ "${attempt}" -ge "${max_attempts}" ]; then
                 echo "::error::month ${month_label} failed after ${max_attempts} attempts."
-                status_rows=$(MONTH_LABEL="${month_label}" MONTH_SINCE="${month_since}" MONTH_UNTIL="${month_until}" \
-                  ERR_CODE="${err_code}" ERR_CAUSE="${err_cause}" WARN_CAUSE="${warn_cause}" \
-                  EXIT_CODE="${code}" ELAPSED="${elapsed}" STATUS_ROWS="${status_rows}" python3 - << 'PY'
-          import json, os
-          rows = json.loads(os.environ["STATUS_ROWS"])
-          rows.append({
-              "month": os.environ["MONTH_LABEL"],
-              "since": os.environ["MONTH_SINCE"],
-              "until": os.environ["MONTH_UNTIL"],
-              "ok": False,
-              "error": {
-                  "exitCode": int(os.environ["EXIT_CODE"]),
-                  "code": os.environ.get("ERR_CODE") or None,
-                  "cause": os.environ.get("ERR_CAUSE") or None,
-                  "warnings": os.environ.get("WARN_CAUSE") or None,
-              },
-              "rawItems": 0,
-              "rowsAdded": 0,
-              "elapsedSeconds": int(os.environ["ELAPSED"]),
-          })
-          print(json.dumps(rows))
-          PY
-                )
+                record_month "$(jq -nc \
+                  --arg m "${month_label}" --arg s "${month_since}" --arg u "${month_until}" \
+                  --argjson code "${code}" --arg ec "${err_code}" --arg cause "${err_cause}" \
+                  --arg warn "${warn_cause}" --arg conn "${conn_err}" --argjson el "${elapsed}" \
+                  '{month:$m,since:$s,until:$u,ok:false,error:{exitCode:$code,code:(if $ec=="" then null else $ec end),cause:(if $cause=="" then null else $cause end),warnings:(if $warn=="" then null else $warn end),connections:(if $conn=="" then null else $conn end)},rawItems:0,rowsAdded:0,elapsedSeconds:$el}')"
                 return 1
               fi
 
               if [ "${is_403}" -eq 1 ] || [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
-                # Honor Retry-After from rate_limit resources when present.
                 local retry_after=""
                 retry_after=$(gh api -i rate_limit 2>/dev/null | awk -F': ' 'tolower($1)=="retry-after"{gsub(/\r/,"",$2); print $2; exit}' || true)
                 if [ -n "${retry_after}" ]; then
                   sleep_for_rate_limit "${retry_after}"
                 else
-                  sleep_for_rate_limit $((60 * attempt))
+                  sleep_for_rate_limit $((45 * attempt))
                 fi
               else
                 echo "Sleeping 30s before non-403 retry"
@@ -388,6 +381,7 @@ jobs:
           month_count=$(jq 'length' "${months_file}")
           month_index=0
           failed_months=0
+          write_months_status
           while [ "${month_index}" -lt "${month_count}" ]; do
             month_label=$(jq -r ".[${month_index}].label" "${months_file}")
             month_since=$(jq -r ".[${month_index}].since" "${months_file}")
@@ -399,6 +393,7 @@ jobs:
             set -e
             if [ "${month_rc}" -ne 0 ]; then
               failed_months=$((failed_months + 1))
+              echo "Continuing after failed month ${month_label} (failed_months=${failed_months})"
             fi
             month_index=$((month_index + 1))
             if [ "${month_index}" -lt "${month_count}" ]; then
@@ -407,6 +402,7 @@ jobs:
             fi
           done
 
+          write_months_status
           echo "${status_rows}" | tee "${months_status}" | jq .
           python3 - "${receipts_dir}" "${since}" "${until}" "${harvest_json}" "${months_status}" << 'PY'
           import json, sys
