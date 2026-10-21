@@ -30,15 +30,15 @@ permissions:
 
 concurrency:
   group: intelligence-scorecard
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   scorecard:
     name: Delivery scorecard
     runs-on: ubuntu-latest
-    # Two calendar years of GitHub + Octopus harvest can take longer than a
-    # trailing-month run. Hosted runners allow up to six hours.
-    timeout-minutes: 360
+    # Chunked quarterly harvest should finish well under two hours; fail loud
+    # instead of sitting on a stuck cmis call for six hours.
+    timeout-minutes: 120
     env:
       SCORECARD_REPO: ClearMeasure/Clear-Measure-Intelligence-Scorecard
       CMIS_GITHUB_TOKEN: ${{ secrets.CMIS_GITHUB_TOKEN }}
@@ -48,8 +48,11 @@ jobs:
       OCTOPUS_API_KEY: ${{ secrets.OCTO_API_KEY }}
       OCTOPUS_SPACE: ${{ vars.OCTOPUS_SPACE }}
       OCTOPUS_PROJECT: ${{ vars.OCTOPUS_PROJECT }}
+      # Per-connection quarterly harvest wall clock (GNU timeout).
+      CMIS_CHUNK_TIMEOUT_SECS: "900"
     steps:
       - name: Install cmis, harvest, and publish the HTML scorecard
+        timeout-minutes: 100
         run: |
           set -euo pipefail
 
@@ -301,71 +304,166 @@ jobs:
             --connection bootcamp-board --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-board.json"
           jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-board.json" >/dev/null
 
-          # Harvest one connection at a time. Octopus has returned transient 403/503
-          # on the two-year GitHubDelivery pull; retry with backoff. Delivery first
-          # so it gets a fresh GitHub rate-limit budget before the board harvest.
-          cmis_harvest_one() {
+          # Harvest the two-year window in quarterly chunks so a stuck GitHub or
+          # Octopus call cannot sit silently for hours. Each chunk is bounded by
+          # GNU timeout; a background heartbeat logs progress every 60s.
+          # Delivery connection first per chunk (fresh rate-limit budget).
+          chunks_file="${RUNNER_TEMP}/harvest-chunks.json"
+          python3 - "${since}" "${until}" "${chunks_file}" << 'PY'
+          import json, sys
+          from datetime import date, timedelta
+          from calendar import monthrange
+
+          since_s, until_s, out_path = sys.argv[1:]
+          since = date.fromisoformat(since_s)
+          until = date.fromisoformat(until_s)
+          if until < since:
+              raise SystemExit(f"until {until} is before since {since}")
+
+          def quarter_start(d: date) -> date:
+              return date(d.year, ((d.month - 1) // 3) * 3 + 1, 1)
+
+          def quarter_end(d: date) -> date:
+              start = quarter_start(d)
+              end_month = start.month + 2
+              last_day = monthrange(start.year, end_month)[1]
+              return date(start.year, end_month, last_day)
+
+          chunks = []
+          cursor = since
+          while cursor <= until:
+              q_end = quarter_end(cursor)
+              chunk_until = min(q_end, until)
+              label = f"Q{((cursor.month - 1) // 3) + 1}-{cursor.year}"
+              chunks.append({
+                  "label": label,
+                  "since": cursor.isoformat(),
+                  "until": chunk_until.isoformat(),
+              })
+              cursor = chunk_until + timedelta(days=1)
+          json.dump(chunks, open(out_path, "w"))
+          print(f"Harvest chunks ({len(chunks)}):")
+          for chunk in chunks:
+              print(f"  {chunk['label']}: {chunk['since']} .. {chunk['until']}")
+          PY
+
+          chunk_timeout_secs="${CMIS_CHUNK_TIMEOUT_SECS:-900}"
+          harvest_receipts_dir="${RUNNER_TEMP}/harvest-receipts"
+          mkdir -p "${harvest_receipts_dir}"
+
+          cmis_harvest_chunk() {
             local connection="$1"
+            local chunk_since="$2"
+            local chunk_until="$3"
+            local chunk_label="$4"
             local attempt=1
-            local max_attempts=8
-            local sleep_s=45
+            local max_attempts=3
+            local sleep_s=30
+            local receipt="${harvest_receipts_dir}/${connection}-${chunk_label}.json"
             while true; do
-              echo "----- harvest ${connection} attempt ${attempt}/${max_attempts} -----"
+              local stamp
+              stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              echo "===== ${stamp} START harvest ${connection} ${chunk_label} ${chunk_since}..${chunk_until} attempt ${attempt}/${max_attempts} (timeout ${chunk_timeout_secs}s) ====="
               local out="${RUNNER_TEMP}/cmis-last.json"
+              local err="${RUNNER_TEMP}/cmis-last.err"
+              : > "${out}"
+              : > "${err}"
+              local start_epoch
+              start_epoch="$(date +%s)"
               set +e
-              "${cmis}" connections harvest \
-                --connection "${connection}" \
-                --since "${since}" \
-                --until "${until}" \
-                --on-failure strict \
-                "${common[@]}" > "${out}"
+              # timeout starts a new process group so TERM/KILL reach cmis children.
+              timeout --signal=TERM --kill-after=45s "${chunk_timeout_secs}" \
+                "${cmis}" connections harvest \
+                  --connection "${connection}" \
+                  --since "${chunk_since}" \
+                  --until "${chunk_until}" \
+                  --on-failure strict \
+                  "${common[@]}" > "${out}" 2>"${err}" &
+              local pid=$!
+              while kill -0 "${pid}" 2>/dev/null; do
+                local elapsed=$(( $(date +%s) - start_epoch ))
+                echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) still harvesting ${connection} ${chunk_label} (elapsed ${elapsed}s / ${chunk_timeout_secs}s)"
+                sleep 60
+              done
+              wait "${pid}"
               local code=$?
               set -e
-              if [ "${code}" -eq 0 ] && [ "$(jq -r '.ok' "${out}")" = "true" ]; then
-                cp "${out}" "${RUNNER_TEMP}/cmis-harvest-${connection}.json"
-                echo "harvest ${connection} succeeded on attempt ${attempt}"
-                return 0
+              local elapsed=$(( $(date +%s) - start_epoch ))
+              if [ -s "${err}" ]; then
+                echo "----- ${connection} ${chunk_label} stderr (tail) -----"
+                tail -n 40 "${err}" || true
               fi
-              echo "::warning::harvest ${connection} attempt ${attempt} failed (exit ${code})"
-              jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error}]})}' "${out}" || true
+              if [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
+                echo "::warning::harvest ${connection} ${chunk_label} timed out after ${elapsed}s (exit ${code})"
+              elif [ "${code}" -eq 0 ] && [ "$(jq -r '.ok // empty' "${out}")" = "true" ]; then
+                cp "${out}" "${receipt}"
+                local raw rows
+                raw="$(jq -r '.data.totalRawItems // 0' "${out}")"
+                rows="$(jq -r '.data.totalRowsAdded // 0' "${out}")"
+                echo "===== $(date -u +%Y-%m-%dT%H:%M:%SZ) DONE harvest ${connection} ${chunk_label} in ${elapsed}s raw=${raw} rows=${rows} ====="
+                return 0
+              else
+                echo "::warning::harvest ${connection} ${chunk_label} attempt ${attempt} failed (exit ${code}, ${elapsed}s)"
+                jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error}]})}' "${out}" 2>/dev/null || cat "${out}" || true
+              fi
               if [ "${attempt}" -ge "${max_attempts}" ]; then
-                echo "::error::harvest ${connection} failed after ${max_attempts} attempts."
+                echo "::error::harvest ${connection} ${chunk_label} failed after ${max_attempts} attempts."
                 cat "${out}" || true
                 return 1
               fi
-              echo "Sleeping ${sleep_s}s before retry"
+              echo "Sleeping ${sleep_s}s before retry of ${connection} ${chunk_label}"
               sleep "${sleep_s}"
               attempt=$((attempt + 1))
               sleep_s=$((sleep_s * 2))
-              if [ "${sleep_s}" -gt 600 ]; then
-                sleep_s=600
-              fi
             done
           }
 
-          cmis_harvest_one bootcamp
-          cmis_harvest_one bootcamp-board
-          # Combined receipt for the summary: prefer delivery harvest, attach board counts.
-          python3 - "${RUNNER_TEMP}/cmis-harvest-bootcamp.json" "${RUNNER_TEMP}/cmis-harvest-bootcamp-board.json" "${harvest_json}" << 'PY'
-          import json, sys
-          delivery = json.load(open(sys.argv[1]))
-          board = json.load(open(sys.argv[2]))
+          chunk_count=$(jq 'length' "${chunks_file}")
+          chunk_index=0
+          while [ "${chunk_index}" -lt "${chunk_count}" ]; do
+            chunk_label=$(jq -r ".[${chunk_index}].label" "${chunks_file}")
+            chunk_since=$(jq -r ".[${chunk_index}].since" "${chunks_file}")
+            chunk_until=$(jq -r ".[${chunk_index}].until" "${chunks_file}")
+            echo "########## chunk $((chunk_index + 1))/${chunk_count}: ${chunk_label} ${chunk_since}..${chunk_until} ##########"
+            cmis_harvest_chunk bootcamp "${chunk_since}" "${chunk_until}" "${chunk_label}"
+            cmis_harvest_chunk bootcamp-board "${chunk_since}" "${chunk_until}" "${chunk_label}"
+            chunk_index=$((chunk_index + 1))
+          done
+
+          # Merge per-chunk receipts into one summary envelope for the HTML report.
+          python3 - "${harvest_receipts_dir}" "${since}" "${until}" "${harvest_json}" << 'PY'
+          import json, os, sys
+          from pathlib import Path
+
+          receipts_dir, since, until, out_path = sys.argv[1:]
+          receipts = []
+          for path in sorted(Path(receipts_dir).glob("*.json")):
+              payload = json.loads(path.read_text())
+              data = payload.get("data") or {}
+              receipts.append({
+                  "file": path.name,
+                  "totalRawItems": data.get("totalRawItems") or 0,
+                  "totalRowsAdded": data.get("totalRowsAdded") or 0,
+                  "connections": data.get("connections") or [],
+              })
           out = {
               "ok": True,
               "data": {
-                  "since": (delivery.get("data") or {}).get("since"),
-                  "until": (delivery.get("data") or {}).get("until"),
-                  "totalRawItems": ((delivery.get("data") or {}).get("totalRawItems") or 0)
-                      + ((board.get("data") or {}).get("totalRawItems") or 0),
-                  "totalRowsAdded": ((delivery.get("data") or {}).get("totalRowsAdded") or 0)
-                      + ((board.get("data") or {}).get("totalRowsAdded") or 0),
+                  "since": since,
+                  "until": until,
+                  "totalRawItems": sum(r["totalRawItems"] for r in receipts),
+                  "totalRowsAdded": sum(r["totalRowsAdded"] for r in receipts),
                   "failedCount": 0,
-                  "connections": []
-                      + ((delivery.get("data") or {}).get("connections") or [])
-                      + ((board.get("data") or {}).get("connections") or []),
+                  "chunkCount": len(receipts),
+                  "connections": [c for r in receipts for c in r["connections"]],
+                  "chunks": receipts,
               },
           }
-          json.dump(out, open(sys.argv[3], "w"))
+          json.dump(out, open(out_path, "w"))
+          print(
+              f"Merged {len(receipts)} chunk receipts: "
+              f"raw={out['data']['totalRawItems']} rows={out['data']['totalRowsAdded']}"
+          )
           PY
 
           cmis_ok "add-scorecard" scorecards add \
@@ -503,7 +601,8 @@ jobs:
               summary_lines.append(
                   f"- Harvest: `{harvest_data.get('totalRawItems')}` raw items, "
                   f"`{harvest_data.get('totalRowsAdded')}` normalized rows, "
-                  f"`{harvest_data.get('failedCount')}` failed connections"
+                  f"`{harvest_data.get('failedCount')}` failed connections, "
+                  f"`{harvest_data.get('chunkCount')}` quarterly chunk receipts"
               )
               summary_lines.append("")
 
