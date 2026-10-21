@@ -279,6 +279,9 @@ jobs:
             --coordinate "projectNumber=1" \
             "${common[@]}"
 
+          # Use the Octopus project name/slug (same as the green 30-day run). The
+          # resolved id is logged for diagnostics; cmis GitHubDelivery accepted the
+          # name while Projects-* ids have returned opaque 403s with apiRequestCount 0.
           cmis_ok "add-delivery" connections add \
             --id bootcamp \
             --name "Delivery" \
@@ -287,27 +290,19 @@ jobs:
             --coordinate "repo=${repo}" \
             --coordinate "octopusServer=${OCTOPUS_URL}" \
             --coordinate "octopusSpace=${octopus_space_id}" \
-            --coordinate "octopusProject=${octopus_project_id}" \
+            --coordinate "octopusProject=${OCTOPUS_PROJECT}" \
             --coordinate "environments=auto" \
             "${common[@]}"
 
-          # Store credentials in the workspace secret store as well as env vars.
-          # GitHubDelivery reads CMIS_BOOTCAMP_TOKEN and CMIS_BOOTCAMP_OCTOPUS_TOKEN;
-          # set-token writes the same keys cmis resolves for harvest.
-          printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
-            --connection bootcamp --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-bootcamp.json"
-          jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-bootcamp.json" >/dev/null
-          printf '%s' "${OCTOPUS_API_KEY}" | "${cmis}" connect set-token \
-            --connection bootcamp-octopus --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-octopus.json"
-          jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-octopus.json" >/dev/null
-          printf '%s' "${harvest_token}" | "${cmis}" connect set-token \
-            --connection bootcamp-board --stdin "${common[@]}" > "${RUNNER_TEMP}/cmis-set-token-board.json"
-          jq -e '.ok == true' "${RUNNER_TEMP}/cmis-set-token-board.json" >/dev/null
+          # Credentials: env vars only (CMIS_BOOTCAMP_TOKEN / _OCTOPUS_TOKEN /
+          # CMIS_BOOTCAMP_BOARD_TOKEN). The green run did not use connect set-token;
+          # writing bootcamp-octopus into the store correlated with persistent 403s.
 
           # Harvest the two-year window in quarterly chunks so a stuck GitHub or
           # Octopus call cannot sit silently for hours. Each chunk is bounded by
-          # GNU timeout; a background heartbeat logs progress every 60s.
-          # Delivery connection first per chunk (fresh rate-limit budget).
+          # GNU timeout; a parallel heartbeat logs progress every 30s.
+          # Newest quarter first. Harvest both connections together per chunk
+          # (same shape as the green trailing-window run).
           chunks_file="${RUNNER_TEMP}/harvest-chunks.json"
           python3 - "${since}" "${until}" "${chunks_file}" << 'PY'
           import json, sys
@@ -341,8 +336,11 @@ jobs:
                   "until": chunk_until.isoformat(),
               })
               cursor = chunk_until + timedelta(days=1)
+          # Newest quarter first: recent delivery data lands before older history,
+          # and a stuck ancient chunk is obvious in the log tail.
+          chunks.reverse()
           json.dump(chunks, open(out_path, "w"))
-          print(f"Harvest chunks ({len(chunks)}):")
+          print(f"Harvest chunks ({len(chunks)}, newest first):")
           for chunk in chunks:
               print(f"  {chunk['label']}: {chunk['since']} .. {chunk['until']}")
           PY
@@ -351,19 +349,31 @@ jobs:
           harvest_receipts_dir="${RUNNER_TEMP}/harvest-receipts"
           mkdir -p "${harvest_receipts_dir}"
 
+          echo "----- GitHub auth/rate-limit probe before harvest -----"
+          gh api user --jq '{login,id,type}' || echo "::warning::gh api user failed"
+          gh api rate_limit --jq '{core:.resources.core|{remaining,limit,reset},search:.resources.search|{remaining,limit,reset},graphql:.resources.graphql|{remaining,limit,reset}}' \
+            || echo "::warning::Could not read GitHub rate_limit"
+          echo "----- Octopus deployments probe (project ${octopus_project_id}) -----"
+          set +e
+          curl -sS -o "${RUNNER_TEMP}/octopus-deployments-probe.json" -w "HTTP_STATUS:%{http_code}\n" \
+            -H "X-Octopus-ApiKey: ${OCTOPUS_API_KEY}" \
+            "${octopus_root}/api/${octopus_space_id}/deployments?projects=${octopus_project_id}&take=1"
+          set -e
+          head -c 400 "${RUNNER_TEMP}/octopus-deployments-probe.json" || true
+          echo
+
           cmis_harvest_chunk() {
-            local connection="$1"
-            local chunk_since="$2"
-            local chunk_until="$3"
-            local chunk_label="$4"
+            local chunk_since="$1"
+            local chunk_until="$2"
+            local chunk_label="$3"
             local attempt=1
             local max_attempts=3
             local sleep_s=30
-            local receipt="${harvest_receipts_dir}/${connection}-${chunk_label}.json"
+            local receipt="${harvest_receipts_dir}/all-${chunk_label}.json"
             while true; do
               local stamp
               stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-              echo "===== ${stamp} START harvest ${connection} ${chunk_label} ${chunk_since}..${chunk_until} attempt ${attempt}/${max_attempts} (timeout ${chunk_timeout_secs}s) ====="
+              echo "===== ${stamp} START harvest ${chunk_label} ${chunk_since}..${chunk_until} attempt ${attempt}/${max_attempts} (timeout ${chunk_timeout_secs}s) ====="
               local out="${RUNNER_TEMP}/cmis-last.json"
               local err="${RUNNER_TEMP}/cmis-last.err"
               : > "${out}"
@@ -371,47 +381,50 @@ jobs:
               local start_epoch
               start_epoch="$(date +%s)"
               set +e
+              # Parallel heartbeat so a stuck call is visible without delaying failure detection.
+              (
+                while true; do
+                  sleep 30
+                  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) still harvesting ${chunk_label} (elapsed $(( $(date +%s) - start_epoch ))s / ${chunk_timeout_secs}s)"
+                done
+              ) &
+              local hb_pid=$!
               # timeout starts a new process group so TERM/KILL reach cmis children.
               timeout --signal=TERM --kill-after=45s "${chunk_timeout_secs}" \
                 "${cmis}" connections harvest \
-                  --connection "${connection}" \
                   --since "${chunk_since}" \
                   --until "${chunk_until}" \
                   --on-failure strict \
-                  "${common[@]}" > "${out}" 2>"${err}" &
-              local pid=$!
-              while kill -0 "${pid}" 2>/dev/null; do
-                local elapsed=$(( $(date +%s) - start_epoch ))
-                echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) still harvesting ${connection} ${chunk_label} (elapsed ${elapsed}s / ${chunk_timeout_secs}s)"
-                sleep 60
-              done
-              wait "${pid}"
+                  "${common[@]}" > "${out}" 2>"${err}"
               local code=$?
+              kill "${hb_pid}" 2>/dev/null || true
+              wait "${hb_pid}" 2>/dev/null || true
               set -e
               local elapsed=$(( $(date +%s) - start_epoch ))
               if [ -s "${err}" ]; then
-                echo "----- ${connection} ${chunk_label} stderr (tail) -----"
+                echo "----- ${chunk_label} stderr (tail) -----"
                 tail -n 40 "${err}" || true
               fi
               if [ "${code}" -eq 124 ] || [ "${code}" -eq 137 ]; then
-                echo "::warning::harvest ${connection} ${chunk_label} timed out after ${elapsed}s (exit ${code})"
+                echo "::warning::harvest ${chunk_label} timed out after ${elapsed}s (exit ${code})"
               elif [ "${code}" -eq 0 ] && [ "$(jq -r '.ok // empty' "${out}")" = "true" ]; then
                 cp "${out}" "${receipt}"
                 local raw rows
                 raw="$(jq -r '.data.totalRawItems // 0' "${out}")"
                 rows="$(jq -r '.data.totalRowsAdded // 0' "${out}")"
-                echo "===== $(date -u +%Y-%m-%dT%H:%M:%SZ) DONE harvest ${connection} ${chunk_label} in ${elapsed}s raw=${raw} rows=${rows} ====="
+                echo "===== $(date -u +%Y-%m-%dT%H:%M:%SZ) DONE harvest ${chunk_label} in ${elapsed}s raw=${raw} rows=${rows} ====="
+                jq -c '.data.connections[]?|{connectionId,succeeded,error,rawItems,rowsAdded}' "${out}" || true
                 return 0
               else
-                echo "::warning::harvest ${connection} ${chunk_label} attempt ${attempt} failed (exit ${code}, ${elapsed}s)"
+                echo "::warning::harvest ${chunk_label} attempt ${attempt} failed (exit ${code}, ${elapsed}s)"
                 jq -c '{ok, error, warnings, data:(.data|{failedCount, connections:[.connections[]?|{connectionId,succeeded,error}]})}' "${out}" 2>/dev/null || cat "${out}" || true
               fi
               if [ "${attempt}" -ge "${max_attempts}" ]; then
-                echo "::error::harvest ${connection} ${chunk_label} failed after ${max_attempts} attempts."
+                echo "::error::harvest ${chunk_label} failed after ${max_attempts} attempts."
                 cat "${out}" || true
                 return 1
               fi
-              echo "Sleeping ${sleep_s}s before retry of ${connection} ${chunk_label}"
+              echo "Sleeping ${sleep_s}s before retry of ${chunk_label}"
               sleep "${sleep_s}"
               attempt=$((attempt + 1))
               sleep_s=$((sleep_s * 2))
@@ -425,8 +438,7 @@ jobs:
             chunk_since=$(jq -r ".[${chunk_index}].since" "${chunks_file}")
             chunk_until=$(jq -r ".[${chunk_index}].until" "${chunks_file}")
             echo "########## chunk $((chunk_index + 1))/${chunk_count}: ${chunk_label} ${chunk_since}..${chunk_until} ##########"
-            cmis_harvest_chunk bootcamp "${chunk_since}" "${chunk_until}" "${chunk_label}"
-            cmis_harvest_chunk bootcamp-board "${chunk_since}" "${chunk_until}" "${chunk_label}"
+            cmis_harvest_chunk "${chunk_since}" "${chunk_until}" "${chunk_label}"
             chunk_index=$((chunk_index + 1))
           done
 
