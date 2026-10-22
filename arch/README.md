@@ -57,9 +57,13 @@ Several PlantUML files include remote C4 library snippets via `!includeurl`. To 
 
 | File | Diagram type | Description |
 |------|--------------|-------------|
-| `arch-c4-system.md` | C4Context | Church Bulletin system context |
+| `arch-c4-work-orders-context.puml` | C4Context | **Current** Work Order portal system context |
+| `arch-c4-work-orders-container.puml` | C4Container | **Current** runtime containers (UI, Worker, MCP, SQL, NSB, CI) |
+| `arch-c4-work-orders.md` | Doc | Index and request-flow summary for the Work Order C4 pair |
+| `arch-c4-system.md` | C4Context | Legacy Church Bulletin system context |
 | `arch-c4-ai-software-factory.puml` | C4Container | AI Software Factory SDLC workflow |
 | `arch-c4-container-deployment.md` | C4Container | Containers (DB, app, UI) |
 | `arch-c4-component-project-dependencies.md` | C4Component | Solution/project structure |
 | `arch-c4-class-domain-model.md` | C4Component | Work order domain model |
+| `runtime-c4.puml` | C4Container + C4Deployment | Detailed runtime and Azure deployment views |
 | `WorflowFor*.md` | Sequence | Command workflow sequence diagrams |
