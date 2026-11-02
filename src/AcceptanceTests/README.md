@@ -48,3 +48,11 @@ Not covered after a deployment:
 
 Keep the set small. A new screen or a new connection gets one smoke test, the cheapest existing test that proves it;
 change this table in the same pull request.
+
+## Login drop-down name casing
+
+On `/login`, "Select Church Member" option **labels** are force-capitalized (ALL CAPS) so locally stored mixed-case
+names match mainframe all-caps names. Option **values** stay the employee username. Welcome text and other screens keep
+stored casing. Covered by `LoginTests.Should_DisplayUppercaseNames_InLoginDropdown` and
+`LoginTests.Should_LoginSuccessfully_UsingUsernameValue_NotDisplayLabel` (implementation:
+`LoginDisplayNameFormatter.FormatForLoginDropdown`).
