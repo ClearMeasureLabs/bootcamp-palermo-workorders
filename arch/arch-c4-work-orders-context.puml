@@ -1,0 +1,32 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+scale 2/3
+center header
+    C4 Architecture: System Context
+endheader
+
+title Work Order Management - System Context
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Context.puml
+
+Person(staff, "Church Staff", "Pastor, facilities lead, volunteer, or ministry leader")
+Person(agent, "AI / MCP Client", "External agent or IDE that calls MCP tools")
+
+System(workOrders, "Work Order Portal", "Create, assign, fulfill, and track facility work orders")
+
+System_Ext(azureOpenAI, "Azure OpenAI", "LLM for chat and work-order reformat agents")
+System_Ext(appInsights, "Application Insights", "Traces, metrics, and logs via OpenTelemetry")
+System_Ext(acr, "Azure Container Registry", "churchbulletin.ui container images")
+System_Ext(azureSql, "Azure SQL", "Work orders, employees, roles, NServiceBus transport")
+
+Rel(staff, workOrders, "Manages work orders", "HTTPS / browser")
+Rel(agent, workOrders, "Invokes WorkOrder and Employee tools", "HTTP /mcp")
+Rel(workOrders, azureSql, "Persists domain and messaging state", "TDS")
+Rel(workOrders, azureOpenAI, "LLM calls when configured", "HTTPS")
+Rel(workOrders, appInsights, "Exports telemetry when configured", "OpenTelemetry / HTTPS")
+Rel(workOrders, acr, "Pulls deployed image", "Docker / ACA")
+
+LEGEND("Legend","Portal: Blazor WASM + ASP.NET host\nMCP: Model Context Protocol at /mcp\nSQL: Azure SQL / SQL Server\nLLM: Azure OpenAI via LlmGateway\nOTEL: Application Insights")
+FOOTER()
+@enduml

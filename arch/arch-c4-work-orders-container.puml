@@ -1,0 +1,49 @@
+@startuml
+!include templates/plantuml-theme.puml
+
+scale 2/3
+left to right direction
+center header
+    C4 Architecture: Container Diagram
+endheader
+
+title Work Order Management - Containers (runtime)
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
+
+Person(staff, "Church Staff", "Browser user of the work-order portal")
+Person(agent, "AI / MCP Client", "Calls MCP tools for work orders and employees")
+
+System_Boundary(system, "ChurchBulletin.sln") {
+    Container(uiClient, "UI.Client", "Blazor WebAssembly", "Work-order portal UI; demo login; client health page")
+    Container(uiServer, "UI.Server", "ASP.NET Core 10 / ACA", "Hosts WASM, UI.Api, gRPC WorkOrders, MCP at /mcp, NServiceBus endpoint UI.Server, health checks")
+    Container(worker, "Worker", ".NET Worker / NServiceBus", "WorkOrderProcessing endpoint; SQL transport; local/dev via Aspire AppHost")
+    Container(mcpStandalone, "McpServer", "ASP.NET", "Standalone MCP host; production MCP is in-process on UI.Server")
+    ContainerDb(sql, "Database", "Azure SQL / SQL Server", "Work orders, employees, roles")
+    ContainerDb(nsb, "NServiceBus Transport", "SQL Server schema", "Queues, sagas, subscriptions, outbox")
+}
+
+System_Ext(azureOpenAI, "Azure OpenAI", "Chat and WorkOrderReformatAgent via LlmGateway")
+System_Ext(telemetry, "Application Insights", "OpenTelemetry traces, metrics, logs")
+System_Ext(acr, "Azure Container Registry", "churchbulletin.ui images")
+System_Ext(ci, "GitHub Actions + Octopus", "Build, DbUp migrate, deploy ACA revisions")
+
+Rel(staff, uiClient, "Uses portal", "HTTPS")
+Rel(uiClient, uiServer, "API, gRPC, WebSockets, static WASM", "HTTPS / HTTP2")
+Rel(agent, uiServer, "MCP WorkOrderTools / EmployeeTools", "HTTP /mcp")
+Rel(uiServer, sql, "EF Core DataContext", "TDS")
+Rel(uiServer, nsb, "Sends/receives as UI.Server", "NServiceBus SqlServerTransport")
+Rel(worker, nsb, "Consumes as WorkOrderProcessing", "NServiceBus SqlServerTransport")
+Rel(worker, sql, "Saga persistence + domain writes", "TDS")
+Rel(mcpStandalone, sql, "DataAccess when run standalone", "TDS")
+Rel(uiServer, azureOpenAI, "LLM via LlmGateway", "HTTPS")
+Rel(worker, azureOpenAI, "LLM when configured", "HTTPS")
+Rel(uiServer, telemetry, "OpenTelemetry export", "HTTPS")
+Rel(worker, telemetry, "OpenTelemetry export", "HTTPS")
+Rel(ci, acr, "Build and push image", "Docker")
+Rel(acr, uiServer, "ACA pulls revision image", "Docker")
+Rel(ci, sql, "DbUp migrations", "TDS")
+
+LEGEND("Legend","UI.Client: Blazor WASM\nUI.Server: API + gRPC + MCP host\nWorker: async NServiceBus processing\nMCP: /mcp on UI.Server (or standalone)\nDB: Azure SQL\nNSB: SQL transport on same instance\nLLM: Azure OpenAI\nOTEL: Application Insights")
+FOOTER()
+@enduml
