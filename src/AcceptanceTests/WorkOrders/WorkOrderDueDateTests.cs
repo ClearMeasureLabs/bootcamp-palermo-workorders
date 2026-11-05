@@ -127,11 +127,24 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         todayCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + todayOrder.Number);
         overdueCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + overdueOrder.Number);
 
+        // Completed order remains in default search with no urgency color
         await Expect(todayCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
-        await Expect(overdueCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
         await Expect(todayCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
-        await Expect(overdueCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
         await Expect(todayCell).ToContainTextAsync(today.ToString("MMM d, yyyy", CultureInfo.InvariantCulture));
+
+        // Cancelled order is hidden from default search
+        await Expect(overdueCell).Not.ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
+
+        // Filter by Cancelled status to verify the cancelled order is visible without urgency color
+        var statusSelect = Page.Locator($"#{WorkOrderSearch.Elements.StatusSelect}");
+        await statusSelect.SelectOptionAsync(WorkOrderStatus.Cancelled.Key);
+        var searchButton = Page.Locator($"#{WorkOrderSearch.Elements.SearchButton}");
+        await searchButton.ClickAsync();
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        overdueCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + overdueOrder.Number);
+        await Expect(overdueCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
+        await Expect(overdueCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
         await Expect(overdueCell).ToContainTextAsync(overdue.ToString("MMM d, yyyy", CultureInfo.InvariantCulture));
     }
 
