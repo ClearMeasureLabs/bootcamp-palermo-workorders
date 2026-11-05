@@ -34,7 +34,7 @@ dotnet test src/AcceptanceTests --configuration Debug
 dotnet test src/AcceptanceTests --configuration Debug --filter "FullyQualifiedName~TestClassName.TestMethodName"
 ```
 
-**Run locally:** `cd src/UI/Server && dotnet run` → `https://localhost:7174` (health: `/_healthcheck`)
+**Run locally:** `cd src/UI/Server && dotnet run` → `https://localhost:7174` (health: `/_healthcheck`, echo: `/api/echo`)
 
 **Telemetry:** OpenTelemetry, wired in `src/ChurchBulletin.ServiceDefaults/Extensions.cs`. In Azure, when the app has `APPLICATIONINSIGHTS_CONNECTION_STRING` (and `OTEL_SERVICE_NAME` for the cloud role name), the Azure Monitor OpenTelemetry exporter sends traces, metrics and logs to Application Insights. Locally, running `src/ChurchBulletin.AppHost` sets `OTEL_EXPORTER_OTLP_ENDPOINT` and the OTLP exporter sends to the Aspire dashboard. No connection string or instrumentation key in the repository.
 
