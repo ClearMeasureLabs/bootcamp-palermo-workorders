@@ -19,18 +19,37 @@ public class ChatClientFactory(IBus bus)
     }
 
     /// <summary>
-    /// Builds a tracing-wrapped chat client from configured Azure OpenAI settings.
+    /// Builds a tracing-wrapped chat client from Azure OpenAI when an API key is set,
+    /// otherwise from local Ollama.
     /// Virtual for unit-test stubs of dependent health checks.
     /// </summary>
     public virtual async Task<IChatClient> GetChatClient()
     {
         var config = await bus.Send(new ChatClientConfigQuery());
-        var apiKey = config.AiOpenAiApiKey
-            ?? throw new InvalidOperationException("AI_OpenAI_ApiKey is not configured.");
-
-        IChatClient innerClient = BuildAzureOpenAiChatClient(config, apiKey);
-
+        IChatClient innerClient = BuildProviderChatClient(config);
         return new TracingChatClient(innerClient);
+    }
+
+    internal static IChatClient BuildProviderChatClient(ChatClientConfig config)
+    {
+        if (string.IsNullOrEmpty(config.AiOpenAiApiKey))
+        {
+            return BuildOllamaChatClient();
+        }
+
+        return BuildAzureOpenAiChatClient(config, config.AiOpenAiApiKey);
+    }
+
+    private static IChatClient BuildOllamaChatClient()
+    {
+        IChatClient ollamaClient = new OllamaChatClient(
+            OllamaChatDefaults.LocalEndpoint,
+            OllamaChatDefaults.DefaultModelId);
+
+        return new OllamaNumCtxChatClient(ollamaClient)
+            .AsBuilder()
+            .UseFunctionInvocation()
+            .Build();
     }
 
     private static IChatClient BuildAzureOpenAiChatClient(ChatClientConfig config, string apiKey)
