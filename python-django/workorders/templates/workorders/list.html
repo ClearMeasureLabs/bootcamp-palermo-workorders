@@ -1,0 +1,25 @@
+{% extends "workorders/base.html" %}
+{% block title %}Work Order Search{% endblock %}
+{% block content %}
+<div class="search-page">
+  <div class="search-container">
+    <div class="search-header"><h1>Work Order Search</h1><div class="search-subtitle">Find and manage church maintenance requests</div></div>
+    <form class="search-filters-card" method="get">
+      <div class="filters-grid">
+        <div class="filter-group"><label class="filter-label" for="CreatorSelect">Creator</label><select class="form-control" id="CreatorSelect" name="creator"><option value="">All</option>{% for employee in employees %}<option value="{{ employee.pk }}" {% if creator_id == employee.pk|stringformat:"s" %}selected{% endif %}>{{ employee.get_full_name }}</option>{% endfor %}</select></div>
+        <div class="filter-group"><label class="filter-label" for="AssigneeSelect">Assignee</label><select class="form-control" id="AssigneeSelect" name="assignee" {% if assigned_to_me %}disabled{% endif %}><option value="">All</option>{% for employee in employees %}<option value="{{ employee.pk }}" {% if assignee_id == employee.pk|stringformat:"s" %}selected{% endif %}>{{ employee.get_full_name }}</option>{% endfor %}</select></div>
+        <div class="filter-group check-filter"><input type="checkbox" id="AssignedToMeCheckbox" name="assigned_to_me" value="1" {% if assigned_to_me %}checked{% endif %}><label class="filter-label" for="AssignedToMeCheckbox">Assigned to me</label></div>
+        <div class="filter-group"><label class="filter-label" for="StatusSelect">Status</label><select class="form-control" name="status" id="StatusSelect"><option value="">All</option>{% for value,label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="filter-group"><label class="filter-label" for="OverdueOnlyToggle">Overdue</label><div class="check-filter"><input type="checkbox" id="OverdueOnlyToggle" name="overdue" value="1" {% if overdue_only %}checked{% endif %}><label for="OverdueOnlyToggle">Show overdue only</label></div></div>
+        <div class="filter-group actions"><button id="SearchButton" class="btn-primary" type="submit">⌕ Search</button><a class="btn-secondary" href="{% url 'work_order_list' %}">Clear filters</a>{% if current_employee.can_create_work_order %}<a class="btn-secondary" href="{% url 'work_order_create' %}">New work order</a>{% endif %}</div>
+      </div>
+    </form>
+    <section class="results-card">
+      <div class="results-header">☷ Search Results ({{ orders|length }} work orders)</div>
+      {% if orders %}<div class="table-scroll"><table class="grid-data"><thead><tr><th>WO #</th><th>Creator</th><th>Assignee</th><th><a class="sort-btn" href="{% querystring sort='Status' direction=next_directions.Status %}">Status{% if sort == 'Status' %} {% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th><th><a class="sort-btn" href="{% querystring sort='Title' direction=next_directions.Title %}">Title{% if sort == 'Title' %} {% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th><th><a class="sort-btn" href="{% querystring sort='DueDate' direction=next_directions.DueDate %}">Due Date{% if sort == 'DueDate' %} {% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th><th><a class="sort-btn" href="{% querystring sort='Room' direction=next_directions.Room %}">Room{% if sort == 'Room' %} {% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th></tr></thead>
+      <tbody>{% for order in orders %}<tr class="{% cycle 'odd' 'even' %}{% if order.due_urgency == 'Overdue' %} overdue-row{% endif %}"><td><a data-testid="WorkOrderLink{{ order.number }}" href="{% url 'work_order_detail' order.pk %}">{{ order.number }}</a></td><td>{{ order.creator|default:"" }}</td><td>{{ order.assignee|default:"" }}</td><td><span class="status-badge">{{ order.get_status_display|upper }}</span></td><td>{{ order.title }}</td><td><span data-testid="DueDateCell{{ order.number }}" class="{{ order.due_css_class }}">{% if order.due_date %}{{ order.due_date|date:"M j, Y" }}{% if order.due_urgency == "Overdue" %}<span class="visually-hidden">Overdue</span>{% elif order.due_urgency == "DueToday" %}<span class="visually-hidden">Due today</span>{% endif %}{% endif %}</span>{% if order.due_badge %}<span class="urgency-badge {% if order.due_css_class %}{{ order.due_css_class }}{% else %}on-track{% endif %}" data-testid="UrgencyBadge{{ order.number }}" aria-label="{{ order.due_badge }}">{{ order.due_badge }}</span>{% endif %}</td><td>{{ order.room_number }}</td></tr>{% endfor %}</tbody></table></div>
+      {% else %}<div class="empty-results"><p>No work orders found matching your search criteria.</p><p>Try adjusting your filters or create a new work order.</p></div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

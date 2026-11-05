@@ -1,0 +1,1 @@
+{% extends "workorders/base.html" %}{% block content %}<h1>New work order</h1><form method="post" class="panel">{% csrf_token %}{{ form.as_p }}<button type="submit">Create work order</button> <a href="{% url 'work_order_list' %}">Cancel</a></form>{% endblock %}
