@@ -15,14 +15,16 @@ const TITLE_CARD_FRAMES = 72;
 const OUTRO_FRAMES = 280; // ~9.3s — narration ~8.4s
 
 // Footage + still durations sized for Emma narration buffers.
+// Captured webm lengths (25fps native): mcp-batch ~6s, portal-batch ~11s,
+// mcp-ops ~94s, portal-ops ~108s — composition uses a readable head portion.
 const MCP_BATCH_FRAMES = 180; // ~6s captured
-const MCP_BATCH_STILL = 360;
-const PORTAL_BATCH_FRAMES = 270;
-const PORTAL_BATCH_STILL = 300;
-const MCP_OPS_FRAMES = 600; // use portion of long ops tour
-const MCP_OPS_STILL = 330;
-const PORTAL_OPS_FRAMES = 360;
-const PORTAL_OPS_STILL = 240;
+const MCP_BATCH_STILL = 360; // narration ~15.3s
+const PORTAL_BATCH_FRAMES = 300; // ~10s of ~11s clip
+const PORTAL_BATCH_STILL = 270; // narration ~16.8s
+const MCP_OPS_FRAMES = 720; // ~24s of long ops tour
+const MCP_OPS_STILL = 240; // narration ~28.2s
+const PORTAL_OPS_FRAMES = 540; // ~18s — search + manage + lifecycle head
+const PORTAL_OPS_STILL = 150; // narration ~16.1s
 
 export const TOTAL_DURATION_IN_FRAMES =
 	INTRO_FRAMES +
