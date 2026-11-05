@@ -128,11 +128,10 @@ public class WorkOrderDueDateTests : AcceptanceTestBase
         overdueCell = Page.GetByTestId(nameof(WorkOrderSearch.Elements.DueDateCell) + overdueOrder.Number);
 
         await Expect(todayCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
-        await Expect(overdueCell).ToBeAttachedAsync(new LocatorAssertionsToBeAttachedOptions { Timeout = 30_000 });
+        // Cancelled orders are excluded from the default search (issue #9770), so the row is gone.
+        await Expect(overdueCell).Not.ToBeAttachedAsync();
         await Expect(todayCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
-        await Expect(overdueCell).Not.ToHaveClassAsync(new Regex("due-date-today|due-date-overdue"));
         await Expect(todayCell).ToContainTextAsync(today.ToString("MMM d, yyyy", CultureInfo.InvariantCulture));
-        await Expect(overdueCell).ToContainTextAsync(overdue.ToString("MMM d, yyyy", CultureInfo.InvariantCulture));
     }
 
     [Test, Retry(2)]

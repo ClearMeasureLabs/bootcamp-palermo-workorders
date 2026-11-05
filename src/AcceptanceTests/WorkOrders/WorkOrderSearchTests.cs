@@ -127,6 +127,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var creator = CurrentUser;
         var order = Faker<WorkOrder>();
         order.Creator = creator;
+        order.Status = WorkOrderStatus.Draft;
         order.Title = $"[{TestTag}] search test";
         await using var context = TestHost.NewDbContext();
         context.Attach(creator);
@@ -535,6 +536,8 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var order2 = Faker<WorkOrder>();
         order1.Creator = creator;
         order2.Creator = creator;
+        order1.Status = WorkOrderStatus.Draft;
+        order2.Status = WorkOrderStatus.Draft;
         order1.Title = "Alpha";
         order2.Title = "Zebra";
 
@@ -577,6 +580,8 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var order2 = Faker<WorkOrder>();
         order1.Creator = creator;
         order2.Creator = creator;
+        order1.Status = WorkOrderStatus.Draft;
+        order2.Status = WorkOrderStatus.Draft;
         order1.RoomNumber = "Atrium";
         order2.RoomNumber = "Zeppelin";
 
@@ -619,9 +624,11 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var otherOrder = Faker<WorkOrder>();
         myOrder.Creator = CurrentUser;
         myOrder.Assignee = CurrentUser;
+        myOrder.Status = WorkOrderStatus.Assigned;
         myOrder.Title = $"[{TestTag}] my order";
         otherOrder.Creator = otherEmployee;
         otherOrder.Assignee = otherEmployee;
+        otherOrder.Status = WorkOrderStatus.Assigned;
         otherOrder.Title = $"[{TestTag}] other order";
 
         await using var context = TestHost.NewDbContext();
@@ -661,9 +668,11 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var otherOrder = Faker<WorkOrder>();
         myOrder.Creator = CurrentUser;
         myOrder.Assignee = CurrentUser;
+        myOrder.Status = WorkOrderStatus.Assigned;
         myOrder.Title = $"[{TestTag}] my order";
         otherOrder.Creator = otherEmployee;
         otherOrder.Assignee = otherEmployee;
+        otherOrder.Status = WorkOrderStatus.Assigned;
         otherOrder.Title = $"[{TestTag}] other order";
 
         await using var context = TestHost.NewDbContext();
@@ -703,6 +712,7 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var myOrder = Faker<WorkOrder>();
         myOrder.Creator = CurrentUser;
         myOrder.Assignee = CurrentUser;
+        myOrder.Status = WorkOrderStatus.Assigned;
         myOrder.Title = $"[{TestTag}] persisted order";
 
         await using var context = TestHost.NewDbContext();
@@ -747,6 +757,8 @@ public class WorkOrderSearchTests : AcceptanceTestBase
         var order2 = Faker<WorkOrder>();
         order1.Creator = creator;
         order2.Creator = creator;
+        order1.Status = WorkOrderStatus.Draft;
+        order2.Status = WorkOrderStatus.Draft;
         order1.DueDate = new DateOnly(2099, 1, 1);
         order2.DueDate = new DateOnly(2099, 12, 31);
 
