@@ -78,4 +78,57 @@ public class EchoControllerTests
         payload.Headers["Cookie"].ShouldBe(EchoController.RedactedValue);
         payload.Headers["Accept"].ShouldBe("application/json");
     }
+
+    [Test]
+    public void BuildEchoResponse_NonSensitiveHeader_IsPassedThrough()
+    {
+        var httpContext = new DefaultHttpContext { Request = { Method = "GET", Path = "/api/echo" } };
+        httpContext.Request.Headers["X-Custom-Trace"] = "trace-value-42";
+
+        var controller = new EchoController
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext }
+        };
+
+        var result = controller.Get();
+
+        var payload = result.ShouldBeOfType<OkObjectResult>().Value.ShouldBeOfType<EchoResponse>();
+        payload.Headers["X-Custom-Trace"].ShouldBe("trace-value-42");
+    }
+
+    [Test]
+    public void BuildEchoResponse_IPv4MappedAddress_IsFlattenedToIPv4()
+    {
+        var httpContext = new DefaultHttpContext
+        {
+            Request = { Method = "GET", Path = "/api/echo" },
+            Connection = { RemoteIpAddress = System.Net.IPAddress.Parse("::ffff:127.0.0.1") }
+        };
+
+        var controller = new EchoController
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext }
+        };
+
+        var result = controller.Get();
+
+        var payload = result.ShouldBeOfType<OkObjectResult>().Value.ShouldBeOfType<EchoResponse>();
+        payload.RemoteIpAddress.ShouldBe("127.0.0.1");
+    }
+
+    [Test]
+    public void BuildEchoResponse_EmptyQueryString_IsEmptyString()
+    {
+        var httpContext = new DefaultHttpContext { Request = { Method = "GET", Path = "/api/echo" } };
+
+        var controller = new EchoController
+        {
+            ControllerContext = new ControllerContext { HttpContext = httpContext }
+        };
+
+        var result = controller.Get();
+
+        var payload = result.ShouldBeOfType<OkObjectResult>().Value.ShouldBeOfType<EchoResponse>();
+        payload.QueryString.ShouldBe(string.Empty);
+    }
 }
