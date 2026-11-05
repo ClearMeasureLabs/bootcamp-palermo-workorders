@@ -1,0 +1,45 @@
+name: TypeScript NestJS prototype # capture, require, and render the browser recording
+# npm --prefix commands lock paths independently of GitHub runner cwd.
+on:
+  pull_request:
+    paths:
+      - 'prototypes/typescript-nest/**'
+      - '.github/workflows/typescript-nest-prototype.yml'
+  push:
+    branches: [prototype/typescript-nest]
+    paths:
+      - 'prototypes/typescript-nest/**'
+      - '.github/workflows/typescript-nest-prototype.yml'
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    env:
+      DEMO_LOGIN_ENABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: prototypes/typescript-nest/package-lock.json
+      - run: cd prototypes/typescript-nest && npm install --no-audit --no-fund
+      - run: cd prototypes/typescript-nest && npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install --yes xvfb
+      - run: cd prototypes/typescript-nest && npm run private-build
+      - run: xvfb-run -a env HEADFUL=true npm run acceptance --prefix prototypes/typescript-nest
+      - run: cd prototypes/typescript-nest/remotion && npm install --no-audit --no-fund
+      - run: cd prototypes/typescript-nest/remotion && npx remotion browser ensure
+      - run: cd prototypes/typescript-nest/remotion && npm run render
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: typescript-nest-visual-acceptance
+          path: |
+            prototypes/typescript-nest/artifacts/acceptance-video.webm
+            prototypes/typescript-nest/artifacts/typescript-nest-acceptance.mp4
+            prototypes/typescript-nest/artifacts/work-order-search-1365x900.png
+            prototypes/typescript-nest/artifacts/work-order-search-1920x1080.png
+            prototypes/typescript-nest/artifacts/work-order-create-1365x900.png
+            prototypes/typescript-nest/artifacts/work-order-create-1920x1080.png
+            prototypes/typescript-nest/artifacts/work-order-manage-1365x900.png
+            prototypes/typescript-nest/artifacts/work-order-manage-1920x1080.png
