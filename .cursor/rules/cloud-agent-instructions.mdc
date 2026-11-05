@@ -5,6 +5,10 @@ alwaysApply: true
 
 # Cloud Agent Instructions
 
+## Implementing a single GitHub issue (agents)
+
+Follow `.claude/skills/feature-loop-lean/GENERAL.md` (token-lean loop: `scripts/agent/Get-Context.ps1` then `scripts/agent/Submit-Change.ps1`). Launch prompt: `docs/agent-launch-prompt.md`.
+
 ## Scope of Work
 
 **CRITICAL:** Only perform work within these responsibilities. Any request outside this scope requires explicit user confirmation before proceeding.

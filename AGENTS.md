@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Implementing a single GitHub issue (agents)
+
+Follow `.claude/skills/feature-loop-lean/GENERAL.md` (token-lean loop: `scripts/agent/Get-Context.ps1` then `scripts/agent/Submit-Change.ps1`). Launch prompt: `docs/agent-launch-prompt.md`.
+
 See `CLAUDE.md` for full project overview, solution structure, architecture, coding standards, and build/test commands.
 
 ## Cursor Cloud specific instructions
