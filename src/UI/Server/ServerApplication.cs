@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Resources;
+using ClearMeasure.Bootcamp.McpServer.RateLimiting;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
@@ -127,7 +128,8 @@ public static class ServerApplication
             .WithHttpTransport()
             .WithTools<WorkOrderTools>()
             .WithTools<EmployeeTools>()
-            .WithResources<ReferenceResources>();
+            .WithResources<ReferenceResources>()
+            .WithMcpToolRateLimiting(builder.Configuration);
     }
 
     private static void RegisterNServiceBus(WebApplicationBuilder builder)

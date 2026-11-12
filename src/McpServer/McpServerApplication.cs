@@ -1,4 +1,5 @@
 using ClearMeasure.Bootcamp.McpServer.Resources;
+using ClearMeasure.Bootcamp.McpServer.RateLimiting;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using Lamar.Microsoft.DependencyInjection;
 using ChurchBulletin.ServiceDefaults;
@@ -45,7 +46,8 @@ public static class McpServerApplication
             })
             .WithTools<WorkOrderTools>()
             .WithTools<EmployeeTools>()
-            .WithResources<ReferenceResources>();
+            .WithResources<ReferenceResources>()
+            .WithMcpToolRateLimiting(builder.Configuration);
 
         configureBuilder?.Invoke(builder);
 
