@@ -5,7 +5,8 @@ namespace ClearMeasure.Bootcamp.IntegrationTests;
 
 public sealed class DatabaseEmptier
 {
-    private static readonly string[] IgnoredTables = ["[dbo].[sysdiagrams]", "[dbo].[SchemaVersions]"];
+    private static readonly string[] IgnoredTables =
+        ["[dbo].[sysdiagrams]", "[dbo].[SchemaVersions]", "[dbo].[AuditLog]"];
     private static string? _deleteSql;
     private readonly DatabaseFacade _database;
 
@@ -25,7 +26,27 @@ public sealed class DatabaseEmptier
 
         _deleteSql ??= BuildDeleteTableSqlStatement();
 
+        DeleteExpiredAuditData();
         _database.ExecuteSqlRaw(_deleteSql);
+    }
+
+    private void DeleteExpiredAuditData()
+    {
+        _database.ExecuteSqlRaw("""
+            IF OBJECT_ID(N'dbo.AuditLog', N'U') IS NOT NULL
+            BEGIN
+                DECLARE @Cutoff datetime2 = SYSUTCDATETIME();
+                BEGIN TRY
+                    EXEC sys.sp_set_session_context @key=N'AuditRetentionCutoff', @value=@Cutoff;
+                    DELETE FROM [dbo].[AuditLog] WHERE [Timestamp] < @Cutoff;
+                    EXEC sys.sp_set_session_context @key=N'AuditRetentionCutoff', @value=NULL;
+                END TRY
+                BEGIN CATCH
+                    EXEC sys.sp_set_session_context @key=N'AuditRetentionCutoff', @value=NULL;
+                    THROW;
+                END CATCH;
+            END;
+            """);
     }
 
     private bool IsSqlite()

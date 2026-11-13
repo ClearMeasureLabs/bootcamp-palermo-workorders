@@ -11,6 +11,7 @@ public class AddAttachmentMetadataCommandHandler(DbContext dbContext, TimeProvid
     public async Task<WorkOrderAttachment> Handle(AddAttachmentMetadataCommand request,
         CancellationToken cancellationToken = default)
     {
+        using var auditScope = AuditOperationScope.Begin(nameof(AddAttachmentMetadataCommand), request.UploadedBy.UserName);
         var attachment = request.CreateAttachment(time.GetUtcNow().DateTime);
         dbContext.Add(attachment);
         await dbContext.SaveChangesAsync(cancellationToken);

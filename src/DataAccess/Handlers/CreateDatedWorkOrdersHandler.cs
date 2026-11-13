@@ -24,6 +24,7 @@ public class CreateDatedWorkOrdersHandler(
         CreateDatedWorkOrdersCommand request,
         CancellationToken cancellationToken)
     {
+        using var auditScope = AuditOperationScope.Begin(nameof(CreateDatedWorkOrdersCommand), request.CreatorUsername);
         var validationFailure = ValidateBatchSize(request.DueDates.Count);
         if (validationFailure != null)
         {

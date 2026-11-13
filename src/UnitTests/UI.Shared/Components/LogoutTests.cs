@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Palermo.BlazorMvc;
 using Shouldly;
 using ClearMeasure.Bootcamp.UnitTests.UI.Client.Authentication;
+using MediatR;
 
 namespace ClearMeasure.Bootcamp.UnitTests.UI.Shared.Components;
 
@@ -29,7 +30,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
 
@@ -50,7 +51,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(employee));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
 
@@ -70,7 +71,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(employee));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
 
@@ -90,7 +91,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(userSession);
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
         userSession.CurrentUser = new Employee("hsimpson", "Homer", "Simpson", "homer@example.com") { MiddleName = "Jay" };
@@ -112,7 +113,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubFailingUserSession());
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
 
@@ -131,7 +132,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
 
@@ -154,7 +155,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
 
@@ -174,7 +175,8 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        var auditBus = new StubLogoutBus();
+        ctx.Services.AddSingleton<IBus>(auditBus);
 
         var component = ctx.Render<Logout>();
         var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
@@ -183,6 +185,9 @@ public class LogoutTests
 
         spyEventBus.NotifyWasCalled.ShouldBeTrue();
         spyEventBus.LastNotifiedEvent.ShouldBeOfType<UserLoggedOutEvent>();
+        ((UserLoggedOutEvent)spyEventBus.LastNotifiedEvent).Username.ShouldBe("hsimpson");
+        auditBus.Notification.ShouldBeOfType<ClearMeasure.Bootcamp.Core.Model.Events.UserLoggedOutEvent>()
+            .UserName.ShouldBe("hsimpson");
     }
 
     [Test]
@@ -196,7 +201,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(new StubUiBus());
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
         var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
@@ -219,7 +224,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
         var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
@@ -250,7 +255,7 @@ public class LogoutTests
         ctx.Services.AddSingleton(authProvider);
         ctx.Services.AddSingleton<IUserSession>(new StubUserSession(null));
         ctx.Services.AddSingleton<IUiBus>(spyEventBus);
-        ctx.Services.AddSingleton<IBus>(new Bus(null!));
+        ctx.Services.AddSingleton<IBus>(new StubBus());
 
         var component = ctx.Render<Logout>();
         var logoutButton = component.Find($"[data-testid='{nameof(Logout.Elements.LogoutLink)}']");
@@ -263,6 +268,17 @@ public class LogoutTests
         authProvider.GetUsername().ShouldBe("tlovejoy");
         spyEventBus.NotifyWasCalled.ShouldBeFalse();
         navigationManager.Uri.ShouldBe(uriBefore);
+    }
+
+    private sealed class StubLogoutBus : StubBus
+    {
+        public INotification? Notification { get; private set; }
+
+        public override Task Publish(INotification notification)
+        {
+            Notification = notification;
+            return Task.CompletedTask;
+        }
     }
 }
 

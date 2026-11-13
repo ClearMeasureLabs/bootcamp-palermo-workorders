@@ -4,6 +4,7 @@ using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.LlmGateway;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Resources;
+using ClearMeasure.Bootcamp.McpServer.Auditing;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using ClearMeasure.Bootcamp.UI.Api;
 using ClearMeasure.Bootcamp.UI.Api.Controllers;
@@ -81,6 +82,7 @@ public static class ServerApplication
         builder.Services.AddRazorPages();
         builder.Host.UseLamar(registry => { registry.IncludeRegistry<UiServiceRegistry>(); });
         builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddAuditRetention(builder.Configuration);
         builder.Services.AddScoped<IDistributedBus, DistributedBus>();
         builder.Services.AddMemoryCache();
         builder.Services.Configure<IdempotencyOptions>(
@@ -125,6 +127,7 @@ public static class ServerApplication
                 options.ServerInfo = new() { Name = "ChurchBulletin", Version = "1.0.0" };
             })
             .WithHttpTransport()
+            .WithRequestFilters(filters => filters.AddCallToolFilter(McpAuditFilter.Wrap))
             .WithTools<WorkOrderTools>()
             .WithTools<EmployeeTools>()
             .WithResources<ReferenceResources>();
@@ -195,6 +198,7 @@ public static class ServerApplication
             context => ApiRateLimitingExtensions.ShouldApplyToPath(context.Request.Path),
             branch => branch.UseRequestTimeouts());
         app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
+        app.UseMiddleware<AuditRequestMiddleware>();
         app.UseMachineClientStatusCodeProblemDetails();
 
         if (app.Services.IsServerCorsActive())

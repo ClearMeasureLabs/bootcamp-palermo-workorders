@@ -17,8 +17,8 @@ public class TelemetryHandler(ILogger<TelemetryHandler> logger)
 
     public Task Handle(UserLoggedInEvent request, CancellationToken cancellationToken)
     {
-        LoginCounter.Add(1, new KeyValuePair<string, object?>("user.name", request.UserName));
-        logger.LogInformation("Recorded login metric for {UserName}", request.UserName);
+        LoginCounter.Add(1);
+        logger.LogInformation("Recorded login metric");
         return Task.CompletedTask;
     }
 }

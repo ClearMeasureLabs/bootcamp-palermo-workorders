@@ -26,6 +26,7 @@ public class UiServiceRegistry : ServiceRegistry
         this.AddValidatorsFromAssemblyContaining<EmployeeGetAllQueryValidator>();
 
         this.AddScoped<DbContext, DataContext>();
+        this.AddScoped<IAuditLog, AuditLogService>();
 
         this.AddSingleton<RealtimeNotificationHub>();
         this.AddSingleton<IRealtimeNotificationHub>(sp => sp.GetRequiredService<RealtimeNotificationHub>());

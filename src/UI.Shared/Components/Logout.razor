@@ -49,8 +49,10 @@
 
     private async Task HandleLogout()
     {
+        var username = AuthStateProvider.GetUsername();
         await AuthStateProvider.Logout();
-        EventBus.Notify(new UserLoggedOutEvent(AuthStateProvider.GetUsername()));
+        await Bus.Publish(new Core.Model.Events.UserLoggedOutEvent(username));
+        EventBus.Notify(new UserLoggedOutEvent(username));
         NavigationManager.NavigateTo("/login");
     }
 
