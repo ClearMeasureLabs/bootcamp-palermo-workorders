@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.UI.Server;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Data.Sqlite;
 
 namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 
@@ -11,6 +12,15 @@ namespace ClearMeasure.Bootcamp.IntegrationTests.Api;
 /// </summary>
 public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<UiServerWebApplicationMarker>
 {
+    private readonly SqliteConnection _database = new(
+        $"Data Source=health-api-validation-{Guid.NewGuid():N};Mode=Memory;Cache=Shared");
+
+    /// <summary>Keeps the schema alive across host startup and request dependency scopes.</summary>
+    public DetailedHealthWebApplicationFactory()
+    {
+        _database.Open();
+    }
+
     /// <summary>Validation key configured for this factory when API key auth is enabled.</summary>
     public const string IntegrationApiKey = "integration-test-api-key";
 
@@ -18,12 +28,12 @@ public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<
     {
         // Avoid appsettings.Development.json (LocalDB) overriding SQLite on Linux CI.
         builder.UseEnvironment("Testing");
-        builder.UseSetting("ConnectionStrings:SqlConnectionString", "Data Source=:memory:");
+        builder.UseSetting("ConnectionStrings:SqlConnectionString", _database.ConnectionString);
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:SqlConnectionString"] = "Data Source=:memory:",
+                ["ConnectionStrings:SqlConnectionString"] = _database.ConnectionString,
                 ["AI_OpenAI_ApiKey"] = "",
                 ["AI_OpenAI_Url"] = "",
                 ["AI_OpenAI_Model"] = "",
@@ -39,5 +49,19 @@ public sealed class DetailedHealthWebApplicationFactory : WebApplicationFactory<
                 ["FeatureFlags:SampleFeatureB"] = "false"
             });
         });
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing) _database.Dispose();
+    }
+
+    /// <inheritdoc />
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        await _database.DisposeAsync();
     }
 }

@@ -2,6 +2,7 @@ using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.McpServer.Tools;
 using Lamar.Microsoft.DependencyInjection;
 using ChurchBulletin.ServiceDefaults;
+using ClearMeasure.Bootcamp.McpServer.Auditing;
 
 namespace ClearMeasure.Bootcamp.McpServer;
 
@@ -30,7 +31,8 @@ public static class McpServerApplication
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.AddSerilogJsonConsole();
+        builder.AddServiceDefaults();
+        builder.Services.AddAuditRetention(builder.Configuration);
 
         builder.Host.UseLamar(registry => { registry.IncludeRegistry<McpServiceRegistry>(); });
 
@@ -43,6 +45,7 @@ public static class McpServerApplication
                     Version = "1.0.0"
                 };
             })
+            .WithRequestFilters(filters => filters.AddCallToolFilter(McpAuditFilter.Wrap))
             .WithTools<WorkOrderTools>()
             .WithTools<EmployeeTools>()
             .WithResources<ReferenceResources>();
@@ -77,6 +80,7 @@ public static class McpServerApplication
         if (useHttp)
         {
             app.UseCorrelationId();
+            app.UseMiddleware<AuditRequestMiddleware>();
             app.MapMcp("/mcp");
         }
     }

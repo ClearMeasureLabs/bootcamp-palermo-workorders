@@ -23,6 +23,7 @@ public class StateCommandHandler(
     public async Task<StateCommandResult> Handle(StateCommandBase request,
         CancellationToken cancellationToken = default)
     {
+        using var auditScope = AuditOperationScope.Begin(request.GetType().Name, request.CurrentUser.UserName);
         logger.LogInformation("Executing");
         request.Execute(new StateCommandContext { CurrentDateTime = time.GetUtcNow().DateTime });
 

@@ -72,6 +72,16 @@ pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
 dotnet test src/AcceptanceTests --configuration Debug
 ```
 
+## Audit trail
+
+- Work-order changes, attachment metadata changes, employee/role changes, authentication events, and MCP tool invocations are persisted in `AuditLog`. Mutation snapshots and audit inserts share the same database transaction. Read-only application queries do not create audit records; MCP invocations are explicitly audited.
+- Audit references use GUIDs, matching the domain identifiers. `Id` is a database-generated BIGINT sequence. Historical records have no foreign keys, so entity deletion does not erase history.
+- Administrator lookup: `GET /api/audit?entityType=WorkOrder&entityId=<guid>&from=2025-01-01T00:00:00Z`. The versioned route is `/api/v1.0/audit`. Results are newest first, limited to 200; pass the last returned `Id` as `beforeId` for the next page.
+- Access requires a trusted authenticated `Admin` principal or the separate server-side `AuditLog__AdministratorApiKey` secret supplied in `X-Audit-Api-Key`. Access is denied when neither is available. The general application API key does not grant administrator privileges; when enabled, that key remains required as well. Never put administrator credentials in client settings or source control.
+- Browser login is a passwordless demonstration, not verified server authentication. Reported demo actors are prefixed with `demo:`; trusted principals take precedence. Server-captured IP, user agent, and correlation ID accompany records when available. Operations without actor metadata use `system`.
+- `AuditLog__RetentionDays` configures retention (default 90 days). The server and standalone MCP host periodically remove expired records. Application audit records are append-only outside this retention path. Database administrators retain control over database permissions and backups; application safeguards do not protect against privileged database access.
+- Audit payloads contain historical business data and actor information. Restrict database access, exports, and backups accordingly. Audit payloads are not added to OpenTelemetry spans. Production performance targets require measurement against representative database latency and workloads.
+
 ## Quick start — Run locally
 
 The repository supports three common local development workflows. Pick the one that matches your environment.

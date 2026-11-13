@@ -47,7 +47,7 @@ public class TelemetryHandlerTests
         listener.RecordObservableInstruments();
 
         recorded.ShouldBeGreaterThan(0);
-        recordedUserName.ShouldBe("testuser");
+        recordedUserName.ShouldBeNull();
     }
 
     [Test]

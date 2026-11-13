@@ -22,6 +22,7 @@ public class EchoController : ControllerBase
     {
         "Authorization",
         "X-Api-Key",
+        "X-Audit-Api-Key",
         "Cookie"
     };
 

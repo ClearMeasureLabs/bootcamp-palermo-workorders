@@ -4,6 +4,8 @@ using ClearMeasure.Bootcamp.UI.Shared;
 using Lamar;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ClearMeasure.Bootcamp.Core.Services;
+using ClearMeasure.Bootcamp.DataAccess;
 
 namespace ClearMeasure.Bootcamp.McpServer;
 
@@ -12,6 +14,7 @@ public class McpServiceRegistry : ServiceRegistry
     public McpServiceRegistry()
     {
         this.AddScoped<DbContext, DataContext>();
+        this.AddScoped<IAuditLog, AuditLogService>();
 
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<McpServiceRegistry>());
         this.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<DataContext>());
