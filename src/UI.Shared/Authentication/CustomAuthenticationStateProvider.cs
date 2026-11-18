@@ -25,24 +25,7 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     /// <inheritdoc />
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        await _stateLock.WaitAsync();
-        try
-        {
-            if (!IsAuthenticated())
-            {
-                var username = await _userSessionStore.GetAsync();
-                if (!string.IsNullOrEmpty(username))
-                {
-                    _currentUser = CreatePrincipal(username);
-                }
-            }
-
-            return new AuthenticationState(_currentUser);
-        }
-        finally
-        {
-            _stateLock.Release();
-        }
+        return new AuthenticationState(await ResolvePrincipalAsync());
     }
 
     /// <summary>
@@ -96,6 +79,44 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     public string? GetUsername()
     {
         return _currentUser.Identity?.Name;
+    }
+
+    /// <summary>
+    /// Returns the current username, restoring it from <see cref="IUserSessionStore"/> first when the
+    /// in-memory principal is not authenticated yet. Prefer this over <see cref="GetUsername"/> when the
+    /// caller may run before the framework has resolved the cascaded authentication state.
+    /// </summary>
+    public async Task<string?> GetUsernameAsync()
+    {
+        var principal = await ResolvePrincipalAsync();
+        return principal.Identity?.Name;
+    }
+
+    /// <summary>
+    /// Hydrates <see cref="_currentUser"/> from the session store on first use and returns it under the
+    /// state lock. Shared by <see cref="GetAuthenticationStateAsync"/> and <see cref="GetUsernameAsync"/>
+    /// so the two accessors can never disagree.
+    /// </summary>
+    private async Task<ClaimsPrincipal> ResolvePrincipalAsync()
+    {
+        await _stateLock.WaitAsync();
+        try
+        {
+            if (!IsAuthenticated())
+            {
+                var username = await _userSessionStore.GetAsync();
+                if (!string.IsNullOrEmpty(username))
+                {
+                    _currentUser = CreatePrincipal(username);
+                }
+            }
+
+            return _currentUser;
+        }
+        finally
+        {
+            _stateLock.Release();
+        }
     }
 
     private static ClaimsPrincipal CreatePrincipal(string username)

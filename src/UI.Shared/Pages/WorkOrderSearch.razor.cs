@@ -17,6 +17,7 @@ public partial class WorkOrderSearch : AppComponentBase
     private string? _sortColumn;
     private bool _sortAscending = true;
     private bool _assignedToMe;
+    private bool _disposed;
 
     [Inject] public TimeProvider Clock { get; set; } = TimeProvider.System;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
@@ -26,6 +27,14 @@ public partial class WorkOrderSearch : AppComponentBase
     [SupplyParameterFromQuery] public string? Assignee { get; set; }
     [SupplyParameterFromQuery] public string? Status { get; set; }
     [SupplyParameterFromQuery] public bool OverdueOnly { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Blazor analyzer BL0013 (new in .NET 11): a component that reads authentication state
+        // must also observe AuthenticationStateChanged, otherwise a login or logout leaves the
+        // rendered "assigned to me" filter pointing at the previous user.
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -196,6 +205,33 @@ public partial class WorkOrderSearch : AppComponentBase
     private async Task HandleSearch()
     {
         await SearchWorkOrders();
+    }
+
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> authenticationStateTask)
+    {
+        _ = RefreshAssigneeFromAuthenticationStateAsync(authenticationStateTask);
+    }
+
+    private async Task RefreshAssigneeFromAuthenticationStateAsync(Task<AuthenticationState> authenticationStateTask)
+    {
+        var authState = await authenticationStateTask;
+        if (_disposed || !_assignedToMe)
+        {
+            return;
+        }
+
+        await InvokeAsync(async () =>
+        {
+            Model.Filters.Assignee = authState.User.Identity?.Name ?? string.Empty;
+            await SearchWorkOrders();
+        });
+    }
+
+    public override void Dispose()
+    {
+        _disposed = true;
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        base.Dispose();
     }
 
     private bool HasActiveFilters =>

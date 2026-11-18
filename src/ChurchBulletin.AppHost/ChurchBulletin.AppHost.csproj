@@ -1,21 +1,25 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.1.2">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-Worker-b9b5c0f8-4249-469b-8bfb-c4cc9398b886</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Pin transitive MessagePack (from Aspire SDK) above 2.5.192 to resolve NU1902/NU1903. -->
-    <PackageReference Include="MessagePack" Version="2.5.302" />
+    <!-- Aspire 17: the Aspire.AppHost.Sdk is obsolete (ASPIRE012). The app host is now an ordinary
+         console project that references the hosting packages explicitly. -->
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="17.0.0" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" Version="17.0.0" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="17.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UI\Server\UI.Server.csproj" />
-    <ProjectReference Include="..\Worker\Worker.csproj" />
+    <!-- Pin transitive MessagePack (from Aspire SDK) above 2.5.192 to resolve NU1902/NU1903.
+         2.5.307 is also the floor required by Aspire.Hosting.AppHost 17.0.0. -->
+    <PackageReference Include="MessagePack" Version="2.5.307" />
   </ItemGroup>
 
   <ItemGroup>

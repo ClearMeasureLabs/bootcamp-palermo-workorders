@@ -2,10 +2,11 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var sql = builder.AddConnectionString("SqlConnectionString");
 
-builder.AddProject<Projects.UI_Server>("ui-server")
+// Aspire 17: AddProject<TProject> is obsolete (CS0618); the app host references projects by path.
+builder.AddDotnetProject("ui-server", "../UI/Server/UI.Server.csproj")
     .WithReference(sql);
 
-builder.AddProject<Projects.Worker>("worker")
+builder.AddDotnetProject("worker", "../Worker/Worker.csproj")
     .WithReference(sql);
 
 builder.Build().Run();
