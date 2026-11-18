@@ -172,11 +172,9 @@ public static class ServerApplication
                     ProblemDetailsExceptionHandler.HandleAsync(context, app.Environment)
             }));
 
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseWebAssemblyDebugging();
-        }
-        else if (!app.Environment.IsEnvironment("Testing"))
+        // .NET 11: UseWebAssemblyDebugging (ASPDEPR011) is obsolete - the IDE launches Blazor
+        // WebAssembly debugging directly, so there is no server-side debug proxy to mount.
+        if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
         {
             app.UseExceptionHandler("/Error");
             app.UseHsts();

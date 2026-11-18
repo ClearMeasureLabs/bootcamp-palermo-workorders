@@ -72,8 +72,12 @@ public class LocalStorageUserSessionStoreTests
         public int RemoveItemCalls { get; private set; }
         public int GetItemCalls { get; private set; }
 
+        // BL0016 wants JS interop guarded against a disconnected circuit; this is a test double with
+        // no browser, and its throws are the assertions that prove which identifier was called.
+#pragma warning disable BL0016
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
             InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+#pragma warning restore BL0016
 
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
             object?[]? args)

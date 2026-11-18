@@ -71,9 +71,13 @@ public class ThemePreferenceServiceTests
             throw new InvalidOperationException($"Unexpected InvokeAsync: {identifier}");
         }
 
+        // BL0016 wants JS interop guarded against a disconnected circuit; this is a test double with
+        // no browser, and its throws are the assertions that prove which identifier was called.
+#pragma warning disable BL0016
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
             object?[]? args) =>
             InvokeAsync<TValue>(identifier, args);
+#pragma warning restore BL0016
 
         private sealed class StubThemeModule : IJSObjectReference
         {
@@ -109,9 +113,13 @@ public class ThemePreferenceServiceTests
                 throw new InvalidOperationException($"Unexpected module InvokeAsync: {identifier}");
             }
 
+            // BL0016 wants JS interop guarded against a disconnected circuit; this is a test double with
+            // no browser, and its throws are the assertions that prove which identifier was called.
+#pragma warning disable BL0016
             public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
                 object?[]? args) =>
                 InvokeAsync<TValue>(identifier, args);
+#pragma warning restore BL0016
 
             public ValueTask DisposeAsync() => ValueTask.CompletedTask;
         }
