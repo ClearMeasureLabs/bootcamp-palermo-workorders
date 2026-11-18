@@ -16,7 +16,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="11.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="11.0.0" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="11.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0" />
+    <!-- Microsoft.Extensions.Logging.Abstractions is inbox in the .NET 11 shared framework (NU1510). -->
     <PackageReference Include="NServiceBus.Persistence.Sql.TransactionalSession" Version="8.3.0" />
     <!-- Pin transitive SQLitePCLRaw above 2.1.11 to resolve NU1903 (GHSA-2m69-gcr7-jv3q).
          3.0.5 is also the floor required by Microsoft.EntityFrameworkCore.Sqlite 11.0.0. -->

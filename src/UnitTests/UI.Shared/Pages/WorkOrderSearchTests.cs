@@ -29,7 +29,9 @@ public class WorkOrderSearchTests
         var store = new StubUserSessionStore { Username = loggedInAs };
         var authProvider = new CustomAuthenticationStateProvider(store);
         authProvider.Login(loggedInAs).GetAwaiter().GetResult();
-        ctx.Services.AddSingleton<AuthenticationStateProvider>(authProvider);
+        ctx.Services.AddSingleton(authProvider);
+        ctx.Services.AddSingleton<AuthenticationStateProvider>(
+            sp => sp.GetRequiredService<CustomAuthenticationStateProvider>());
 
         return ctx;
     }
@@ -680,5 +682,47 @@ public class WorkOrderSearchTests
 
         rehydrated.ShouldNotBeNull();
         rehydrated.OverdueOnly.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task WhenUserSwitchesSession_AssignedToMeFilter_ReappliesToTheNewUser()
+    {
+        var state = new WorkOrderSearchState { AssignedToMe = true };
+        var stubBus = new StubBusWithAssigneeCapture();
+        await using var ctx = CreateContext(stubBus, searchState: state);
+
+        var component = ctx.Render<WorkOrderSearch>();
+        component.Instance.Model.Filters.Assignee.ShouldBe(CurrentUsername);
+
+        var authProvider = ctx.Services.GetRequiredService<CustomAuthenticationStateProvider>();
+        await authProvider.Login("gwillie");
+
+        await component.WaitForStateAsync(() => component.Instance.Model.Filters.Assignee == "gwillie");
+
+        component.Instance.Model.Filters.Assignee.ShouldBe("gwillie");
+        stubBus.LastAssigneeQueried.ShouldBe("gwillie");
+    }
+
+    [Test]
+    public async Task WhenComponentIsDisposed_AuthenticationStateChange_DoesNotReFilter()
+    {
+        var state = new WorkOrderSearchState { AssignedToMe = true };
+        var stubBus = new StubBusWithAssigneeCapture();
+        await using var ctx = CreateContext(stubBus, searchState: state);
+
+        var component = ctx.Render<WorkOrderSearch>();
+        await component.WaitForStateAsync(() => component.Instance.Model.Filters.Assignee == CurrentUsername);
+
+        // Dispose the component instance itself - that is what Blazor calls when a page leaves the
+        // render tree, and it is the only way to prove the AuthenticationStateChanged hook is released.
+        var instance = component.Instance;
+        var model = instance.Model;
+        instance.Dispose();
+
+        var authProvider = ctx.Services.GetRequiredService<CustomAuthenticationStateProvider>();
+        await authProvider.Login("gwillie");
+
+        model.Filters.Assignee.ShouldNotBe("gwillie");
+        stubBus.LastAssigneeQueried.ShouldBe(CurrentUsername);
     }
 }
