@@ -33,6 +33,12 @@ public class TestState
 /// </summary>
 public abstract class AcceptanceTestBase
 {
+    /// <summary>
+    /// Locale of every Playwright browser context. Pinned because under LANG=C (CI runners) Chromium reports
+    /// "en-US@posix", which the .NET 11 WebAssembly runtime rejects as a culture.
+    /// </summary>
+    public const string BrowserLocale = "en-US";
+
     private static readonly ConcurrentDictionary<string, TestState> TestStates = new();
     
     private bool? Headless { get; } = ServerFixture.HeadlessTestBrowser;
@@ -97,8 +103,7 @@ public abstract class AcceptanceTestBase
         {
             BaseURL = ServerFixture.ApplicationBaseUrl,
             IgnoreHTTPSErrors = true,
-            // Under LANG=C (CI runners) Chromium reports "en-US@posix", which the .NET 11 WebAssembly runtime rejects as a culture.
-            Locale = "en-US",
+            Locale = BrowserLocale,
             ViewportSize = new ViewportSize { Width = 800, Height = 600 }
         });
         browserContext.SetDefaultTimeout(60_000);
