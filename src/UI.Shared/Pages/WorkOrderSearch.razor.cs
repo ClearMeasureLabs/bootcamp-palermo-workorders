@@ -90,7 +90,9 @@ public partial class WorkOrderSearch : AppComponentBase
         SearchState.AssignedToMe = _assignedToMe;
         if (_assignedToMe)
         {
+#pragma warning disable BL0013 // State is read on demand when the checkbox changes and never cached, so it cannot go stale.
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
             var username = authState.User.Identity?.Name;
             Model.Filters.Assignee = username ?? string.Empty;
         }
