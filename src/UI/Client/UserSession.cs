@@ -16,7 +16,9 @@ public class UserSession(
     /// <inheritdoc />
     public async Task<Employee?> GetCurrentUserAsync()
     {
+        #pragma warning disable BL0013 // Not a component: the session facade reads auth state on demand and has no UI to refresh.
         await authProvider.GetAuthenticationStateAsync();
+        #pragma warning restore BL0013
         var username = authProvider.GetUsername();
         if (string.IsNullOrEmpty(username))
         {
