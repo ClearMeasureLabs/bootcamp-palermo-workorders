@@ -76,7 +76,7 @@ internal static class RealtimeWebSocketSender
         try
         {
             await socket
-                .SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken)
+                .SendAsync(bytes.AsMemory(), WebSocketMessageType.Text, true, cancellationToken)
                 .ConfigureAwait(false);
             return true;
         }

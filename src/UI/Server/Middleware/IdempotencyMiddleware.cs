@@ -19,8 +19,9 @@ public sealed class IdempotencyMiddleware
     private static readonly JsonSerializerOptions JsonOptions =
         new(JsonSerializerDefaults.Web);
 
-    private static readonly HashSet<string> HopByHopHeaderNames = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly HashSet<string> HopByHopHeaderNames =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
         "Connection",
         "Keep-Alive",
         "Proxy-Authenticate",
@@ -29,7 +30,7 @@ public sealed class IdempotencyMiddleware
         "Trailer",
         "Transfer-Encoding",
         "Upgrade"
-    };
+    ];
 
     private readonly RequestDelegate _next;
     private readonly IMemoryCache _cache;

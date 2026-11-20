@@ -1,5 +1,6 @@
 version: "1.0"
 linter: jetbrains/qodana-cdnet:latest
+bootstrap: curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --jsonfile global.json --install-dir /usr/share/dotnet
 dotnet:
   solution: src/ChurchBulletin.sln
 # Phase 5 (#8846): fail on new/absent problems vs committed baseline.

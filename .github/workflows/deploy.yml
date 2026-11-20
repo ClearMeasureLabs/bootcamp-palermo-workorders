@@ -102,7 +102,7 @@ jobs:
       # can be cancelled. Master/main deploys are never cancelled -- they queue instead.
       group: deploy-to-tdd-serialized
       cancel-in-progress: ${{ github.event.workflow_run.head_branch != 'master' && github.event.workflow_run.head_branch != 'main' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       statuses: write

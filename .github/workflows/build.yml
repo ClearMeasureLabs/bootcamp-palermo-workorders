@@ -930,7 +930,7 @@ jobs:
     name: Acceptance Tests
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     concurrency:
       group: acceptance-tests-${{ github.ref }}-${{ github.sha }}

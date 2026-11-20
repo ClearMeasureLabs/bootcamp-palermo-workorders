@@ -8,6 +8,8 @@
 		<AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
 		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 		<Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+		<!-- Referenced by UI.Server: only the host may emit the .NET 11 Hot Reload browser-tools assets, otherwise their static web asset paths collide. -->
+		<EnableHotReloadInRuntimeConfigDevFile>false</EnableHotReloadInRuntimeConfigDevFile>
 	</PropertyGroup>
 
 	<ItemGroup>
