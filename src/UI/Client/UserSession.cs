@@ -16,7 +16,9 @@ public class UserSession(
     /// <inheritdoc />
     public async Task<Employee?> GetCurrentUserAsync()
     {
+#pragma warning disable BL0013 // State is read on demand per call and never cached, so it cannot go stale.
         await authProvider.GetAuthenticationStateAsync();
+#pragma warning restore BL0013
         var username = authProvider.GetUsername();
         if (string.IsNullOrEmpty(username))
         {
