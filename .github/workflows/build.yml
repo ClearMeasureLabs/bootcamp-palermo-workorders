@@ -974,45 +974,6 @@ jobs:
           version="${{ env.MAJOR_VERSION }}.${{ env.MINOR_VERSION }}.${{ github.run_number }}"
           echo "BUILD_BUILDNUMBER=$version" >> $GITHUB_ENV
 
-      # TEMPORARY .NET 11 upgrade diagnostics: capture the Blazor WASM browser console. Remove before merge.
-      - name: Diagnose Blazor WASM in browser (temporary)
-        continue-on-error: true
-        shell: bash
-        run: |
-          dotnet build src/UI/Server/UI.Server.csproj -c Release -nologo -v q
-          mkdir -p /tmp/pwdiag
-          cd /tmp/pwdiag
-          npm init -y > /dev/null
-          npm i --no-fund --no-audit playwright@1.54.1 > /dev/null
-          npx playwright install --with-deps chromium > /dev/null
-          cat > diag.js <<'EOF'
-          const { chromium } = require('playwright');
-          (async () => {
-            const b = await chromium.launch();
-            const c = await b.newContext({ ignoreHTTPSErrors: true });
-            const p = await c.newPage();
-            p.on('console', m => console.log('CONSOLE', m.type(), m.text().slice(0, 1500)));
-            p.on('pageerror', e => console.log('PAGEERROR', e.message.slice(0, 3000)));
-            p.on('requestfailed', r => console.log('REQFAILED', r.url(), r.failure() && r.failure().errorText));
-            p.on('response', r => { if (r.status() >= 400) console.log('HTTP', r.status(), r.url()); });
-            await p.goto(process.argv[2]);
-            await p.waitForTimeout(60000);
-            const ids = await p.$$eval('[data-testid]', els => els.map(e => e.getAttribute('data-testid')));
-            console.log('TESTIDS', ids.slice(0, 30).join(','));
-            console.log('HTML', (await p.content()).slice(0, 4000));
-            await b.close();
-          })();
-          EOF
-          cd "$GITHUB_WORKSPACE/src/UI/Server"
-          ASPNETCORE_ENVIRONMENT=Development ConnectionStrings__SqlConnectionString="Data Source=/tmp/diag.db" DATABASE_ENGINE=SQLite AI_OpenAI_ApiKey= AI_OpenAI_Url= AI_OpenAI_Model= dotnet run --no-build -c Release --no-launch-profile --urls=https://localhost:7298 > /tmp/diag-server.log 2>&1 &
-          sleep 30
-          node /tmp/pwdiag/diag.js https://localhost:7298/
-          echo "----- server log (warnings/errors) -----"
-          grep -iE "warn|fail|error|exception" /tmp/diag-server.log | grep -v '"@t"' | head -100
-          echo "----- server log (tail) -----"
-          tail -40 /tmp/diag-server.log
-          kill %1 || true
-
       - name: Run Acceptance Tests
         shell: pwsh
         env:

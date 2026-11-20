@@ -39,7 +39,9 @@ public class BlazorWasmWarmUp
         var context = await browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = _baseUrl,
-            IgnoreHTTPSErrors = true
+            IgnoreHTTPSErrors = true,
+            // Under LANG=C (CI runners) Chromium reports "en-US@posix", which the .NET 11 WebAssembly runtime rejects as a culture.
+            Locale = "en-US"
         });
         context.SetDefaultTimeout(TimeoutSeconds * 1000);
 

@@ -97,6 +97,8 @@ public abstract class AcceptanceTestBase
         {
             BaseURL = ServerFixture.ApplicationBaseUrl,
             IgnoreHTTPSErrors = true,
+            // Under LANG=C (CI runners) Chromium reports "en-US@posix", which the .NET 11 WebAssembly runtime rejects as a culture.
+            Locale = "en-US",
             ViewportSize = new ViewportSize { Width = 800, Height = 600 }
         });
         browserContext.SetDefaultTimeout(60_000);
