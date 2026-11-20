@@ -18,12 +18,13 @@ public class EchoController : ControllerBase
 {
     internal const string RedactedValue = "[REDACTED]";
 
-    private static readonly HashSet<string> SensitiveHeaderNames = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly HashSet<string> SensitiveHeaderNames =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
         "Authorization",
         "X-Api-Key",
         "Cookie"
-    };
+    ];
 
     /// <summary>
     /// Returns a JSON object reflecting method, path, query, host, protocol, remote IP, and headers

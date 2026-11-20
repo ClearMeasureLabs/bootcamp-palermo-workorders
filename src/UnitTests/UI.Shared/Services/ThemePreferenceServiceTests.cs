@@ -71,9 +71,11 @@ public class ThemePreferenceServiceTests
             throw new InvalidOperationException($"Unexpected InvokeAsync: {identifier}");
         }
 
+#pragma warning disable BL0016 // Test stub forwarding between its own overloads; no real JS interop.
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
             object?[]? args) =>
             InvokeAsync<TValue>(identifier, args);
+#pragma warning restore BL0016
 
         private sealed class StubThemeModule : IJSObjectReference
         {
@@ -109,9 +111,11 @@ public class ThemePreferenceServiceTests
                 throw new InvalidOperationException($"Unexpected module InvokeAsync: {identifier}");
             }
 
+#pragma warning disable BL0016 // Test stub forwarding between its own overloads; no real JS interop.
             public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
                 object?[]? args) =>
                 InvokeAsync<TValue>(identifier, args);
+#pragma warning restore BL0016
 
             public ValueTask DisposeAsync() => ValueTask.CompletedTask;
         }

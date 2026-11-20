@@ -77,7 +77,7 @@ System_Boundary(deploy_wf, "Deploy Workflow (.github/workflows/deploy.yml)") {
 }
 
 System_Boundary(octopus, "Octopus Deploy (per environment)") {
-    Component(octo_dotnet, "Ensure .NET 10 Installed", "Tool", "")
+    Component(octo_dotnet, "Ensure .NET 11 Installed", "Tool", "")
     Component(octo_db, "Run DB Migrations", "DbUp", "")
     Component(octo_app, "Update Container App", "AZ CLI", "az containerapp update")
 

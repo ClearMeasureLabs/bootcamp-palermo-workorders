@@ -5,7 +5,7 @@ set -euo pipefail
 # Cursor Cloud Agent – environment setup script
 #
 # Installs and configures:
-#   1. .NET 10 SDK (10.0.1xx channel, matching global.json)
+#   1. .NET 11 SDK (11.0.1xx channel, matching global.json)
 #   2. PowerShell 7 (required for PrivateBuild.ps1)
 #   3. Docker Engine with fuse-overlayfs + iptables-legacy
 #   4. NuGet restore
@@ -15,12 +15,12 @@ DOTNET_INSTALL_DIR="$HOME/.dotnet"
 export DOTNET_ROOT="$DOTNET_INSTALL_DIR"
 export PATH="$DOTNET_INSTALL_DIR:$DOTNET_INSTALL_DIR/tools:$PATH"
 
-# ── 1. .NET 10 SDK ─────────────────────────────────────────────────────────
-if ! command -v dotnet &>/dev/null || ! dotnet --list-sdks 2>/dev/null | grep -q '^10\.'; then
-    echo "==> Installing .NET 10 SDK..."
+# ── 1. .NET 11 SDK ─────────────────────────────────────────────────────────
+if ! command -v dotnet &>/dev/null || ! dotnet --list-sdks 2>/dev/null | grep -q '^11\.'; then
+    echo "==> Installing .NET 11 SDK..."
     curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
     chmod +x /tmp/dotnet-install.sh
-    /tmp/dotnet-install.sh --channel 10.0 --install-dir "$DOTNET_INSTALL_DIR"
+    /tmp/dotnet-install.sh --channel 11.0 --install-dir "$DOTNET_INSTALL_DIR"
     rm -f /tmp/dotnet-install.sh
 fi
 echo "    dotnet $(dotnet --version)"

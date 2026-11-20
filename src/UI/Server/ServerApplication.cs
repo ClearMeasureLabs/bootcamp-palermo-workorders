@@ -172,11 +172,7 @@ public static class ServerApplication
                     ProblemDetailsExceptionHandler.HandleAsync(context, app.Environment)
             }));
 
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseWebAssemblyDebugging();
-        }
-        else if (!app.Environment.IsEnvironment("Testing"))
+        if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
         {
             app.UseExceptionHandler("/Error");
             app.UseHsts();

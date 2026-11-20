@@ -64,12 +64,12 @@ Deployment_Node(gha_cloud, "GitHub", "Actions + Packages") {
 }
 
 Deployment_Node(octo, "clearmeasure.octopus.app", "Octopus Deploy") {
-    Container(octoProj, "Octopus project", "OCL in .octopus/", "Steps: Ensure .NET 10, Run DB migrations (ChurchBulletin.Database UpdateAzureSql.ps1), Add Revision to Container App.")
+    Container(octoProj, "Octopus project", "OCL in .octopus/", "Steps: Ensure .NET 11, Run DB migrations (ChurchBulletin.Database UpdateAzureSql.ps1), Add Revision to Container App.")
 }
 
 Deployment_Node(azure, "Azure South Central US", "az_location = southcentralus") {
     Deployment_Node(acrNode, "churchbulletingithubacr.azurecr.io", "Azure Container Registry") {
-        Container(image, "churchbulletin.ui", "mcr.microsoft.com/dotnet/aspnet:10.0", "ENTRYPOINT ClearMeasure.Bootcamp.UI.Server.dll. Exposes 8080/80. Tag = Octopus.Release.Number.")
+        Container(image, "churchbulletin.ui", "mcr.microsoft.com/dotnet/aspnet:11.0", "ENTRYPOINT ClearMeasure.Bootcamp.UI.Server.dll. Exposes 8080/80. Tag = Octopus.Release.Number.")
     }
 
     Deployment_Node(tddRg, "bootcamp-tdd", "Resource group") {

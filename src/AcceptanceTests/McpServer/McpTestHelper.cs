@@ -41,6 +41,7 @@ public class McpTestHelper(ChatClientFactory factory) : IAsyncDisposable
         _client = await McpClient.CreateAsync(transport, cancellationToken: cts.Token);
         _tools = await _client.ListToolsAsync(cancellationToken: cts.Token);
 
+        // ReSharper disable once MethodHasAsyncOverloadWithCancellation -- synchronous NUnit diagnostic output is intended
         TestContext.Out.WriteLine($"McpTestHelper: connected, {_tools.Count} tools discovered");
     }
 

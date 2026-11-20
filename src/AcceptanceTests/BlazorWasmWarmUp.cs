@@ -39,7 +39,8 @@ public class BlazorWasmWarmUp
         var context = await browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = _baseUrl,
-            IgnoreHTTPSErrors = true
+            IgnoreHTTPSErrors = true,
+            Locale = AcceptanceTestBase.BrowserLocale
         });
         context.SetDefaultTimeout(TimeoutSeconds * 1000);
 

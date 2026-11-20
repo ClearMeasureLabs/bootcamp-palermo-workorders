@@ -2,12 +2,14 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net10.0</TargetFramework>
+		<TargetFramework>net11.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AssemblyName>ClearMeasure.Bootcamp.$(MSBuildProjectName)</AssemblyName>
 		<RootNamespace>ClearMeasure.Bootcamp.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 		<Configurations>Debug;Release;exclude-maui.slnf</Configurations>
+		<!-- Referenced by UI.Server: only the host may emit the .NET 11 Hot Reload browser-tools assets, otherwise their static web asset paths collide. -->
+		<EnableHotReloadInRuntimeConfigDevFile>false</EnableHotReloadInRuntimeConfigDevFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -19,10 +21,10 @@
 		<PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.0.0" />
 		<PackageReference Include="Lamar.Microsoft.DependencyInjection" Version="15.0.1" />
 		<PackageReference Include="MediatR" Version="12.4.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
-		<!-- Pin transitive SQLitePCLRaw above 2.1.11 to resolve NU1903 (GHSA-2m69-gcr7-jv3q). -->
-		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.12" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="11.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="11.0.0" />
+		<!-- Pin SQLitePCLRaw to the version EF Core 11 requires (>= 3.0.5; also above 2.1.11 for NU1903 / GHSA-2m69-gcr7-jv3q). -->
+		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />

@@ -11,7 +11,7 @@ This diagram models the end-to-end delivery pipeline from local development thro
 | `acceptancetests.ps1` | Local quality gate — runs `Invoke-AcceptanceTests` (Playwright) |
 | `.github/workflows/build.yml` | CI workflow — 8 parallel jobs + 3 publish jobs, triggers on all pushes |
 | `.github/workflows/deploy.yml` | CD workflow — TDD → UAT → Prod, triggers on Build completion (master only) |
-| `.octopus/deployment_process.ocl` | Octopus steps — .NET 10 check, DB migrations (DbUp), Container App update |
+| `.octopus/deployment_process.ocl` | Octopus steps — .NET 11 check, DB migrations (DbUp), Container App update |
 | `.github/copilot-code-review-instructions.md` | Copilot PR review rules |
 
 ## Pipeline Diagram
@@ -63,7 +63,7 @@ C4Deployment
   }
 
   Deployment_Node(octopus, "Octopus Deploy", "Deployment server, per environment") {
-    Container(octo_dotnet, "Ensure .NET 10", "PowerShell", "Check/install .NET 10 runtime on hosted Windows worker")
+    Container(octo_dotnet, "Ensure .NET 11", "PowerShell", "Check/install .NET 11 runtime on hosted Windows worker")
     Container(octo_db, "Run DB Migrations", "DbUp", "Execute migration scripts from ChurchBulletin.Database package")
     Container(octo_app, "Update Container App", "Azure CLI", "az containerapp update, new image + connection string")
   }
@@ -136,7 +136,7 @@ Each environment (TDD, UAT, Prod) executes the same deployment process defined i
 
 | Step | Name | Description |
 |------|------|-------------|
-| 1 | Ensure .NET 10 installed | Checks/installs .NET 10 runtime on hosted Windows worker |
+| 1 | Ensure .NET 11 installed | Checks/installs .NET 11 runtime on hosted Windows worker |
 | 2 | Run DB migrations | Executes DbUp scripts from `ChurchBulletin.Database` package |
 | 3 | Add Revision to Container App | `az containerapp update` with new container image + connection string |
 

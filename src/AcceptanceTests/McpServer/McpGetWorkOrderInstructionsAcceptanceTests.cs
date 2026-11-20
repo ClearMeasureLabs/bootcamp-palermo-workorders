@@ -110,7 +110,7 @@ public class McpGetWorkOrderInstructionsAcceptanceTests : AcceptanceTestBase
 
         var createdDate = live.GetProperty("CreatedDate").GetDateTime();
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CreatedDate)))
-            .ToHaveTextAsync(createdDate.ToString("G", CultureInfo.CurrentCulture));
+            .ToHaveTextAsync(createdDate.ToString("G", CultureInfo.GetCultureInfo(BrowserLocale)));
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.AssignedDate)))
             .ToHaveTextAsync(string.Empty);
         await Expect(Page.GetByTestId(nameof(WorkOrderManage.Elements.CompletedDate)))

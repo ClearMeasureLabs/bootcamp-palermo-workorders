@@ -1,16 +1,18 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.1.2">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-Worker-b9b5c0f8-4249-469b-8bfb-c4cc9398b886</UserSecretsId>
+    <!-- Run without the Aspire CLI bundle (pre-13.6 behavior); ASPIRE010 only reports that the bundle is off. -->
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Pin transitive MessagePack (from Aspire SDK) above 2.5.192 to resolve NU1902/NU1903. -->
-    <PackageReference Include="MessagePack" Version="2.5.302" />
+    <!-- Pin transitive MessagePack (from Aspire SDK) at 2.5.307 (Aspire 13.6.5 minimum; above GHSA-qhrr-8q5h-9q3h fix 2.5.303) to resolve NU1902/NU1903. -->
+    <PackageReference Include="MessagePack" Version="2.5.307" />
   </ItemGroup>
 
   <ItemGroup>
