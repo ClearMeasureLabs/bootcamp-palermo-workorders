@@ -128,6 +128,11 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          global-json-file: global.json
+
       - name: Set Version
         shell: pwsh
         run: |

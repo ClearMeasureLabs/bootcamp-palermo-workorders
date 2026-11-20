@@ -66,7 +66,7 @@ public class WorkOrderFullLifecycleTests : AcceptanceTestBase
 
 ```powershell
 dotnet build src/AcceptanceTests --configuration Debug
-pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
+pwsh src/AcceptanceTests/bin/Debug/net11.0/playwright.ps1 install
 dotnet test src/AcceptanceTests --configuration Debug --filter "FullyQualifiedName~WorkOrderFullLifecycleTests"
 ```
 

@@ -1,5 +1,5 @@
 step "ensure-dotnet-10-installed" {
-    name = "Ensure .NET 10 is installed"
+    name = "Ensure .NET 11 is installed"
 
     action {
         action_type = "Octopus.Script"
@@ -10,49 +10,49 @@ step "ensure-dotnet-10-installed" {
             Octopus.Action.Script.ScriptBody = <<-EOT
                     $ErrorActionPreference = "Stop"
                     
-                    Write-Host "Checking for .NET 10 installation..."
+                    Write-Host "Checking for .NET 11 installation..."
                     
-                    # Check if .NET 10 is already installed
-                    $dotnet10Installed = $false
+                    # Check if .NET 11 is already installed
+                    $dotnet11Installed = $false
                     try {
                         $dotnetVersions = dotnet --list-runtimes 2>$null
-                        if ($dotnetVersions -match "Microsoft\.NETCore\.App 10\.|Microsoft\.AspNetCore\.App 10\.") {
-                            Write-Host "✅ .NET 10 runtime is already installed"
-                            $dotnet10Installed = $true
+                        if ($dotnetVersions -match "Microsoft\.NETCore\.App 11\.|Microsoft\.AspNetCore\.App 11\.") {
+                            Write-Host "✅ .NET 11 runtime is already installed"
+                            $dotnet11Installed = $true
                         }
                     } catch {
                         Write-Host ".NET CLI not found or error checking versions"
                     }
                     
                     # Check SDK versions too
-                    if (-not $dotnet10Installed) {
+                    if (-not $dotnet11Installed) {
                         try {
                             $sdkVersions = dotnet --list-sdks 2>$null
-                            if ($sdkVersions -match "10\.") {
-                                Write-Host "✅ .NET 10 SDK is already installed"
-                                $dotnet10Installed = $true
+                            if ($sdkVersions -match "11\.") {
+                                Write-Host "✅ .NET 11 SDK is already installed"
+                                $dotnet11Installed = $true
                             }
                         } catch {
                             Write-Host "Error checking SDK versions"
                         }
                     }
                     
-                    if (-not $dotnet10Installed) {
-                        Write-Host "Installing .NET 10 runtime..."
+                    if (-not $dotnet11Installed) {
+                        Write-Host "Installing .NET 11 runtime..."
                         
-                        # Download and install .NET 10 runtime
+                        # Download and install .NET 11 runtime
                         $installScript = "$env:TEMP\dotnet-install.ps1"
                         $downloadUrl = "https://dot.net/v1/dotnet-install.ps1"
                         
                         try {
                             Invoke-WebRequest -Uri $downloadUrl -OutFile $installScript -UseBasicParsing
                             
-                            # Install .NET 10 runtime
-                            Write-Host "Running .NET 10 installation script..."
-                            & powershell -ExecutionPolicy Bypass -File $installScript -Channel 10.0 -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet"
+                            # Install .NET 11 runtime
+                            Write-Host "Running .NET 11 installation script..."
+                            & powershell -ExecutionPolicy Bypass -File $installScript -Channel 11.0 -Runtime dotnet -InstallDir "$env:ProgramFiles\dotnet"
                             
                             # Also install ASP.NET Core runtime (in case it's needed)
-                            & powershell -ExecutionPolicy Bypass -File $installScript -Channel 10.0 -Runtime aspnetcore -InstallDir "$env:ProgramFiles\dotnet"
+                            & powershell -ExecutionPolicy Bypass -File $installScript -Channel 11.0 -Runtime aspnetcore -InstallDir "$env:ProgramFiles\dotnet"
                             
                             # Add to PATH if not already there
                             $dotnetPath = "$env:ProgramFiles\dotnet"
@@ -67,14 +67,14 @@ step "ensure-dotnet-10-installed" {
                             $env:Path = "$env:ProgramFiles\dotnet;$env:Path"
                             $installedRuntimes = dotnet --list-runtimes
                             
-                            if ($installedRuntimes -match "Microsoft\.NETCore\.App 10\.") {
-                                Write-Host "✅ .NET 10 runtime installed successfully"
+                            if ($installedRuntimes -match "Microsoft\.NETCore\.App 11\.") {
+                                Write-Host "✅ .NET 11 runtime installed successfully"
                             } else {
-                                Write-Warning ".NET 10 installation may have failed. Installed runtimes:"
+                                Write-Warning ".NET 11 installation may have failed. Installed runtimes:"
                                 Write-Host $installedRuntimes
                             }
                         } catch {
-                            Write-Warning "Failed to install .NET 10: $_"
+                            Write-Warning "Failed to install .NET 11: $_"
                             Write-Host "Attempting to continue - .NET may already be available via system installation"
                         } finally {
                             # Clean up install script

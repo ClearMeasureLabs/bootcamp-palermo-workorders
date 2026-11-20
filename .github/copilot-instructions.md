@@ -4,7 +4,7 @@ This file provides standards for GitHub Copilot to follow when generating code f
 
 ## Quick Reference (AI Tools: Read This First)
 
-**Stack:** .NET 10.0 | Blazor WASM + Server | EF Core 10 | SQL Server | Onion Architecture | Aspire
+**Stack:** .NET 11.0 | Blazor WASM + Server | EF Core 11 | SQL Server | Onion Architecture | Aspire
 
 **Solution:** `src/ChurchBulletin.sln` — Core, DataAccess, Database, UI.Server, UI.Client, UI.Api, UI.Shared, LlmGateway, ChurchBulletin.AppHost, ChurchBulletin.ServiceDefaults, Worker, UnitTests, IntegrationTests, AcceptanceTests.
 
@@ -49,9 +49,9 @@ This file provides standards for GitHub Copilot to follow when generating code f
 ## Project Overview
 
 This is a Work Order management application built with:
-- **.NET 10.0** - Primary framework
+- **.NET 11.0** - Primary framework
 - **Blazor** - UI framework (WebAssembly + Server)
-- **Entity Framework Core 10** - Data access
+- **Entity Framework Core 11** - Data access
 - **SQL Server** - Database (LocalDB for development)
 - **Onion Architecture** - Clean architecture pattern with Core, DataAccess, and UI layers
 - **MediatR** - CQRS pattern for queries and commands
@@ -136,22 +136,22 @@ All branches must be created inside a folder matching the username of the accoun
 
 - **DO NOT** modify files in `.octopus/`, `.octopus_original_from_od/`, or build scripts without explicit approval
 - **DO NOT** add new NuGet packages without approval
-- **DO NOT** upgrade .NET SDK version without approval (currently 10.0.x)
+- **DO NOT** upgrade .NET SDK version without approval (currently 11.0.x)
 - **ALWAYS** include unit tests for new functionality
 - **ALWAYS** update XML documentation for public APIs
 - Integration tests require SQL Server LocalDB
 
 ## Dependencies
 
-**.NET SDK:** 10.0.100 (see `global.json`)
+**.NET SDK:** 11.0.100 (see `global.json`)
 
 | Project | Key NuGet Packages |
 |---------|--------------------|
-| Core | MediatR.Contracts 2.0.1, Microsoft.Extensions.Logging.Abstractions 10.0.0 |
-| DataAccess | MediatR 12.4.1, Microsoft.EntityFrameworkCore 10.0.0, EF Core SqlServer + Sqlite 10.0.0, NServiceBus.Persistence.Sql.TransactionalSession 8.3.0 |
+| Core | MediatR.Contracts 2.0.1, Microsoft.Extensions.Logging.Abstractions 11.0.0 |
+| DataAccess | MediatR 12.4.1, Microsoft.EntityFrameworkCore 11.0.0, EF Core SqlServer + Sqlite 11.0.0, NServiceBus.Persistence.Sql.TransactionalSession 8.3.0 |
 | Database | DbUp 5.0.41, dbup-sqlserver 6.0.16, Spectre.Console 0.54.0 |
 | UI.Server | Lamar.Microsoft.DependencyInjection 15.0.1, ModelContextProtocol 1.0.0, NServiceBus.Extensions.Hosting 3.0.1, OpenTelemetry 1.12.0 |
-| UI.Client | BlazorMvc 2.1.1, MediatR 12.4.1, Lamar.Microsoft.DependencyInjection 15.0.1, Microsoft.AspNetCore.Components.WebAssembly 10.0.0 |
+| UI.Client | BlazorMvc 2.1.1, MediatR 12.4.1, Lamar.Microsoft.DependencyInjection 15.0.1, Microsoft.AspNetCore.Components.WebAssembly 11.0.0 |
 | UI.Api | Lamar.Microsoft.DependencyInjection 15.0.1 |
 | UI.Shared | BlazorMvc 2.1.1, MediatR 12.4.1 |
 | LlmGateway | Azure.AI.OpenAI 2.1.0, MediatR 12.4.1, Microsoft.Extensions.AI 9.7.0 |
@@ -160,7 +160,7 @@ All branches must be created inside a folder matching the username of the accoun
 | AppHost | Aspire.AppHost.Sdk 13.1.2 |
 | ServiceDefaults | Azure.Monitor.OpenTelemetry.AspNetCore 1.6.0, OpenTelemetry 1.12.0, Microsoft.Extensions.ServiceDiscovery 9.5.0 |
 | UnitTests | NUnit 4.3.2, Shouldly 4.3.0, bunit 1.40.0, AutoBogus.Conventions 2.13.1 |
-| IntegrationTests | NUnit 4.3.2, Shouldly 4.3.0, Microsoft.EntityFrameworkCore 10.0.0 |
+| IntegrationTests | NUnit 4.3.2, Shouldly 4.3.0, Microsoft.EntityFrameworkCore 11.0.0 |
 | AcceptanceTests | NUnit 4.3.2, microsoft.playwright.nunit 1.54.0, Azure.AI.OpenAI 2.1.0, ModelContextProtocol 1.0.0 |
 
 ## General Coding Standards
@@ -245,7 +245,7 @@ public async Task TestNameFromIssue()
 **Running Acceptance Tests:**
 ```powershell
 cd src/AcceptanceTests
-pwsh bin/Debug/net10.0/playwright.ps1 install  # First time only
+pwsh bin/Debug/net11.0/playwright.ps1 install  # First time only
 dotnet test --filter "FullyQualifiedName~TestClassName"
 ```
 

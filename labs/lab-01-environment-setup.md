@@ -16,7 +16,7 @@ Confirm the development toolchain works end-to-end, make a first code change thr
 
 - Developer-grade Windows 11 x64 computer with full administrator account
 - Unrestricted GitHub account
-- Visual Studio 2026 with .NET 10.0 SDK
+- Visual Studio 2026 with .NET 11.0 SDK
 - JetBrains ReSharper with "IntelliJ IDEA" keymap selected
 - SQL Server LocalDB (or better)
 

@@ -1,12 +1,12 @@
 # Work Order Management System
 
-A work order management application built with .NET 10.0 implementing Onion Architecture. The system uses Blazor WebAssembly for the UI, Entity Framework Core for data access, MediatR for CQRS, and deploys to Azure Container Apps.
+A work order management application built with .NET 11.0 implementing Onion Architecture. The system uses Blazor WebAssembly for the UI, Entity Framework Core for data access, MediatR for CQRS, and deploys to Azure Container Apps.
 
 This codebase serves as both a working application and a teaching reference for software architecture. The 51 architectural patterns cataloged below are all demonstrated in the source code.
 
 ## Getting Started
 
-1. Install the .NET 10 SDK.
+1. Install the .NET 11 SDK.
 2. Run `dotnet build` from the repository root.
 3. Run the AppHost project `src/ChurchBulletin.AppHost` to start the application.
 4. Read `docs/glossary-ops.md` for the operations terms used on the board.
@@ -34,7 +34,7 @@ src/
 
 ## Prerequisites
 
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
+- [.NET 11.0 SDK](https://dotnet.microsoft.com/download)
 - One of the following database options:
   - **Windows:** SQL Server LocalDB (included with Visual Studio)
   - **Linux/macOS with Docker:** SQL Server 2022 runs automatically in a container
@@ -68,7 +68,7 @@ dotnet test src/UnitTests --configuration Release
 dotnet test src/IntegrationTests --configuration Release
 
 # Acceptance tests (install Playwright browsers first)
-pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
+pwsh src/AcceptanceTests/bin/Debug/net11.0/playwright.ps1 install
 dotnet test src/AcceptanceTests --configuration Debug
 ```
 
@@ -160,7 +160,7 @@ Architecture diagrams
 Playwright (acceptance tests)
 - Install browsers (PowerShell):
   ```powershell
-  pwsh src/AcceptanceTests/bin/Debug/net10.0/playwright.ps1 install
+  pwsh src/AcceptanceTests/bin/Debug/net11.0/playwright.ps1 install
   ```
 - Run acceptance tests:
   ```bash
