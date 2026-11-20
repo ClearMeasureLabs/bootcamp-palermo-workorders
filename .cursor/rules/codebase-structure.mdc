@@ -65,7 +65,7 @@ alwaysApply: true
 
 | Project | Key NuGet Packages |
 |---------|--------------------|
-| Core | MediatR.Contracts 2.0.1, Microsoft.Extensions.Logging.Abstractions 11.0.0 |
+| Core | MediatR.Contracts 2.0.1, Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions 11.0.0 |
 | DataAccess | MediatR 12.4.1, Microsoft.EntityFrameworkCore 11.0.0, EF Core SqlServer + Sqlite, NServiceBus.Persistence.Sql.TransactionalSession 8.3.0 |
 | Database | DbUp 5.0.41, dbup-sqlserver 6.0.16, Spectre.Console 0.54.0 |
 | UI.Server | Lamar.Microsoft.DependencyInjection 15.0.1, OpenTelemetry 1.12.0, ModelContextProtocol 1.0.0, NServiceBus.Extensions.Hosting 3.0.1 |

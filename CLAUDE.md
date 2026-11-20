@@ -114,7 +114,7 @@ DbUp scripts in `src/Database/scripts/Update/`, numbered sequentially (`###_Desc
 
 **.NET SDK:** 11.0.100 (see `global.json`)
 
-**Core** — MediatR.Contracts 2.0.1, Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions 11.0.0, Microsoft.Extensions.Logging.Abstractions 11.0.0
+**Core** — MediatR.Contracts 2.0.1, Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions 11.0.0
 
 **DataAccess** — MediatR 12.4.1, Microsoft.EntityFrameworkCore 11.0.0, Microsoft.EntityFrameworkCore.SqlServer 11.0.0, Microsoft.EntityFrameworkCore.Sqlite 11.0.0, NServiceBus.Persistence.Sql.TransactionalSession 8.3.0, ClearMeasureLabs.HostedEndpoint.SqlServerTransport 1.0.30
 
@@ -134,7 +134,7 @@ DbUp scripts in `src/Database/scripts/Update/`, numbered sequentially (`###_Desc
 
 **Worker** — ClearMeasureLabs.HostedEndpoint.SqlServerTransport 1.0.30, Microsoft.Extensions.Hosting 11.0.0
 
-**AppHost** — Aspire.AppHost.Sdk 13.1.2
+**AppHost** — Aspire.AppHost.Sdk 13.6.5
 
 **ServiceDefaults** — Azure.Monitor.OpenTelemetry.AspNetCore 1.6.0, OpenTelemetry.Exporter.OpenTelemetryProtocol 1.12.0, OpenTelemetry.Extensions.Hosting 1.12.0, Microsoft.Extensions.Http.Resilience 9.9.0, Microsoft.Extensions.ServiceDiscovery 9.5.0
 

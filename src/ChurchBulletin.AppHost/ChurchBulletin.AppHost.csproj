@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.1.2">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Pin transitive MessagePack (from Aspire SDK) above 2.5.192 to resolve NU1902/NU1903. -->
-    <PackageReference Include="MessagePack" Version="2.5.302" />
+    <!-- Pin transitive MessagePack (from Aspire SDK) at 2.5.303+ to resolve NU1902/NU1903 (GHSA-qhrr-8q5h-9q3h). -->
+    <PackageReference Include="MessagePack" Version="2.5.303" />
   </ItemGroup>
 
   <ItemGroup>

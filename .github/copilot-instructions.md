@@ -147,7 +147,7 @@ All branches must be created inside a folder matching the username of the accoun
 
 | Project | Key NuGet Packages |
 |---------|--------------------|
-| Core | MediatR.Contracts 2.0.1, Microsoft.Extensions.Logging.Abstractions 11.0.0 |
+| Core | MediatR.Contracts 2.0.1, Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions 11.0.0 |
 | DataAccess | MediatR 12.4.1, Microsoft.EntityFrameworkCore 11.0.0, EF Core SqlServer + Sqlite 11.0.0, NServiceBus.Persistence.Sql.TransactionalSession 8.3.0 |
 | Database | DbUp 5.0.41, dbup-sqlserver 6.0.16, Spectre.Console 0.54.0 |
 | UI.Server | Lamar.Microsoft.DependencyInjection 15.0.1, ModelContextProtocol 1.0.0, NServiceBus.Extensions.Hosting 3.0.1, OpenTelemetry 1.12.0 |
@@ -157,7 +157,7 @@ All branches must be created inside a folder matching the username of the accoun
 | LlmGateway | Azure.AI.OpenAI 2.1.0, MediatR 12.4.1, Microsoft.Extensions.AI 9.7.0 |
 | McpServer | ModelContextProtocol 1.0.0, Lamar.Microsoft.DependencyInjection 15.0.1, MediatR 12.4.1 |
 | Worker | ClearMeasureLabs.HostedEndpoint.SqlServerTransport 1.0.30 |
-| AppHost | Aspire.AppHost.Sdk 13.1.2 |
+| AppHost | Aspire.AppHost.Sdk 13.6.5 |
 | ServiceDefaults | Azure.Monitor.OpenTelemetry.AspNetCore 1.6.0, OpenTelemetry 1.12.0, Microsoft.Extensions.ServiceDiscovery 9.5.0 |
 | UnitTests | NUnit 4.3.2, Shouldly 4.3.0, bunit 1.40.0, AutoBogus.Conventions 2.13.1 |
 | IntegrationTests | NUnit 4.3.2, Shouldly 4.3.0, Microsoft.EntityFrameworkCore 11.0.0 |
