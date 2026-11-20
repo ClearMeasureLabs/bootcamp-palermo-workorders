@@ -172,11 +172,9 @@ public static class ServerApplication
                     ProblemDetailsExceptionHandler.HandleAsync(context, app.Environment)
             }));
 
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseWebAssemblyDebugging();
-        }
-        else if (!app.Environment.IsEnvironment("Testing"))
+        // UseWebAssemblyDebugging was removed: it is obsolete (ASPDEPR011) and Blazor WebAssembly
+        // debugging is now launched directly by Visual Studio / Visual Studio Code.
+        if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
         {
             app.UseExceptionHandler("/Error");
             app.UseHsts();

@@ -46,12 +46,14 @@ public class ThemePreferenceServiceTests
 
     private sealed class StubDisconnectedJsRuntime : IJSRuntime
     {
+        #pragma warning disable BL0016 // Test stub implementing IJSRuntime; it is the JS interop target, not a caller.
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
             throw new JSDisconnectedException("circuit disconnected");
 
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
             object?[]? args) =>
             throw new JSDisconnectedException("circuit disconnected");
+        #pragma warning restore BL0016
     }
 
     private sealed class StubThemeJsRuntime : IJSRuntime
@@ -60,6 +62,7 @@ public class ThemePreferenceServiceTests
         public int SetThemeCalls { get; private set; }
         public bool? LastSetThemeArg { get; private set; }
 
+        #pragma warning disable BL0016 // Test stub implementing IJSRuntime; it is the JS interop target, not a caller.
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
         {
             if (identifier == "import" && typeof(TValue) == typeof(IJSObjectReference))
@@ -74,6 +77,7 @@ public class ThemePreferenceServiceTests
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
             object?[]? args) =>
             InvokeAsync<TValue>(identifier, args);
+        #pragma warning restore BL0016
 
         private sealed class StubThemeModule : IJSObjectReference
         {
@@ -87,6 +91,7 @@ public class ThemePreferenceServiceTests
                 _parent = parent;
             }
 
+            #pragma warning disable BL0016 // Test stub implementing IJSRuntime; it is the JS interop target, not a caller.
             public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
             {
                 if (identifier == "getTheme" && typeof(TValue) == typeof(string))
@@ -112,6 +117,7 @@ public class ThemePreferenceServiceTests
             public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken,
                 object?[]? args) =>
                 InvokeAsync<TValue>(identifier, args);
+            #pragma warning restore BL0016
 
             public ValueTask DisposeAsync() => ValueTask.CompletedTask;
         }

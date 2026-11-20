@@ -54,7 +54,9 @@ public partial class WorkOrderSearch : AppComponentBase
         _assignedToMe = SearchState.AssignedToMe;
         if (_assignedToMe)
         {
+            #pragma warning disable BL0013 // Pre-existing behavior: the page reads auth state on demand; live auth-state refresh is out of scope for the .NET 11 upgrade.
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            #pragma warning restore BL0013
             Model.Filters.Assignee = authState.User.Identity?.Name ?? string.Empty;
         }
     }
@@ -88,7 +90,9 @@ public partial class WorkOrderSearch : AppComponentBase
         SearchState.AssignedToMe = _assignedToMe;
         if (_assignedToMe)
         {
+            #pragma warning disable BL0013 // Pre-existing behavior: the page reads auth state on demand; live auth-state refresh is out of scope for the .NET 11 upgrade.
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            #pragma warning restore BL0013
             var username = authState.User.Identity?.Name;
             Model.Filters.Assignee = username ?? string.Empty;
         }

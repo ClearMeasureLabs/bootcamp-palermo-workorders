@@ -72,6 +72,7 @@ public class LocalStorageUserSessionStoreTests
         public int RemoveItemCalls { get; private set; }
         public int GetItemCalls { get; private set; }
 
+        #pragma warning disable BL0016 // Test stub implementing IJSRuntime; it is the JS interop target, not a caller.
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
             InvokeAsync<TValue>(identifier, CancellationToken.None, args);
 
@@ -108,5 +109,6 @@ public class LocalStorageUserSessionStoreTests
                     throw new InvalidOperationException($"Unexpected InvokeAsync: {identifier}");
             }
         }
+        #pragma warning restore BL0016
     }
 }
