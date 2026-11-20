@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Pin transitive MessagePack (from Aspire SDK) at 2.5.303+ to resolve NU1902/NU1903 (GHSA-qhrr-8q5h-9q3h). -->
-    <PackageReference Include="MessagePack" Version="2.5.303" />
+    <!-- Pin transitive MessagePack (from Aspire SDK) at 2.5.307 (Aspire 13.6.5 minimum; above GHSA-qhrr-8q5h-9q3h fix 2.5.303) to resolve NU1902/NU1903. -->
+    <PackageReference Include="MessagePack" Version="2.5.307" />
   </ItemGroup>
 
   <ItemGroup>
