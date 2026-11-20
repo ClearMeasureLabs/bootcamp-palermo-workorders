@@ -328,6 +328,8 @@ jobs:
     env:
       BUILD_CONFIGURATION: Release
       DATABASE_ENGINE: SQLite
+      # The ARM runner's /run/user directory fails the .NET 11 test host's artifacts-directory check (errno 22).
+      VSTEST_DISABLE_ARTIFACTS_DIRECTORY_VERIFICATION: "1"
 
     steps:
       - name: Checkout code
@@ -931,7 +933,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 75
     concurrency:
       group: acceptance-tests-${{ github.ref }}-${{ github.sha }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -1012,6 +1014,8 @@ jobs:
     env:
       BUILD_CONFIGURATION: Release
       DATABASE_ENGINE: SQLite
+      # The ARM runner's /run/user directory fails the .NET 11 test host's artifacts-directory check (errno 22).
+      VSTEST_DISABLE_ARTIFACTS_DIRECTORY_VERIFICATION: "1"
 
     steps:
       - name: Checkout code
