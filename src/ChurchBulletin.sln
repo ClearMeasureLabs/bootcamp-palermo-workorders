@@ -67,6 +67,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worker", "Worker\Worker.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "McpServer", "McpServer\McpServer.csproj", "{E23868C9-DE84-4385-95ED-AC785AD4F47E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AgentProtocols", "AgentProtocols\AgentProtocols.csproj", "{A1B2C3D4-1111-4444-8888-100000000001}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkOrderAgentSpike", "WorkOrderAgentSpike\WorkOrderAgentSpike.csproj", "{A1B2C3D4-2222-4444-8888-100000000002}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -536,6 +540,66 @@ Global
 		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|x64.Build.0 = Release|Any CPU
 		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|x86.ActiveCfg = Release|Any CPU
 		{E23868C9-DE84-4385-95ED-AC785AD4F47E}.Release|x86.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|ARM.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Debug|x86.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|ARM.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|ARM.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|ARM64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|ARM64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|x64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|x64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|x86.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.exclude-maui.slnf|x86.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|ARM.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|ARM.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|ARM64.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|x64.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|x86.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-4444-8888-100000000001}.Release|x86.Build.0 = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|ARM.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Debug|x86.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|ARM.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|ARM.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|ARM64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|ARM64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|x64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|x64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|x86.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.exclude-maui.slnf|x86.Build.0 = Debug|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|ARM.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|ARM.Build.0 = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|ARM64.Build.0 = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|x64.Build.0 = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|x86.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-2222-4444-8888-100000000002}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
