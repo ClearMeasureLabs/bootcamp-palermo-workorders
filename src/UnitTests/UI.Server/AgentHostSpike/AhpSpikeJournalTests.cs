@@ -53,7 +53,7 @@ public class AhpSpikeJournalTests
         journal.Append(Delta("second"));
 
         attachedFromSeq.ShouldBe(1);
-        received.Select(envelope => envelope.ServerSeq).ShouldBe(new long[] { 2, 3 });
+        received.Select(envelope => envelope.ServerSeq).ShouldBe([2L, 3L]);
         received.ShouldAllBe(envelope => envelope.Channel == AhpSpikeJournal.ChatUri);
     }
 
@@ -69,7 +69,7 @@ public class AhpSpikeJournalTests
         journal.Append(Delta("a"));
         journal.Append(Delta("b"));
 
-        received.Select(envelope => envelope.ServerSeq).ShouldBe(new long[] { 1, 2 });
+        received.Select(envelope => envelope.ServerSeq).ShouldBe([1L, 2L]);
     }
 
     [Test]
@@ -99,9 +99,9 @@ public class AhpSpikeJournalTests
 
         var replayed = new List<ActionEnvelope>();
         var snapshotCount = 0;
-        journal.Resume(2, replayed.Add, actions => replayed.AddRange(actions), _ => snapshotCount++);
+        journal.Resume(2, replayed.Add, replayed.AddRange, _ => snapshotCount++);
 
-        replayed.Select(envelope => envelope.ServerSeq).ShouldBe(new long[] { 3, 4, 5 });
+        replayed.Select(envelope => envelope.ServerSeq).ShouldBe([3L, 4L, 5L]);
         snapshotCount.ShouldBe(0);
     }
 
@@ -133,7 +133,7 @@ public class AhpSpikeJournalTests
 
         var replayed = new List<ActionEnvelope>();
         Snapshot? snapshot = null;
-        journal.Resume(9, replayed.Add, actions => replayed.AddRange(actions), captured => snapshot = captured);
+        journal.Resume(9, replayed.Add, replayed.AddRange, captured => snapshot = captured);
 
         snapshot.ShouldNotBeNull();
         snapshot!.FromSeq.ShouldBe(3);
@@ -147,7 +147,7 @@ public class AhpSpikeJournalTests
         var replayed = new List<ActionEnvelope>();
         var snapshotCount = 0;
 
-        journal.Resume(0, _ => { }, actions => replayed.AddRange(actions), _ => snapshotCount++);
+        journal.Resume(0, _ => { }, replayed.AddRange, _ => snapshotCount++);
 
         replayed.ShouldBeEmpty();
         snapshotCount.ShouldBe(0);

@@ -26,7 +26,7 @@ public class AhpSpikeTests : AcceptanceTestBase
 
         await Click(nameof(AhpSpike.Elements.ConnectButton));
         await Expect(TestId(AhpSpike.Elements.ConnectionStatus)).ToHaveTextAsync("Connected", new() { Timeout = 30_000 });
-        await Expect(TestId(AhpSpike.Elements.ServerUser)).ToContainTextAsync(CurrentUser.UserName!);
+        await Expect(TestId(AhpSpike.Elements.ServerUser)).ToContainTextAsync(CurrentUser.UserName);
 
         await Click(nameof(AhpSpike.Elements.StartButton));
         await WaitForNumberAsync(AhpSpike.Elements.DeltaActionsReceived, n => n >= 250, 90_000);

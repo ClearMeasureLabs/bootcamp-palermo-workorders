@@ -103,23 +103,21 @@ public sealed class AhpSpikeWebSocketMiddleware(
         var buffer = new byte[16 * 1024];
         while (socket.State == WebSocketState.Open)
         {
+            using var message = new MemoryStream();
             WebSocketReceiveResult result;
-            using (var message = new MemoryStream())
+            do
             {
-                do
+                result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken).ConfigureAwait(false);
+                if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken).ConfigureAwait(false);
-                    if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        return;
-                    }
-
-                    message.Write(buffer, 0, result.Count);
+                    return;
                 }
-                while (!result.EndOfMessage);
 
-                handler.Handle(Encoding.UTF8.GetString(message.ToArray()));
+                message.Write(buffer, 0, result.Count);
             }
+            while (!result.EndOfMessage);
+
+            handler.Handle(Encoding.UTF8.GetString(message.ToArray()));
         }
     }
 }

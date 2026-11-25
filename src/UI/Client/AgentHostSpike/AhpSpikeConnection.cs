@@ -21,7 +21,6 @@ public sealed class AhpSpikeConnection : IAsyncDisposable
     private readonly Action<string> _log;
     private ClientWebSocket? _socket;
     private AhpClient? _client;
-    private Task _pump = Task.CompletedTask;
 
     /// <summary>Stable client id used for initialize and reconnect.</summary>
     public string ClientId { get; } = "wasm-" + Guid.NewGuid().ToString("N")[..8];
@@ -68,7 +67,7 @@ public sealed class AhpSpikeConnection : IAsyncDisposable
             ?? throw new InvalidOperationException("initialize result has no snapshot for the spike chat");
         _projection.Seed(snapshot);
         _log($"initialize: protocol {NegotiatedVersion}, snapshot fromSeq {snapshot.FromSeq}, server saw user '{ServerUser}'");
-        _pump = PumpAsync(sub);
+        _ = PumpAsync(sub);
         _onChanged();
     }
 
@@ -106,7 +105,7 @@ public sealed class AhpSpikeConnection : IAsyncDisposable
         var lastSeen = _projection.LastSeenServerSeq;
         var result = await _client!.ReconnectAsync(ClientId, lastSeen, [AhpSpikeChatProjection.ChatUri]);
         ApplyReconnectResult(result, lastSeen);
-        _pump = PumpAsync(sub);
+        _ = PumpAsync(sub);
         _onChanged();
     }
 

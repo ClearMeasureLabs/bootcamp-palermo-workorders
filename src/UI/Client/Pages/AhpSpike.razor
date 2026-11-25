@@ -23,6 +23,7 @@
         <tr><td class="text-muted">Gaps</td><td data-testid="@Elements.Gaps">@(_projection is not null ? _projection.Gaps.ToString() : "-")</td></tr>
         <tr><td class="text-muted">Duplicates dropped</td><td data-testid="@Elements.Duplicates">@(_projection is not null ? _projection.Duplicates.ToString() : "-")</td></tr>
         <tr><td class="text-muted">Replayed on reconnect</td><td data-testid="@Elements.Replayed">@(_projection is not null ? _projection.ReplayedActions.ToString() : "-")</td></tr>
+        <tr><td class="text-muted">Chat title (from snapshot)</td><td>@(_projection?.State?.Title ?? "-")</td></tr>
         <tr><td class="text-muted">Turn</td><td data-testid="@Elements.TurnStatus">@(_projection?.TurnStatus ?? "-")</td></tr>
         </tbody>
     </table>

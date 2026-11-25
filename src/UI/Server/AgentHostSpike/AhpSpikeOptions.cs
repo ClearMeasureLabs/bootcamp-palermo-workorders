@@ -1,4 +1,4 @@
-// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global -- required for IOptions<T> configuration binding
+// ReSharper disable PropertyCanBeMadeInitOnly.Global -- setters required for IOptions<T> configuration binding
 namespace ClearMeasure.Bootcamp.UI.Server.AgentHostSpike;
 
 /// <summary>

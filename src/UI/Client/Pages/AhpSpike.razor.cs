@@ -149,7 +149,7 @@ public partial class AhpSpike : IAsyncDisposable
     /// <summary>Cancels the render loop and disposes the connection.</summary>
     public async ValueTask DisposeAsync()
     {
-        _renderLoop.Cancel();
+        await _renderLoop.CancelAsync();
         _renderLoop.Dispose();
         if (_connection is not null)
         {
