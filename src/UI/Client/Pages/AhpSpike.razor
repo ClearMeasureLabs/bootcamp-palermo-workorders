@@ -1,0 +1,56 @@
+@page "/spike/ahp"
+
+<div class="container-fluid py-2" style="max-width:1200px">
+    <h1>Spike S1: AHP .NET client in Blazor WASM</h1>
+    <p class="text-muted small">Microsoft.VisualStudioCode.AgentHostProtocol 1.1.0 AhpClient + WebSocketTransport.FromClientWebSocket, connected to the in-app test host at /ws/agent-host-spike.</p>
+
+    <div class="btn-group mb-2" role="group" aria-label="Spike controls">
+        <button class="btn btn-sm btn-primary" data-testid="@Elements.ConnectButton" disabled="@(_connection?.IsConnected == true)" @onclick="HandleConnectAsync">Connect</button>
+        <button class="btn btn-sm btn-outline-primary" data-testid="@Elements.StartButton" disabled="@(_connection?.IsConnected != true)" @onclick="HandleStartAsync">Start turn</button>
+        <button class="btn btn-sm btn-outline-danger" data-testid="@Elements.DropButton" disabled="@(_connection?.IsConnected != true)" @onclick="HandleDrop">Drop</button>
+        <button class="btn btn-sm btn-outline-secondary" data-testid="@Elements.ReconnectButton" disabled="@(_connection?.IsConnected == true || !_everConnected)" @onclick="HandleReconnectAsync">Reconnect</button>
+    </div>
+
+    <table class="table table-sm table-bordered mb-2 small">
+        <tbody>
+        <tr><td class="text-muted">Connection</td><td data-testid="@Elements.ConnectionStatus">@ConnectionText</td></tr>
+        <tr><td class="text-muted">Server saw user</td><td data-testid="@Elements.ServerUser">@(_connection?.ServerUser ?? "-")</td></tr>
+        <tr><td class="text-muted">Protocol</td><td data-testid="@Elements.ProtocolVersion">@(_connection?.NegotiatedVersion ?? "-")</td></tr>
+        <tr><td class="text-muted">AHP client id</td><td>@(_connection?.ClientId ?? "-")</td></tr>
+        <tr><td class="text-muted">chat/delta actions received</td><td data-testid="@Elements.DeltaActionsReceived">@(_projection?.DeltaActionsReceived.ToString() ?? "-")</td></tr>
+        <tr><td class="text-muted">Deltas rendered (from reduced ChatState)</td><td data-testid="@Elements.DeltasRendered">@(_projection?.DeltasRendered.ToString() ?? "-")</td></tr>
+        <tr><td class="text-muted">Last serverSeq</td><td data-testid="@Elements.LastServerSeq">@(_projection is not null ? _projection.LastSeenServerSeq.ToString() : "-")</td></tr>
+        <tr><td class="text-muted">Gaps</td><td data-testid="@Elements.Gaps">@(_projection is not null ? _projection.Gaps.ToString() : "-")</td></tr>
+        <tr><td class="text-muted">Duplicates dropped</td><td data-testid="@Elements.Duplicates">@(_projection is not null ? _projection.Duplicates.ToString() : "-")</td></tr>
+        <tr><td class="text-muted">Replayed on reconnect</td><td data-testid="@Elements.Replayed">@(_projection is not null ? _projection.ReplayedActions.ToString() : "-")</td></tr>
+        <tr><td class="text-muted">Turn</td><td data-testid="@Elements.TurnStatus">@(_projection?.TurnStatus ?? "-")</td></tr>
+        </tbody>
+    </table>
+
+    <pre data-testid="@Elements.RenderedText" style="height:180px;overflow:auto;white-space:pre-wrap;font-size:11px">@(_projection?.Text)</pre>
+
+    <h6 class="mt-2">WASM constraints</h6>
+    <table class="table table-sm table-bordered mb-2 small" data-testid="@Elements.Probes">
+        <thead>
+        <tr><th>Probe</th><th>Supported</th><th>Detail</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var probe in _probes)
+        {
+            <tr>
+                <td>@probe.Name</td>
+                <td>@(probe.Supported ? "yes" : "no")</td>
+                <td class="text-muted">@probe.Detail</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <h6 class="mt-2">Log</h6>
+    <ul data-testid="@Elements.Log" class="small mb-0" style="font-size:10px;max-height:140px;overflow:auto">
+        @foreach (var line in _logLines)
+        {
+            <li>@line</li>
+        }
+    </ul>
+</div>
