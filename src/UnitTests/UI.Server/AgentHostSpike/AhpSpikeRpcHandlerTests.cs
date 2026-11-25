@@ -22,7 +22,7 @@ public class AhpSpikeRpcHandlerTests
         root.GetProperty("jsonrpc").GetString().ShouldBe("2.0");
         root.GetProperty("id").GetInt32().ShouldBe(1);
         var result = root.GetProperty("result");
-        result.GetProperty("protocolVersion").GetString().ShouldBe("1.0.0");
+        result.GetProperty("protocolVersion").GetString().ShouldBe(ProtocolVersion.Supported[0]);
         result.GetProperty("serverSeq").GetInt64().ShouldBe(0);
         result.GetProperty("serverInfo").GetProperty("name").GetString().ShouldBe("church-bulletin-ahp-spike-host");
         result.GetProperty("_meta").GetProperty("spike.user").GetString().ShouldBe("alice");
@@ -43,7 +43,7 @@ public class AhpSpikeRpcHandlerTests
         frames.Count.ShouldBe(1);
         using var document = JsonDocument.Parse(frames[0]);
         var result = document.RootElement.GetProperty("result");
-        result.GetProperty("protocolVersion").GetString().ShouldBe("1.0.0");
+        result.GetProperty("protocolVersion").GetString().ShouldBe(ProtocolVersion.Supported[0]);
         result.GetProperty("snapshots").GetArrayLength().ShouldBe(0);
         handler.ClientId.ShouldBe("client-1");
     }
@@ -345,7 +345,7 @@ public class AhpSpikeRpcHandlerTests
         var parameters = SystemTextJsonAhpSerializer.Default.Serialize(new InitializeParams
         {
             Channel = AhpSpikeJournal.ChatUri,
-            ProtocolVersions = protocolVersions ?? ["1.0.0"],
+            ProtocolVersions = protocolVersions ?? [ProtocolVersion.Supported[0]],
             ClientId = clientId,
             InitialSubscriptions = subscriptions
         });

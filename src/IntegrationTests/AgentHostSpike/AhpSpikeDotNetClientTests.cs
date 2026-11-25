@@ -99,7 +99,7 @@ public class AhpSpikeDotNetClientTests
         await using var app = await StartHostAsync(5, 1, 5000);
         var projection = new AhpSpikeChatProjection();
         var logs = new List<string>();
-        await using var connection = new AhpSpikeConnection(EndpointOf(app, "alice"), projection, 4096, () => { }, logs.Add);
+        var connection = new AhpSpikeConnection(EndpointOf(app, "alice"), projection, 4096, () => { }, logs.Add);
 
         await connection.ConnectAsync();
         await connection.DisposeAsync();
