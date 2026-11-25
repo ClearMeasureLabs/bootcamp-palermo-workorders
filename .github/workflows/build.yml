@@ -112,6 +112,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          global-json-file: global.json
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -265,6 +270,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          global-json-file: global.json
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -325,6 +335,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          global-json-file: global.json
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -379,6 +394,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          global-json-file: global.json
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -456,6 +476,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          global-json-file: global.json
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
@@ -816,6 +841,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          global-json-file: global.json
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -917,6 +947,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          global-json-file: global.json
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
@@ -985,6 +1020,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          global-json-file: global.json
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
