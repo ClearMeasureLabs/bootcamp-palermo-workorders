@@ -2,6 +2,7 @@ using System.Reflection;
 using Asp.Versioning;
 using ClearMeasure.Bootcamp.Core;
 using ClearMeasure.Bootcamp.LlmGateway;
+using ClearMeasure.Bootcamp.UI.Server.AgentHostSpike;
 using ClearMeasure.Bootcamp.DataAccess.Messaging;
 using ClearMeasure.Bootcamp.McpServer.Resources;
 using ClearMeasure.Bootcamp.McpServer.Tools;
@@ -128,6 +129,9 @@ public static class ServerApplication
             .WithTools<WorkOrderTools>()
             .WithTools<EmployeeTools>()
             .WithResources<ReferenceResources>();
+        builder.Services.Configure<AhpSpikeOptions>(builder.Configuration.GetSection(AhpSpikeOptions.SectionName));
+        builder.Services.AddSingleton<AhpSpikeJournal>();
+        builder.Services.AddSingleton<AhpSpikeTurnStreamer>();
     }
 
     private static void RegisterNServiceBus(WebApplicationBuilder builder)
@@ -204,6 +208,7 @@ public static class ServerApplication
 
         app.UseWebSockets();
         app.UseMiddleware<RealtimeNotificationWebSocketMiddleware>();
+        app.UseMiddleware<AhpSpikeWebSocketMiddleware>();
         MapTestingEndpoints(app);
         app.UseRequestBodyBuffering();
         app.UseMiddleware<IdempotencyMiddleware>();
