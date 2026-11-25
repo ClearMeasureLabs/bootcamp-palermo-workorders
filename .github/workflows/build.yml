@@ -142,8 +142,6 @@ jobs:
 
       - name: Enforce CRAP (production)
         shell: pwsh
-        env:
-          DOTNET_ROLL_FORWARD: LatestMajor
         run: |
           # Threshold from scripts/crap/crap-gate-threshold.json (single source of truth).
           pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailOnViolations
@@ -205,11 +203,11 @@ jobs:
       - name: Create NuGet Packages
         shell: pwsh
         env:
-          DOTNET_ROLL_FORWARD: LatestMajor
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
         run: |
+          dotnet tool install --global Octopus.DotNet.Cli 2>$null
           . ./build.ps1
           Package-Everything
 
