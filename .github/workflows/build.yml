@@ -93,7 +93,7 @@ jobs:
     name: Integration Build (SQL container)
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       # Cancelled when new commits arrive on the same non-master branch/PR; on master,
       # cancel-in-progress is disabled below so builds queue instead of being dropped.
@@ -105,7 +105,6 @@ jobs:
       pull-requests: write
     env:
       BUILD_CONFIGURATION: Release
-      DOTNET_ROLL_FORWARD: LatestMajor
 
     steps:
       # Checkout code
@@ -143,6 +142,8 @@ jobs:
 
       - name: Enforce CRAP (production)
         shell: pwsh
+        env:
+          DOTNET_ROLL_FORWARD: LatestMajor
         run: |
           # Threshold from scripts/crap/crap-gate-threshold.json (single source of truth).
           pwsh scripts/crap/run-crap-audit.ps1 -SkipTests -FailOnViolations
@@ -204,6 +205,7 @@ jobs:
       - name: Create NuGet Packages
         shell: pwsh
         env:
+          DOTNET_ROLL_FORWARD: LatestMajor
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_BUILDNUMBER: ${{ env.VERSION }}
@@ -318,6 +320,7 @@ jobs:
     env:
       BUILD_CONFIGURATION: Release
       DATABASE_ENGINE: SQLite
+      VSTEST_DISABLE_ARTIFACTS_DIRECTORY_VERIFICATION: "1"
 
     steps:
       - name: Checkout code
@@ -900,7 +903,7 @@ jobs:
     name: Acceptance Tests
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     concurrency:
       group: acceptance-tests-${{ github.ref }}-${{ github.sha }}
@@ -977,6 +980,7 @@ jobs:
     env:
       BUILD_CONFIGURATION: Release
       DATABASE_ENGINE: SQLite
+      VSTEST_DISABLE_ARTIFACTS_DIRECTORY_VERIFICATION: "1"
 
     steps:
       - name: Checkout code
