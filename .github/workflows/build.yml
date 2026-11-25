@@ -318,6 +318,8 @@ jobs:
     env:
       BUILD_CONFIGURATION: Release
       DATABASE_ENGINE: SQLite
+      # The ARM runner's /run/user directory fails the test host's artifacts-directory check (errno 22).
+      VSTEST_DISABLE_ARTIFACTS_DIRECTORY_VERIFICATION: "1"
 
     steps:
       - name: Checkout code
@@ -900,7 +902,7 @@ jobs:
     name: Acceptance Tests
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     concurrency:
       group: acceptance-tests-${{ github.ref }}-${{ github.sha }}
@@ -977,6 +979,8 @@ jobs:
     env:
       BUILD_CONFIGURATION: Release
       DATABASE_ENGINE: SQLite
+      # The ARM runner's /run/user directory fails the test host's artifacts-directory check (errno 22).
+      VSTEST_DISABLE_ARTIFACTS_DIRECTORY_VERIFICATION: "1"
 
     steps:
       - name: Checkout code
