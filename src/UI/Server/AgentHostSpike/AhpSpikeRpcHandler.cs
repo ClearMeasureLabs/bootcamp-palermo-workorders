@@ -15,6 +15,7 @@ public sealed class AhpSpikeRpcHandler : IDisposable
     private readonly Action<string> _send;
     private readonly Action<ActionEnvelope> _listener;
     private readonly string _user;
+    private readonly Dictionary<string, Action<JsonElement?, JsonElement?>> _handlers;
     private string? _clientId;
 
     /// <summary>
@@ -31,6 +32,15 @@ public sealed class AhpSpikeRpcHandler : IDisposable
         _send = send;
         _user = user;
         _listener = OnAction;
+        _handlers = new Dictionary<string, Action<JsonElement?, JsonElement?>>(StringComparer.Ordinal)
+        {
+            ["initialize"] = HandleInitialize,
+            ["reconnect"] = HandleReconnect,
+            ["subscribe"] = HandleSubscribe,
+            ["ping"] = (requestId, _) => SendEmptyResult(requestId),
+            ["unsubscribe"] = (_, _) => _journal.Detach(_listener),
+            ["dispatchAction"] = (_, requestParams) => HandleDispatchAction(requestParams)
+        };
     }
 
     /// <summary>
@@ -46,16 +56,11 @@ public sealed class AhpSpikeRpcHandler : IDisposable
         try
         {
             using var document = JsonDocument.Parse(frame);
-            var root = document.RootElement;
-            if (!root.TryGetProperty("method", out var methodElement) || methodElement.ValueKind != JsonValueKind.String)
+            var (method, id, parameters) = ReadRpcFields(document.RootElement);
+            if (method is not null)
             {
-                return;
+                Dispatch(method, id, parameters);
             }
-
-            var method = methodElement.GetString()!;
-            JsonElement? id = root.TryGetProperty("id", out var idElement) ? idElement.Clone() : null;
-            JsonElement? parameters = root.TryGetProperty("params", out var parametersElement) ? parametersElement.Clone() : null;
-            Dispatch(method, id, parameters);
         }
         catch (JsonException)
         {
@@ -67,34 +72,29 @@ public sealed class AhpSpikeRpcHandler : IDisposable
     /// </summary>
     public void Dispose() => _journal.Detach(_listener);
 
+    private static (string? Method, JsonElement? Id, JsonElement? Parameters) ReadRpcFields(JsonElement root)
+    {
+        if (!root.TryGetProperty("method", out var methodElement) || methodElement.ValueKind != JsonValueKind.String)
+        {
+            return (null, null, null);
+        }
+
+        JsonElement? id = root.TryGetProperty("id", out var idElement) ? idElement.Clone() : null;
+        JsonElement? parameters = root.TryGetProperty("params", out var parametersElement) ? parametersElement.Clone() : null;
+        return (methodElement.GetString()!, id, parameters);
+    }
+
     private void Dispatch(string method, JsonElement? id, JsonElement? parameters)
     {
-        switch (method)
+        if (_handlers.TryGetValue(method, out var handler))
         {
-            case "initialize":
-                HandleInitialize(id, parameters);
-                break;
-            case "reconnect":
-                HandleReconnect(id, parameters);
-                break;
-            case "subscribe":
-                HandleSubscribe(id, parameters);
-                break;
-            case "ping":
-                SendEmptyResult(id);
-                break;
-            case "unsubscribe":
-                _journal.Detach(_listener);
-                break;
-            case "dispatchAction":
-                HandleDispatchAction(parameters);
-                break;
-            default:
-                if (id is not null)
-                {
-                    SendError(id, -32601, $"Method not found: {method}");
-                }
-                break;
+            handler(id, parameters);
+            return;
+        }
+
+        if (id is not null)
+        {
+            SendError(id, -32601, $"Method not found: {method}");
         }
     }
 

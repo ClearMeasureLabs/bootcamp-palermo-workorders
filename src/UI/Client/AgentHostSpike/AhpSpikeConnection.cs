@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using System.Text.Json;
 using Microsoft.AgentHostProtocol;
@@ -11,7 +10,6 @@ namespace ClearMeasure.Bootcamp.UI.Client.AgentHostSpike;
 /// <see cref="WebSocketTransport.FromClientWebSocket"/>, and pumps subscription events into
 /// the <see cref="AhpSpikeChatProjection"/>.
 /// </summary>
-[ExcludeFromCodeCoverage(Justification = "Browser WebSocket wiring; exercised by the AhpSpike acceptance test in a real browser")]
 public sealed class AhpSpikeConnection : IAsyncDisposable
 {
     private readonly Uri _endpoint;
@@ -119,16 +117,20 @@ public sealed class AhpSpikeConnection : IAsyncDisposable
             return;
         }
 
+        await DisposeQuietlyAsync(_client);
+        _client = null;
+    }
+
+    private async Task DisposeQuietlyAsync(AhpClient client)
+    {
         try
         {
-            await _client.DisposeAsync();
+            await client.DisposeAsync();
         }
         catch (Exception ex)
         {
             _log($"dispose: {ex.GetType().Name}");
         }
-
-        _client = null;
     }
 
     private async Task<Subscription> OpenAsync()
@@ -143,44 +145,44 @@ public sealed class AhpSpikeConnection : IAsyncDisposable
 
     private void ApplyReconnectResult(ReconnectResult result, long lastSeen)
     {
-        if (result.Value is ReconnectReplayResult replay)
+        switch (result.Value)
         {
-            foreach (var a in replay.Actions)
-            {
-                _projection.Apply(a, fromReplay: true);
-            }
+            case ReconnectReplayResult replay:
+                ApplyReplay(replay, lastSeen);
+                break;
+            case ReconnectSnapshotResult snapshot:
+                ApplySnapshot(snapshot);
+                break;
+        }
+    }
 
-            _log($"reconnect: replayed {replay.Actions.Count} actions (serverSeq {lastSeen + 1}..{_projection.LastSeenServerSeq})");
-            return;
+    private void ApplyReplay(ReconnectReplayResult replay, long lastSeen)
+    {
+        foreach (var action in replay.Actions)
+        {
+            _projection.Apply(action, fromReplay: true);
         }
 
-        if (result.Value is ReconnectSnapshotResult snap)
-        {
-            foreach (var s in snap.Snapshots.Where(s => s.Resource == AhpSpikeChatProjection.ChatUri))
-            {
-                _projection.Seed(s);
-            }
+        _log($"reconnect: replayed {replay.Actions.Count} actions (serverSeq {lastSeen + 1}..{_projection.LastSeenServerSeq})");
+    }
 
-            _log("reconnect: server sent a fresh snapshot");
+    private void ApplySnapshot(ReconnectSnapshotResult snapshot)
+    {
+        foreach (var snapshotItem in snapshot.Snapshots.Where(s => s.Resource == AhpSpikeChatProjection.ChatUri))
+        {
+            _projection.Seed(snapshotItem);
         }
+
+        _log("reconnect: server sent a fresh snapshot");
     }
 
     private async Task PumpAsync(Subscription sub)
     {
         try
         {
-            await foreach (var ev in sub.Events.ReadAllAsync())
+            await foreach (var subscriptionEvent in sub.Events.ReadAllAsync())
             {
-                switch (ev)
-                {
-                    case SubscriptionEventAction a:
-                        _projection.Apply(a.Envelope);
-                        break;
-                    case SubscriptionEventSnapshot s:
-                        _projection.Seed(s.Snapshot);
-                        break;
-                }
-
+                ApplyEvent(subscriptionEvent);
                 _onChanged();
             }
         }
@@ -193,13 +195,19 @@ public sealed class AhpSpikeConnection : IAsyncDisposable
         _onChanged();
     }
 
-    private static string? ReadServerUser(Dictionary<string, JsonElement>? meta)
+    private void ApplyEvent(SubscriptionEvent subscriptionEvent)
     {
-        if (meta is not null && meta.TryGetValue("spike.user", out var element))
+        switch (subscriptionEvent)
         {
-            return element.GetString();
+            case SubscriptionEventAction action:
+                _projection.Apply(action.Envelope);
+                break;
+            case SubscriptionEventSnapshot snapshot:
+                _projection.Seed(snapshot.Snapshot);
+                break;
         }
-
-        return null;
     }
+
+    private static string? ReadServerUser(Dictionary<string, JsonElement>? meta)
+        => meta is not null && meta.TryGetValue("spike.user", out var element) ? element.GetString() : null;
 }

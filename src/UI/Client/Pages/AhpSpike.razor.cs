@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using ClearMeasure.Bootcamp.UI.Client.AgentHostSpike;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -9,7 +8,6 @@ namespace ClearMeasure.Bootcamp.UI.Client.Pages;
 /// Throwaway spike page proving the Microsoft Agent Host Protocol .NET client
 /// (<see cref="AhpSpikeConnection"/>) runs inside Blazor WebAssembly.
 /// </summary>
-[ExcludeFromCodeCoverage(Justification = "Spike page; exercised by the AhpSpike acceptance test in a real browser")]
 public partial class AhpSpike : IAsyncDisposable
 {
     [Inject] private NavigationManager Navigation { get; set; } = null!;
@@ -94,10 +92,7 @@ public partial class AhpSpike : IAsyncDisposable
     {
         try
         {
-            var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity?.Name ?? "anonymous";
-            var baseUri = new Uri(Navigation.BaseUri);
-            var scheme = baseUri.Scheme == "https" ? "wss" : "ws";
-            var endpoint = new Uri($"{scheme}://{baseUri.Authority}/ws/agent-host-spike?user={Uri.EscapeDataString(user)}");
+            var endpoint = await BuildEndpointAsync();
             _projection = new AhpSpikeChatProjection();
             _connection = new AhpSpikeConnection(endpoint, _projection, Buffer ?? 4096, MarkDirty, AddLog);
             await _connection.ConnectAsync();
@@ -107,6 +102,14 @@ public partial class AhpSpike : IAsyncDisposable
         {
             AddLog($"{ex.GetType().Name}: {ex.Message}");
         }
+    }
+
+    private async Task<Uri> BuildEndpointAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity?.Name ?? "anonymous";
+        var baseUri = new Uri(Navigation.BaseUri);
+        var scheme = baseUri.Scheme == Uri.UriSchemeHttps ? "wss" : "ws";
+        return new Uri($"{scheme}://{baseUri.Authority}/ws/agent-host-spike?user={Uri.EscapeDataString(user)}");
     }
 
     private async Task HandleStartAsync()
@@ -164,13 +167,7 @@ public partial class AhpSpike : IAsyncDisposable
         {
             while (await timer.WaitForNextTickAsync(_renderLoop.Token))
             {
-                if (!_dirty)
-                {
-                    continue;
-                }
-
-                _dirty = false;
-                await InvokeAsync(StateHasChanged);
+                await FlushIfDirtyAsync();
             }
         }
         catch (OperationCanceledException)
@@ -179,12 +176,23 @@ public partial class AhpSpike : IAsyncDisposable
         }
     }
 
+    private async Task FlushIfDirtyAsync()
+    {
+        if (!_dirty)
+        {
+            return;
+        }
+
+        _dirty = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
     private void AddLog(string message)
     {
         _logLines.Insert(0, $"{DateTime.Now:HH:mm:ss.fff} {message}");
         if (_logLines.Count > 50)
         {
-            _logLines.RemoveRange(50, _logLines.Count - 50);
+            _logLines.RemoveAt(_logLines.Count - 1);
         }
 
         MarkDirty();

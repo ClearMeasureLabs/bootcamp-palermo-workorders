@@ -49,23 +49,7 @@ public sealed class AhpSpikeChatProjection
     public int DeltasRendered => Text.Count(c => c == '[');
 
     /// <summary>Human-readable status of the current turn.</summary>
-    public string TurnStatus
-    {
-        get
-        {
-            if (State is null)
-            {
-                return "not connected";
-            }
-
-            if (State.ActiveTurn is not null)
-            {
-                return "streaming";
-            }
-
-            return State.Turns.Count > 0 ? "complete" : "idle";
-        }
-    }
+    public string TurnStatus => State is null ? "not connected" : DescribeTurn(State);
 
     /// <summary>Applies a snapshot and resets the reduced chat state.</summary>
     /// <param name="snapshot">Snapshot for the spike chat channel.</param>
@@ -82,11 +66,22 @@ public sealed class AhpSpikeChatProjection
     /// <returns>Outcome of the application.</returns>
     public AhpSpikeApplyResult Apply(ActionEnvelope envelope, bool fromReplay = false)
     {
-        if (State is null)
+        var state = State ?? throw new InvalidOperationException("No snapshot has been seeded");
+        var verdict = Classify(envelope);
+        if (verdict != AhpSpikeApplyResult.Applied)
         {
-            throw new InvalidOperationException("No snapshot has been seeded");
+            return verdict;
         }
 
+        CountGap(envelope.ServerSeq);
+        Reducers.ApplyToChat(state, envelope.Action);
+        LastSeenServerSeq = envelope.ServerSeq;
+        CountApplied(envelope, fromReplay);
+        return AhpSpikeApplyResult.Applied;
+    }
+
+    private AhpSpikeApplyResult Classify(ActionEnvelope envelope)
+    {
         if (envelope.Channel != ChatUri)
         {
             return AhpSpikeApplyResult.Ignored;
@@ -98,13 +93,19 @@ public sealed class AhpSpikeChatProjection
             return AhpSpikeApplyResult.Duplicate;
         }
 
-        if (envelope.ServerSeq > LastSeenServerSeq + 1)
-        {
-            Gaps += envelope.ServerSeq - LastSeenServerSeq - 1;
-        }
+        return AhpSpikeApplyResult.Applied;
+    }
 
-        Reducers.ApplyToChat(State, envelope.Action);
-        LastSeenServerSeq = envelope.ServerSeq;
+    private void CountGap(long serverSeq)
+    {
+        if (serverSeq > LastSeenServerSeq + 1)
+        {
+            Gaps += serverSeq - LastSeenServerSeq - 1;
+        }
+    }
+
+    private void CountApplied(ActionEnvelope envelope, bool fromReplay)
+    {
         if (envelope.Action.Value is ChatDeltaAction)
         {
             DeltaActionsReceived++;
@@ -114,8 +115,16 @@ public sealed class AhpSpikeChatProjection
         {
             ReplayedActions++;
         }
+    }
 
-        return AhpSpikeApplyResult.Applied;
+    private static string DescribeTurn(ChatState state)
+    {
+        if (state.ActiveTurn is not null)
+        {
+            return "streaming";
+        }
+
+        return state.Turns.Count > 0 ? "complete" : "idle";
     }
 
     private Turn? LastCompletedTurn() => State?.Turns.LastOrDefault();

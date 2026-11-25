@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading.Channels;
@@ -39,48 +38,25 @@ public sealed class AhpSpikeWebSocketMiddleware(
         await RunConnectionAsync(context).ConfigureAwait(false);
     }
 
-    [ExcludeFromCodeCoverage(Justification = "Socket pump; covered by the AhpSpike acceptance test in a real browser")]
     private async Task RunConnectionAsync(HttpContext context)
     {
-        var user = context.Request.Query["user"].ToString();
-        if (user.Length == 0)
-        {
-            user = "anonymous";
-        }
-
         var cancellationToken = context.RequestAborted;
         var outbound = Channel.CreateUnbounded<string>(new UnboundedChannelOptions { SingleReader = true });
-        var handler = new AhpSpikeRpcHandler(journal, streamer, user, frame => outbound.Writer.TryWrite(frame));
+        var handler = new AhpSpikeRpcHandler(journal, streamer, ResolveUser(context), frame => outbound.Writer.TryWrite(frame));
         using var socket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
         var writerTask = WriteLoopAsync(socket, outbound.Reader, cancellationToken);
-        try
-        {
-            await ReceiveLoopAsync(socket, handler, cancellationToken).ConfigureAwait(false);
-        }
-        catch (WebSocketException)
-        {
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        finally
-        {
-            handler.Dispose();
-            outbound.Writer.TryComplete();
-            try
-            {
-                await writerTask.ConfigureAwait(false);
-            }
-            catch (WebSocketException)
-            {
-            }
-            catch (OperationCanceledException)
-            {
-            }
-        }
+        await ReceiveUntilClosedAsync(socket, handler, cancellationToken).ConfigureAwait(false);
+        handler.Dispose();
+        outbound.Writer.TryComplete();
+        await AwaitQuietlyAsync(writerTask).ConfigureAwait(false);
     }
 
-    [ExcludeFromCodeCoverage(Justification = "Socket pump; covered by the AhpSpike acceptance test in a real browser")]
+    private static string ResolveUser(HttpContext context)
+    {
+        var user = context.Request.Query["user"].ToString();
+        return user.Length == 0 ? "anonymous" : user;
+    }
+
     private static async Task WriteLoopAsync(
         WebSocket socket,
         ChannelReader<string> reader,
@@ -94,7 +70,23 @@ public sealed class AhpSpikeWebSocketMiddleware(
         }
     }
 
-    [ExcludeFromCodeCoverage(Justification = "Socket pump; covered by the AhpSpike acceptance test in a real browser")]
+    private static async Task ReceiveUntilClosedAsync(
+        WebSocket socket,
+        AhpSpikeRpcHandler handler,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await ReceiveLoopAsync(socket, handler, cancellationToken).ConfigureAwait(false);
+        }
+        catch (WebSocketException)
+        {
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
     private static async Task ReceiveLoopAsync(
         WebSocket socket,
         AhpSpikeRpcHandler handler,
@@ -118,6 +110,20 @@ public sealed class AhpSpikeWebSocketMiddleware(
             while (!result.EndOfMessage);
 
             handler.Handle(Encoding.UTF8.GetString(message.ToArray()));
+        }
+    }
+
+    private static async Task AwaitQuietlyAsync(Task task)
+    {
+        try
+        {
+            await task.ConfigureAwait(false);
+        }
+        catch (WebSocketException)
+        {
+        }
+        catch (OperationCanceledException)
+        {
         }
     }
 }
